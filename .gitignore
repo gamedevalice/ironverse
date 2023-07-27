@@ -1,0 +1,6 @@
+Cargo.lock
+target/
+assets/wasm/
+.cargo/
+/.project
+assets/temp/
