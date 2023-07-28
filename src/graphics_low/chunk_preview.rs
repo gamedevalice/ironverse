@@ -49,7 +49,6 @@ fn update(
     }
 
     if chunk_preview.chunk_op.is_none() {
-      info!("None, dispose");
       continue;
     }
 
@@ -59,8 +58,6 @@ fn update(
       VoxelMode::SurfaceNets, 
       &mut game_res.chunk_manager.voxel_reuse
     );
-
-    info!("data.indices.len() {}", data.indices.len());
 
     if data.indices.len() > 0 { // Temporary, should be removed once the ChunkMode detection is working
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);

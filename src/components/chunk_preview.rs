@@ -132,7 +132,6 @@ fn on_range(
       chunk_preview.chunk_op = None;
       continue;
     }
-    info!("chunk_preview on_range {}", range.point.x);
 
     let size = 2_u32.pow(range.scale as u32);
 

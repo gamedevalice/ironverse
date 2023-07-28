@@ -133,9 +133,12 @@ fn update_point_snap_grid(
           }
         }
         
-        if !pos.is_nan() && range.point != pos {
+        if range.point.is_nan() ^ pos.is_nan() {
           range.point = pos;
-          info!("range.point {:?}", pos);
+        }
+
+        if !range.point.is_nan() && !pos.is_nan() && range.point != pos {
+          range.point = pos;
         }
       }
 
@@ -181,19 +184,12 @@ fn update_point_snap_grid(
           }
         }
 
-        // info!(
-        //   "range.point.is_nan() ^ pos.is_nan() {}", 
-        //   range.point.is_nan() ^ pos.is_nan()
-        // );
-
         if range.point.is_nan() ^ pos.is_nan() {
           range.point = pos;
-          info!("range.point1 {:?}", pos);
         }
 
         if !range.point.is_nan() && !pos.is_nan() && range.point != pos {
           range.point = pos;
-          info!("range.point2 {:?}", pos);
         }
       }
 
