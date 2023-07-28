@@ -3,18 +3,35 @@ use bevy_flycam::FlyCam;
 
 use crate::data::GameResource;
 
-use super::{player::Player, chunk_edit::{ChunkEdit, SnapMode}};
+use super::{player::Player, chunk_edit::{ChunkEdit, SnapMode, EditMode}};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
+      .insert_resource(LocalResource::default())
+      .add_system(init_resource)
       .add_system(add)
       .add_system(update_point.run_if(snap_normal))
       .add_system(update_point_snap_grid.run_if(not(snap_normal)))
       .add_system(update_range);
   }
 }
+
+fn init_resource(
+  mut local_res: ResMut<LocalResource>,
+  game_res: Res<GameResource>,
+) {
+  if local_res.max_dist == 0.0 {
+    let adj = 12.0;
+    local_res.max_dist = 
+      game_res.chunk_manager.config.seamless_size as f32 + adj;
+    println!("local_res {:?}", local_res.max_dist);
+  }
+
+  
+}
+
 
 fn add(
   mut commands: Commands,
@@ -56,6 +73,7 @@ fn update_point(
 fn update_point_snap_grid(
   mut query: Query<(&Transform, &ChunkEdit, &mut Range), With<FlyCam>>,
   game_res: Res<GameResource>,
+  local_res: Res<LocalResource>,
 ) {
   for (trans, chunk_edit, mut range) in query.iter_mut() {
     let default = false;
@@ -71,68 +89,105 @@ fn update_point_snap_grid(
       }
     } else {
 
-      /*
-        Create Mode
-          Iterate from the end of ray to the min dist
-          Reduce dist by certain amount until we meet the condition
-            Condition
-              If target area has just 1 air value
-
-
-        Delete Mode
-       */
-      // info!("test");
-
-      let size = 2_u32.pow(range.scale as u32);
-      let min = 0;
-      let max = size as i64;
-
-      let mut pos = Vec3::NAN;
-
-      let total_div = 10;
-      let min_dist = size as f32 * 2.0;
-      'main: for i in (0..total_div).rev() {
-        let div_f32 = total_div as f32 - 1.0;
-        let dist = (range.dist / div_f32) * i as f32;
-        if dist < min_dist {
-          pos = Vec3::NAN;
-          break;
-        }
-
-
-        let mut point = trans.translation + trans.forward() * dist;
-
+      if chunk_edit.mode == EditMode::Create {
         let size = 2_u32.pow(range.scale as u32);
+        let min = 0;
+        let max = size as i64;
 
-        point -= (size as f32 * 0.5 - 0.5);
-        let p = get_snapped_position(point, size);
+        let mut pos = Vec3::NAN;
 
-        // info!("range.dist {} dist {}", range.dist, dist);
+        let total_div = 10;
+        let min_dist = size as f32 * 2.0;
+        'main: for i in (0..total_div).rev() {
+          let div_f32 = total_div as f32 - 1.0;
+          let dist = (range.dist / div_f32) * i as f32;
+          if dist < min_dist {
+            pos = Vec3::NAN;
+            break;
+          }
 
-        for x in min..max {
-          for y in min..max {
-            for z in min..max {
-              let tmp_pos = [
-                p.x as i64 + x,
-                p.y as i64 + y,
-                p.z as i64 + z
-              ];
-    
-              let voxel = game_res.chunk_manager.get_voxel(&tmp_pos);
-              if voxel == 0 {
-                pos = p;
-                // info!("i {} dist {}", i, dist);
-                break 'main;
+          let mut point = trans.translation + trans.forward() * dist;
+          let size = 2_u32.pow(range.scale as u32);
+          point -= (size as f32 * 0.5 - 0.5);
+          let p = get_snapped_position(point, size);
+
+          // info!("range.dist {} dist {}", range.dist, dist);
+
+          for x in min..max {
+            for y in min..max {
+              for z in min..max {
+                let tmp_pos = [
+                  p.x as i64 + x,
+                  p.y as i64 + y,
+                  p.z as i64 + z
+                ];
+      
+                let res = game_res.chunk_manager.get_voxel_safe(&tmp_pos);
+                if res.is_some() && res.unwrap() == 0 {
+                  pos = p;
+                  // info!("i {} dist {}", i, dist);
+                  break 'main;
+                }
               }
             }
           }
         }
+        
+        if range.point != pos {
+          range.point = pos;
+          info!("range.point {:?}", pos);
+        }
       }
+
+
+      if chunk_edit.mode == EditMode::Delete {
+        let size = 2_u32.pow(range.scale as u32);
+        let min = 0;
+        let max = size as i64;
+
+        let mut pos = Vec3::NAN;
+
+        let total_div = 10;
+
+        'main: for i in 0..total_div {
+          let div_f32 = total_div as f32 - 1.0;
+          let dist = (local_res.max_dist / div_f32) * i as f32;
+
+
+          let mut point = trans.translation + trans.forward() * dist;
+          let size = 2_u32.pow(range.scale as u32);
+          point -= (size as f32 * 0.5 - 0.5);
+          let p = get_snapped_position(point, size);
+
+          // info!("range.dist {} dist {}", range.dist, dist);
+
+          for x in min..max {
+            for y in min..max {
+              for z in min..max {
+                let tmp_pos = [
+                  p.x as i64 + x,
+                  p.y as i64 + y,
+                  p.z as i64 + z
+                ];
       
-      if range.point != pos {
-        range.point = pos;
-        info!("range.point {:?}", pos);
+                let res = game_res.chunk_manager.get_voxel_safe(&tmp_pos);
+                if res.is_some() && res.unwrap() == 1 {
+                  pos = p;
+                  // info!("i {} dist {}", i, dist);
+                  break 'main;
+                }
+              }
+            }
+          }
+        }
+        
+        if range.point != pos {
+          range.point = pos;
+          info!("range.point {:?}", pos);
+        }
       }
+
+      
     }
   }
 }
@@ -257,6 +312,14 @@ fn get_nearby_snapped_positions(pos: Vec3, size: u32) -> Vec<Vec3> {
 
   result
 }
+
+
+
+#[derive(Resource, Default)]
+struct LocalResource {
+  pub max_dist: f32,
+}
+
 
 #[cfg(test)]
 mod tests {

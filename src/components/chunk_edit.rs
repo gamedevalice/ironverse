@@ -43,6 +43,18 @@ fn toggle_snap_mode(
       info!("SnapMode {:?}", edit.snap_mode);
     }
   }
+
+  if keys.just_pressed(KeyCode::N) {
+    for mut edit in &mut chunk_edits.iter_mut() {
+
+      if edit.mode == EditMode::Create {
+        edit.mode = EditMode::Delete;
+      } else {
+        edit.mode = EditMode::Create;
+      }
+      info!("mode {:?}", edit.mode);
+    }
+  }
 }
 
 

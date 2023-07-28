@@ -192,8 +192,9 @@ impl ChunkManager {
     chunks
   }
 
-
-
+  /**
+    Returns 0 if the chunk is not loaded containing the coordinate
+   */
   pub fn get_voxel(&self, pos: &[i64; 3]) -> u8 {
     let seamless_size = self.seamless_size();
     let key = voxel_pos_to_key(pos, seamless_size);
@@ -201,7 +202,7 @@ impl ChunkManager {
     
     let octree = match self.get_octree(&pos) {
       Some(o) => o,
-      None => return 255
+      None => return 0
     };
 
     let sizei64 = seamless_size as i64;
@@ -212,6 +213,29 @@ impl ChunkManager {
     // println!("key1 {:?} local {} {} {}", key, local_x, local_y, local_z);
 
     octree.get_voxel(local_x as u32, local_y as u32, local_z as u32)
+  }
+
+  /**
+   * Returns None if the chunk is not loaded containing the coordinate 
+   */
+  pub fn get_voxel_safe(&self, pos: &[i64; 3]) -> Option<u8> {
+    let seamless_size = self.seamless_size();
+    let key = voxel_pos_to_key(pos, seamless_size);
+    // let key = world_pos_to_key(pos, seamless_size);
+    
+    let octree = match self.get_octree(&pos) {
+      Some(o) => o,
+      None => return None
+    };
+
+    let sizei64 = seamless_size as i64;
+    let local_x = pos[0] - (key[0] * sizei64);
+    let local_y = pos[1] - (key[1] * sizei64);
+    let local_z = pos[2] - (key[2] * sizei64);
+
+    // println!("key1 {:?} local {} {} {}", key, local_x, local_y, local_z);
+
+    Some(octree.get_voxel(local_x as u32, local_y as u32, local_z as u32))
   }
 
   fn get_octree(&self, pos: &[i64; 3]) -> Option<&VoxelOctree> {
