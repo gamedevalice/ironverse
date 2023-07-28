@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use voxels::chunk::{chunk_manager::Chunk};
 use crate::{data::{GameResource}, utils::{nearest_voxel_point_0, nearest_voxel_point}, input::hotbar::{HotbarResource, self}};
-use super::{raycast::Raycast, range::Range, player::Player};
+use super::{raycast::Raycast, range::Range, player::Player, chunk_edit::{ChunkEdit, SnapMode}};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -91,9 +91,7 @@ fn on_raycast(
       }
 
 
-      let res = game_res.preview_chunk_manager.set_voxel2(&new, voxel);
-      // chunk_preview.chunks.push((chunk.key, chunk));
-
+      let _ = game_res.preview_chunk_manager.set_voxel2(&new, voxel);
 
       let mut chunk = Chunk::default();
       let pos = chunk.octree.get_size() / 2;
@@ -125,24 +123,31 @@ fn on_raycast(
 fn on_range(
   mut game_res: ResMut<GameResource>,
   mut ranges: Query<
-    (&Range, &mut ChunkPreview), Changed<Range>
+    (&Range, &ChunkEdit, &mut ChunkPreview), Changed<Range>
   >,
   hotbar_res: Res<HotbarResource>,
 ) {
-  for (range, mut chunk_preview) in &mut ranges {
+  for (range, chunk_edit, mut chunk_preview) in &mut ranges {
     if range.point.x == f32::NAN {
       continue;
     }
 
+    let size = 2_u32.pow(range.scale as u32);
+
     game_res.preview_chunk_manager.chunks = game_res.chunk_manager.chunks.clone();
+    
+    let mut min = -(range.scale as i64);
+    let mut max = (range.scale as i64);
+    if size == 1 {
+      max = 1;
+    }
+    
+    if chunk_edit.snap_mode == SnapMode::Grid {
+      min = 0;
+      max = size as i64;
+    }
 
-    let min = -(range.scale as i64);
-    let max = (range.scale as i64) + 1;
-
-    // let min = -3;
-    // let max = 3;
-
-    // info!("min {} max {}", min, max);
+    // info!("size {} range.scale {} min max: {} {}", size, range.scale, min, max);
 
     chunk_preview.new = [
       range.point.x as i64,
@@ -158,11 +163,11 @@ fn on_range(
     let mut voxel = 0;
     if bar_op.is_some() {
       voxel = bar_op.unwrap().voxel;
-    }
+    } 
 
     let mut chunk = Chunk::default();
     let chunk_pos = chunk.octree.get_size() / 2;
-
+    // info!("min {} max {} size {}", min, max, size);
 
     for x in min..max {
       for y in min..max {
@@ -173,7 +178,7 @@ fn on_range(
             range.point.z as i64 + z
           ];
 
-          game_res.preview_chunk_manager.set_voxel2(&pos, voxel);
+          let _ = game_res.preview_chunk_manager.set_voxel2(&pos, voxel);
         }
       }
     }

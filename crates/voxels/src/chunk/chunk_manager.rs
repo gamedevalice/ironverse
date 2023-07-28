@@ -198,11 +198,10 @@ impl ChunkManager {
     let seamless_size = self.seamless_size();
     let key = voxel_pos_to_key(pos, seamless_size);
     // let key = world_pos_to_key(pos, seamless_size);
-
+    
     let octree = match self.get_octree(&pos) {
       Some(o) => o,
-      // None => { println!("none1"); return 0 },
-      None => return 0
+      None => return 255
     };
 
     let sizei64 = seamless_size as i64;

@@ -22,12 +22,27 @@ cfg_if! {
   }
 }
 
+cfg_if! {
+  if #[cfg(all(feature = "ui_prompt", target_arch = "wasm32") )] {
+    mod wasm_ui;
+  }
+}
+
+
+
 // mod native;
 cfg_if! {
-  if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
+  if #[cfg(not(target_arch = "wasm32") )] {
     mod native;
   }
 }
+
+cfg_if! {
+  if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
+    mod native_ui;
+  }
+}
+
 
 cfg_if! {
   if #[cfg(feature = "graphics_low")] {
@@ -55,9 +70,6 @@ cfg_if! {
   }
 }
 
-
-
-
 fn main() {
   let mut app = App::new();
   app
@@ -72,7 +84,7 @@ fn main() {
       }),
       ..default()
     }));
-  
+
   cfg_if! {
     if #[cfg(feature = "core")] {
       app
@@ -133,16 +145,30 @@ fn main() {
   }
 
   cfg_if! {
-    if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
+    if #[cfg(target_arch = "wasm32")] {
+      app
+        .add_plugin(wasm::CustomPlugin);
+    }
+  }
+
+  cfg_if! {
+    if #[cfg(all(feature = "ui_prompt", target_arch = "wasm32") )] {
+      app
+        .add_plugin(wasm_ui::CustomPlugin);
+    }
+  }
+
+  cfg_if! {
+    if #[cfg(not(target_arch = "wasm32") )] {
       app
         .add_plugin(native::CustomPlugin);
     }
   }
 
   cfg_if! {
-    if #[cfg(target_arch = "wasm32")] {
+    if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
       app
-        .add_plugin(wasm::CustomPlugin);
+        .add_plugin(native_ui::CustomPlugin);
     }
   }
 
@@ -156,5 +182,3 @@ fn main() {
   
   app.run();
 }
-
-
