@@ -1,13 +1,10 @@
 #![allow(dead_code, unused_variables)]  // Forced to use, even though the look_at_to_rotation_quat() is being used, it is still showing warning
 
-use std::fs::File;
 
 use bevy::math::{Vec3, Quat};
 use voxels::chunk::chunk_manager::ChunkManager;
 use voxels::chunk::{adjacent_keys_i64};
 use voxels::{chunk::{voxel_pos_to_key}};
-
-use crate::data::{Data, Status, Terrains};
 
 pub struct Math;
 

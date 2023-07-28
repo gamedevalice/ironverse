@@ -114,7 +114,7 @@ fn on_raycast(
         }
       }
 
-      chunk_preview.chunk = chunk;
+      chunk_preview.chunk_op = Some(chunk);
     }
   }
 }
@@ -128,9 +128,11 @@ fn on_range(
   hotbar_res: Res<HotbarResource>,
 ) {
   for (range, chunk_edit, mut chunk_preview) in &mut ranges {
-    if range.point.x == f32::NAN {
+    if range.point.x.is_nan() {
+      chunk_preview.chunk_op = None;
       continue;
     }
+    info!("chunk_preview on_range {}", range.point.x);
 
     let size = 2_u32.pow(range.scale as u32);
 
@@ -203,7 +205,7 @@ fn on_range(
         }
       }
     }
-    chunk_preview.chunk = chunk;
+    chunk_preview.chunk_op = Some(chunk);
   }
 }
 
@@ -284,7 +286,7 @@ fn on_changed_selected_voxel(
         }
       }
     }
-    chunk_preview.chunk = chunk;
+    chunk_preview.chunk_op = Some(chunk);
   }
 }
 
@@ -304,7 +306,7 @@ fn on_remove(
 pub struct ChunkPreview {
   pub target: [i64; 3],
   pub new: [i64; 3],
-  pub chunk: Chunk,
+  pub chunk_op: Option<Chunk>,
   pub is_showing: bool,
 }
 
@@ -313,7 +315,7 @@ impl Default for ChunkPreview {
     Self {
       target: [i64::MAX; 3],
       new: [i64::MAX; 3],
-      chunk: Chunk::default(),
+      chunk_op: None,
       is_showing: true,
     }
   }
