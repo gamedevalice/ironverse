@@ -196,22 +196,33 @@ fn update_by_range(
   mut physics: ResMut<Physics>,
 ) {
   let mut voxel_op = None;
+
+
   for event in mouse_inputs.iter() {
-    if event.mouse_button_input.state == ButtonState::Pressed {
-      if event.mouse_button_input.button == MouseButton::Left {
-        voxel_op = Some(0);
+    for (_, chunk_edit, _) in &mut ranges {
+      if chunk_edit.mode == EditMode::Create {
+        if event.mouse_button_input.state == ButtonState::Pressed {
+          if event.mouse_button_input.button == MouseButton::Left {
+            voxel_op = Some(1);
+            for i in 0..hotbar_res.bars.len() {
+              let bar = &hotbar_res.bars[i];
+              if  hotbar_res.selected_keycode ==  bar.key_code {
+                voxel_op = Some(bar.voxel);
+              }
+            }
+          }
+        }
       }
-      
-      if event.mouse_button_input.button == MouseButton::Right {
-        voxel_op = Some(1);
-        for i in 0..hotbar_res.bars.len() {
-          let bar = &hotbar_res.bars[i];
-          if  hotbar_res.selected_keycode ==  bar.key_code {
-            voxel_op = Some(bar.voxel);
+
+      if chunk_edit.mode == EditMode::Delete {
+        if event.mouse_button_input.state == ButtonState::Pressed {
+          if event.mouse_button_input.button == MouseButton::Left {
+            voxel_op = Some(0);
           }
         }
       }
     }
+    
   }
   if voxel_op.is_none() {
     return;
