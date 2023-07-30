@@ -148,8 +148,7 @@ fn spawn(
           // .with_scale(Vec3::new(0.99, 0.999, 0.99 )),
         ..default()
       })
-      .insert(ChunkPreviewGraphics { parent: local_res.preview_entity })
-      .id();
+      .insert(ChunkPreviewGraphics { parent: local_res.preview_entity });
   }
 
 }

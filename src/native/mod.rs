@@ -2,15 +2,10 @@ use bevy::{prelude::*, input::mouse::MouseButtonInput, window::CursorGrabMode};
 use bevy_flycam::MovementSettings;
 use crate::{input::{MouseInput, InputResource}, data::{CursorState, UIState}};
 
-mod load_game;
-mod save;
-
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_plugin(load_game::CustomPlugin)
-      .add_plugin(save::CustomPlugin)
       .add_system(update)
       .add_system(toggle_mouse_grab.in_base_set(CoreSet::PostUpdate))
       .add_system(cursor_free.in_schedule(OnEnter(CursorState::None)))
@@ -47,6 +42,7 @@ fn toggle_mouse_grab(
   if !input_res.enabled {
     return;
   }
+
   if ui_state.0 != UIState::Default {
     return;
   }
@@ -94,6 +90,7 @@ fn cursor_locked(
   window.cursor.grab_mode = CursorGrabMode::Locked;
 
   move_setting_res.sensitivity = 0.00012;
-  move_setting_res.speed = 12.0;
+  // move_setting_res.speed = 12.0;
+  move_setting_res.speed = 6.0;
 }
 

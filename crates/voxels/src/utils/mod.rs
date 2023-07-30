@@ -1,5 +1,5 @@
 pub mod grid_hashmap;
-use crate::chunk::{voxel_pos_to_key, world_pos_to_key2, world_pos_to_key};
+use crate::chunk::voxel_pos_to_key;
 use crate::data::voxel_octree::VoxelOctree;
 
 pub struct Utils;

@@ -91,9 +91,7 @@ fn on_raycast(
       }
 
 
-      let res = game_res.preview_chunk_manager.set_voxel2(&new, voxel);
-      // chunk_preview.chunks.push((chunk.key, chunk));
-
+      let _ = game_res.preview_chunk_manager.set_voxel2(&new, voxel);
 
       let mut chunk = Chunk::default();
       let pos = chunk.octree.get_size() / 2;
@@ -116,7 +114,7 @@ fn on_raycast(
         }
       }
 
-      chunk_preview.chunk = chunk;
+      chunk_preview.chunk_op = Some(chunk);
     }
   }
 }
@@ -130,19 +128,29 @@ fn on_range(
   hotbar_res: Res<HotbarResource>,
 ) {
   for (range, mut chunk_preview) in &mut ranges {
-    if range.point.x == f32::NAN {
+    if range.point.x.is_nan() {
+      chunk_preview.chunk_op = None;
       continue;
     }
 
+    let size = 2_u32.pow(range.scale as u32);
+
     game_res.preview_chunk_manager.chunks = game_res.chunk_manager.chunks.clone();
+    
+    let mut min = -(range.scale as i64);
+    let mut max = (range.scale as i64);
+    if size == 1 {
+      max = 1;
+    }
+    let normal_mode = true;
+    
+    // if chunk_edit.snap_mode == SnapMode::Grid {
+    if normal_mode {
+      min = 0;
+      max = size as i64;
+    }
 
-    let min = -(range.scale as i64);
-    let max = (range.scale as i64) + 1;
-
-    // let min = -3;
-    // let max = 3;
-
-    // info!("min {} max {}", min, max);
+    // info!("size {} range.scale {} min max: {} {}", size, range.scale, min, max);
 
     chunk_preview.new = [
       range.point.x as i64,
@@ -158,11 +166,11 @@ fn on_range(
     let mut voxel = 0;
     if bar_op.is_some() {
       voxel = bar_op.unwrap().voxel;
-    }
+    } 
 
     let mut chunk = Chunk::default();
     let chunk_pos = chunk.octree.get_size() / 2;
-
+    // info!("min {} max {} size {}", min, max, size);
 
     for x in min..max {
       for y in min..max {
@@ -173,7 +181,7 @@ fn on_range(
             range.point.z as i64 + z
           ];
 
-          game_res.preview_chunk_manager.set_voxel2(&pos, voxel);
+          let _ = game_res.preview_chunk_manager.set_voxel2(&pos, voxel);
         }
       }
     }
@@ -198,7 +206,7 @@ fn on_range(
         }
       }
     }
-    chunk_preview.chunk = chunk;
+    chunk_preview.chunk_op = Some(chunk);
   }
 }
 
@@ -279,7 +287,7 @@ fn on_changed_selected_voxel(
         }
       }
     }
-    chunk_preview.chunk = chunk;
+    chunk_preview.chunk_op = Some(chunk);
   }
 }
 
@@ -299,7 +307,7 @@ fn on_remove(
 pub struct ChunkPreview {
   pub target: [i64; 3],
   pub new: [i64; 3],
-  pub chunk: Chunk,
+  pub chunk_op: Option<Chunk>,
   pub is_showing: bool,
 }
 
@@ -308,7 +316,7 @@ impl Default for ChunkPreview {
     Self {
       target: [i64::MAX; 3],
       new: [i64::MAX; 3],
-      chunk: Chunk::default(),
+      chunk_op: None,
       is_showing: true,
     }
   }

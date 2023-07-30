@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
-use voxels::{data::voxel_octree::VoxelMode};
+use voxels::data::voxel_octree::VoxelMode;
 use crate::components::player::Player;
 use crate::graphics::chunk_preview::ChunkPreviewRender;
 use crate::graphics::{GraphicsResource, ChunkPreviewGraphics};
@@ -33,7 +33,7 @@ fn update(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut game_res: ResMut<GameResource>,
-  mut chunk_previews: Query<
+  chunk_previews: Query<
     (Entity, &ChunkPreview), Changed<ChunkPreview>
   >,
   mut materials: ResMut<Assets<StandardMaterial>>,
@@ -41,16 +41,20 @@ fn update(
 
   graphics: Query<(Entity, &ChunkPreviewGraphics)>,
 ) {
-  let config = game_res.chunk_manager.config.clone();
-
-  for (entity, mut chunk_preview) in &mut chunk_previews {
+  for (entity, chunk_preview) in &chunk_previews {
     for (graphics_entity, graphics) in &graphics {
       if entity == graphics.parent {
         commands.entity(graphics_entity).despawn_recursive();
       }
     }
 
-    let data = chunk_preview.chunk.octree.compute_mesh(
+    if chunk_preview.chunk_op.is_none() {
+      continue;
+    }
+
+    let chunk = chunk_preview.chunk_op.clone().unwrap();
+
+    let data = chunk.octree.compute_mesh(
       VoxelMode::SurfaceNets, 
       &mut game_res.chunk_manager.voxel_reuse
     );
@@ -64,7 +68,7 @@ fn update(
       render_mesh.insert_attribute(VOXEL_WEIGHT, data.weights.clone());
       render_mesh.insert_attribute(VOXEL_TYPE_1, data.types_1.clone());
 
-      let chunk_size = (chunk_preview.chunk.octree.get_size() / 2) as f32;
+      let chunk_size = (chunk.octree.get_size() / 2) as f32;
       let p = &chunk_preview.new;
       let adj = [p[0] as f32, p[1] as f32, p[2] as f32];
       let coord_f32 = [adj[0] - chunk_size, adj[1] - chunk_size, adj[2] - chunk_size];
