@@ -1,6 +1,6 @@
-use bevy::{prelude::*, input::ButtonState};
+use bevy::prelude::*;
 use bevy_flycam::FlyCam;
-use crate::input::{MouseInput, hotbar::HotbarResource};
+use crate::input::hotbar::HotbarResource;
 use super::ChunkEdit;
 
 pub struct CustomPlugin;
@@ -12,27 +12,10 @@ impl Plugin for CustomPlugin {
 }
 
 fn update(
-  mut mouse_inputs: EventReader<MouseInput>,
-  hotbar_res: Res<HotbarResource>,
   mut chunk_edits: Query<(&Transform, &mut ChunkEdit), With<FlyCam>>,
+  hotbar_res: Res<HotbarResource>,
 ) {
-  let mut voxel_op = None;
-
-  // for event in mouse_inputs.iter() {
-  //   if event.mouse_button_input.state == ButtonState::Pressed 
-  //   && event.mouse_button_input.button == MouseButton::Left {
-  //     voxel_op = Some(1);
-  //     for i in 0..hotbar_res.bars.len() {
-  //       let bar = &hotbar_res.bars[i];
-  //       if  hotbar_res.selected_keycode ==  bar.key_code {
-  //         voxel_op = Some(bar.voxel);
-  //       }
-
-  //     }
-  //   }
-  // }
-
-  voxel_op = Some(1);
+  let mut voxel_op = Some(1);
   for i in 0..hotbar_res.bars.len() {
     let bar = &hotbar_res.bars[i];
     if  hotbar_res.selected_keycode ==  bar.key_code {
