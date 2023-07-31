@@ -32,8 +32,8 @@ fn add(
     commands
       .entity(entity)
       .insert(ChunkEdit::default())
-      // .insert(CreateNormal::default())
-      .insert(DeleteNormal::default())
+      .insert(CreateNormal::default())
+      // .insert(DeleteNormal::default())
       ;
   }
 }

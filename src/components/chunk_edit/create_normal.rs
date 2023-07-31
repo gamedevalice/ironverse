@@ -55,20 +55,14 @@ fn update(
       let div_f32 = total_div as f32 - 1.0;
       let dist = (edit.dist / div_f32) * i as f32;
       if dist < min_dist {
+        // info!("break");
         break;
       }
 
       let mut point = trans.translation + trans.forward() * dist;
-      // let size = 2_u32.pow(edit.scale as u32);
-      // point -= (size as f32 * 0.5 - 0.5);
-      // let p = get_snapped_position(point, size);
-
-      let mut p = point;
-      p.x = (p.x as i64) as f32;
-      p.y = (p.y as i64) as f32;
-      p.z = (p.z as i64) as f32;
-
-      // info!("range.dist {} dist {}", range.dist, dist);
+      let size = 2_u32.pow(edit.scale as u32);
+      point -= (size as f32 * 0.5 - 0.5);
+      let p = get_snapped_position(point, 1);
 
       for x in edit.min..edit.max {
         for y in edit.min..edit.max {
@@ -92,6 +86,9 @@ fn update(
 
 
     if pos_op.is_none() {
+      if edit.point_op.is_some() {
+        edit.point_op = None;
+      }
       continue;
     }
     let pos = pos_op.unwrap();
