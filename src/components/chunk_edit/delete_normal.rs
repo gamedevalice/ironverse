@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::data::GameResource;
-use super::{ChunkEdit, get_snapped_position};
+use super::{ChunkEdit, get_snapped_position, ChunkEditResource, EditMode, get_point_by_edit_mode};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -24,6 +24,7 @@ fn on_change_voxel_changed(
 fn update(
   mut chunk_edits: Query<(&Transform, &mut ChunkEdit), With<DeleteNormal>>,
   game_res: Res<GameResource>,
+  chunk_edit_res: Res<ChunkEditResource>,
 ) {
   for (trans, mut edit) in &mut chunk_edits {
     let size = 2_u32.pow(edit.scale as u32);
@@ -42,14 +43,12 @@ fn update(
       let div_f32 = total_div as f32 - 1.0;
       let dist = (max_dist / div_f32) * i as f32;
 
-      let mut point = trans.translation + trans.forward() * dist;
-      let size = 2_u32.pow(edit.scale as u32);
-      // point -= (size as f32 * 0.5 - 0.5);
-      // let p = get_snapped_position(point, size);
-      let mut p = point;
-      p.x = (p.x as i64) as f32;
-      p.y = (p.y as i64) as f32;
-      p.z = (p.z as i64) as f32;
+      let mut snap = true;
+      if chunk_edit_res.edit_mode == EditMode::DeleteNormal {
+        snap = false;
+      }
+
+      let p = get_point_by_edit_mode(&trans, dist, size, snap);
 
       for x in edit.min..edit.max {
         for y in edit.min..edit.max {

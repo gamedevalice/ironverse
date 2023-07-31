@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::{components::chunk_edit::get_snapped_position, data::GameResource, input::hotbar::HotbarResource};
-use super::{ChunkEdit, ChunkEditResource, EditMode};
+use super::{ChunkEdit, ChunkEditResource, EditMode, get_point_by_edit_mode};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -64,7 +64,7 @@ fn update(
         snap = false;
       }
 
-      let p = get_point(&trans, dist, size, snap);
+      let p = get_point_by_edit_mode(&trans, dist, size, snap);
 
       for x in edit.min..edit.max {
         for y in edit.min..edit.max {
@@ -107,19 +107,6 @@ fn update(
       edit.point_op = Some(pos);
     }
   }
-}
-
-fn get_point(
-  trans: &Transform, dist: f32, size: u32, snap_to_grid: bool
-) -> Vec3 {
-  let mut point = trans.translation + trans.forward() * dist;
-  point -= (size as f32 * 0.5 - 0.5);
-
-  let mut s = size;
-  if !snap_to_grid {
-    s = 1;
-  }
-  get_snapped_position(point, s)
 }
 
 

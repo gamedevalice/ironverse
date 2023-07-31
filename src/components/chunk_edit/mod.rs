@@ -64,26 +64,6 @@ fn manage_modes(
       },
     };
 
-
-    // for entity in &players {
-    //   match chunk_edit_res.edit_mode {
-    //     EditMode::CreateNormal => {
-    //       chunk_edit_res.edit_mode = EditMode::CreateSnap;
-    //     },
-    //     EditMode::CreateSnap => {
-    //       chunk_edit_res.edit_mode = EditMode::DeleteNormal;
-    //     },
-    //     EditMode::DeleteNormal => {
-    //       chunk_edit_res.edit_mode = EditMode::DeleteSnap;
-    //     },
-    //     EditMode::DeleteSnap => {
-    //       chunk_edit_res.edit_mode = EditMode::CreateNormal;
-    //       commands.entity(entity).insert(CreateNormal::default());
-    //     },
-    //     // _ => {},
-    //   };
-    // }
-
     info!("Edit_mode {:?}", chunk_edit_res.edit_mode);
   }
 
@@ -93,7 +73,19 @@ fn manage_modes(
       commands.entity(entity).insert(DeleteNormal::default());
     }
 
-    chunk_edit_res.edit_mode = EditMode::DeleteNormal;
+    match chunk_edit_res.edit_mode {
+      EditMode::DeleteNormal => {
+        chunk_edit_res.edit_mode = EditMode::DeleteSnap;
+      },
+      EditMode::DeleteSnap => {
+        chunk_edit_res.edit_mode = EditMode::DeleteNormal;
+      },
+      _ => {
+        chunk_edit_res.edit_mode = EditMode::DeleteNormal;
+      },
+    };
+
+    info!("Edit_mode {:?}", chunk_edit_res.edit_mode);
   }
 
 }
@@ -289,6 +281,20 @@ fn get_nearby_snapped_positions(pos: Vec3, size: u32) -> Vec<Vec3> {
 
   result
 }
+
+fn get_point_by_edit_mode(
+  trans: &Transform, dist: f32, size: u32, snap_to_grid: bool
+) -> Vec3 {
+  let mut point = trans.translation + trans.forward() * dist;
+  point -= (size as f32 * 0.5 - 0.5);
+
+  let mut s = size;
+  if !snap_to_grid {
+    s = 1;
+  }
+  get_snapped_position(point, s)
+}
+
 
 
 #[derive(Component)]
