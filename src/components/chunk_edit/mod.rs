@@ -48,32 +48,52 @@ fn manage_modes(
 
   if key_input.just_pressed(KeyCode::M) {
     for entity in &players {
-      commands.entity(entity).remove::<CreateNormal>();
       commands.entity(entity).remove::<DeleteNormal>();
-      // Add the remaining 3 mode here
+      commands.entity(entity).insert(CreateNormal::default());
     }
 
+    match chunk_edit_res.edit_mode {
+      EditMode::CreateNormal => {
+        chunk_edit_res.edit_mode = EditMode::CreateSnap;
+      },
+      EditMode::CreateSnap => {
+        chunk_edit_res.edit_mode = EditMode::CreateNormal;
+      },
+      _ => {
+        chunk_edit_res.edit_mode = EditMode::CreateSnap;
+      },
+    };
 
-    for entity in &players {
-      match chunk_edit_res.edit_mode {
-        EditMode::CreateNormal => {
-          chunk_edit_res.edit_mode = EditMode::CreateSnap;
-        },
-        EditMode::CreateSnap => {
-          chunk_edit_res.edit_mode = EditMode::DeleteNormal;
-        },
-        EditMode::DeleteNormal => {
-          chunk_edit_res.edit_mode = EditMode::DeleteSnap;
-        },
-        EditMode::DeleteSnap => {
-          chunk_edit_res.edit_mode = EditMode::CreateNormal;
-          commands.entity(entity).insert(CreateNormal::default());
-        },
-        // _ => {},
-      };
-    }
+
+    // for entity in &players {
+    //   match chunk_edit_res.edit_mode {
+    //     EditMode::CreateNormal => {
+    //       chunk_edit_res.edit_mode = EditMode::CreateSnap;
+    //     },
+    //     EditMode::CreateSnap => {
+    //       chunk_edit_res.edit_mode = EditMode::DeleteNormal;
+    //     },
+    //     EditMode::DeleteNormal => {
+    //       chunk_edit_res.edit_mode = EditMode::DeleteSnap;
+    //     },
+    //     EditMode::DeleteSnap => {
+    //       chunk_edit_res.edit_mode = EditMode::CreateNormal;
+    //       commands.entity(entity).insert(CreateNormal::default());
+    //     },
+    //     // _ => {},
+    //   };
+    // }
 
     info!("Edit_mode {:?}", chunk_edit_res.edit_mode);
+  }
+
+  if key_input.just_pressed(KeyCode::N) {
+    for entity in &players {
+      commands.entity(entity).remove::<CreateNormal>();
+      commands.entity(entity).insert(DeleteNormal::default());
+    }
+
+    chunk_edit_res.edit_mode = EditMode::DeleteNormal;
   }
 
 }
@@ -222,7 +242,6 @@ fn edit(
 }
 
 
-
 fn get_snapped_position(pos: Vec3, size: u32) -> Vec3 {
   let adj_positions = get_nearby_snapped_positions(pos, size);
 
@@ -239,7 +258,6 @@ fn get_snapped_position(pos: Vec3, size: u32) -> Vec3 {
 
   snapped_pos
 }
-
 
 fn get_nearby_snapped_positions(pos: Vec3, size: u32) -> Vec<Vec3> {
   let mut result = Vec::new();
@@ -271,7 +289,6 @@ fn get_nearby_snapped_positions(pos: Vec3, size: u32) -> Vec<Vec3> {
 
   result
 }
-
 
 
 #[derive(Component)]

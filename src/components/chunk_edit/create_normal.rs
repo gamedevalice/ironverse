@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::{components::chunk_edit::get_snapped_position, data::GameResource, input::hotbar::HotbarResource};
-use super::ChunkEdit;
+use super::{ChunkEdit, ChunkEditResource, EditMode};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -37,6 +37,7 @@ fn on_change_voxel_changed(
 fn update(
   mut chunk_edits: Query<(&Transform, &mut ChunkEdit), With<CreateNormal>>,
   game_res: Res<GameResource>,
+  chunk_edit_res: Res<ChunkEditResource>,
 ) {
   for (trans, mut edit) in chunk_edits.iter_mut() {
     let size = 2_u32.pow(edit.scale as u32);
@@ -55,14 +56,15 @@ fn update(
       let div_f32 = total_div as f32 - 1.0;
       let dist = (edit.dist / div_f32) * i as f32;
       if dist < min_dist {
-        // info!("break");
         break;
       }
 
-      let mut point = trans.translation + trans.forward() * dist;
-      let size = 2_u32.pow(edit.scale as u32);
-      point -= (size as f32 * 0.5 - 0.5);
-      let p = get_snapped_position(point, 1);
+      let mut snap = true;
+      if chunk_edit_res.edit_mode == EditMode::CreateNormal {
+        snap = false;
+      }
+
+      let p = get_point(&trans, dist, size, snap);
 
       for x in edit.min..edit.max {
         for y in edit.min..edit.max {
@@ -105,6 +107,19 @@ fn update(
       edit.point_op = Some(pos);
     }
   }
+}
+
+fn get_point(
+  trans: &Transform, dist: f32, size: u32, snap_to_grid: bool
+) -> Vec3 {
+  let mut point = trans.translation + trans.forward() * dist;
+  point -= (size as f32 * 0.5 - 0.5);
+
+  let mut s = size;
+  if !snap_to_grid {
+    s = 1;
+  }
+  get_snapped_position(point, s)
 }
 
 
