@@ -62,7 +62,11 @@ fn update(
       // let size = 2_u32.pow(edit.scale as u32);
       // point -= (size as f32 * 0.5 - 0.5);
       // let p = get_snapped_position(point, size);
-      let p = point;
+
+      let mut p = point;
+      p.x = (p.x as i64) as f32;
+      p.y = (p.y as i64) as f32;
+      p.z = (p.z as i64) as f32;
 
       // info!("range.dist {} dist {}", range.dist, dist);
 
