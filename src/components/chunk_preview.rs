@@ -55,6 +55,10 @@ fn chunk_edit_changed(
     let mut chunk = Chunk::default();
     let chunk_pos = game_res.chunk_manager.config.chunk_size / 2;
 
+    let mut voxel = edit.voxel;
+    if voxel == 0 {
+      voxel = 1;
+    }
     for x in min..max {
       for y in min..max {
         for z in min..max {
@@ -64,7 +68,7 @@ fn chunk_edit_changed(
             point.z as i64 + z
           ];
 
-          let _ = game_res.preview_chunk_manager.set_voxel2(&pos, edit.voxel);
+          let _ = game_res.preview_chunk_manager.set_voxel2(&pos, voxel);
         }
       }
     }

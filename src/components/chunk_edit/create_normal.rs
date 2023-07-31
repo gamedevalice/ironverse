@@ -1,12 +1,36 @@
 use bevy::prelude::*;
-use crate::{components::chunk_edit::get_snapped_position, data::GameResource};
+use crate::{components::chunk_edit::get_snapped_position, data::GameResource, input::hotbar::HotbarResource};
 use super::ChunkEdit;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_system(on_change_voxel_changed)
       .add_system(update);
+  }
+}
+
+fn on_change_voxel_changed(
+  hotbar_res: Res<HotbarResource>,
+  mut edits: Query<&mut ChunkEdit>,
+) {
+
+  let mut voxel_op = Some(1);
+  for i in 0..hotbar_res.bars.len() {
+    let bar = &hotbar_res.bars[i];
+    if  hotbar_res.selected_keycode == bar.key_code {
+      voxel_op = Some(bar.voxel);
+    }
+
+  }
+
+  if voxel_op.is_none() { return; }
+
+  for mut edit in &mut edits {
+    if edit.voxel != voxel_op.unwrap() {
+      edit.voxel = voxel_op.unwrap();
+    }
   }
 }
 
@@ -17,8 +41,12 @@ fn update(
   for (trans, mut edit) in chunk_edits.iter_mut() {
     let size = 2_u32.pow(edit.scale as u32);
 
-    edit.min = 0;
-    edit.max = size as i64;
+    if edit.min != 0 {
+      edit.min = 0;
+    }
+    if edit.max != size as i64 {
+      edit.max = size as i64;
+    }
 
     let mut pos_op = None;
     let total_div = 10;
@@ -31,9 +59,10 @@ fn update(
       }
 
       let mut point = trans.translation + trans.forward() * dist;
-      let size = 2_u32.pow(edit.scale as u32);
-      point -= (size as f32 * 0.5 - 0.5);
-      let p = get_snapped_position(point, size);
+      // let size = 2_u32.pow(edit.scale as u32);
+      // point -= (size as f32 * 0.5 - 0.5);
+      // let p = get_snapped_position(point, size);
+      let p = point;
 
       // info!("range.dist {} dist {}", range.dist, dist);
 

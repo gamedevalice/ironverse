@@ -14,7 +14,7 @@ fn update(
   mut chunk_edits: Query<(&Transform, &mut ChunkEdit), With<DeleteNormal>>,
   game_res: Res<GameResource>,
 ) {
-  for (trans, mut edit) in chunk_edits.iter_mut() {
+  for (trans, mut edit) in &mut chunk_edits {
     let size = 2_u32.pow(edit.scale as u32);
 
     if edit.min != 0 {
@@ -40,8 +40,9 @@ fn update(
 
       let mut point = trans.translation + trans.forward() * dist;
       let size = 2_u32.pow(edit.scale as u32);
-      point -= (size as f32 * 0.5 - 0.5);
-      let p = get_snapped_position(point, size);
+      // point -= (size as f32 * 0.5 - 0.5);
+      // let p = get_snapped_position(point, size);
+      let p = point;
 
       for x in edit.min..edit.max {
         for y in edit.min..edit.max {
@@ -74,6 +75,7 @@ fn update(
       if p != pos {
         info!("set {:?}: {:?}", p, pos);
         edit.point_op = Some(pos);
+        edit.voxel = 0;
       }
     }
 
@@ -81,6 +83,7 @@ fn update(
 
       info!("set2 {:?}", pos);
       edit.point_op = Some(pos);
+      edit.voxel = 0;
     }
   }
 }

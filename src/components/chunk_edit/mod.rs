@@ -31,8 +31,8 @@ fn add(
     commands
       .entity(entity)
       .insert(ChunkEdit::default())
-      // .insert(CreateNormal::default())
-      .insert(DeleteNormal::default())
+      .insert(CreateNormal::default())
+      // .insert(DeleteNormal::default())
       ;
   }
 }
@@ -84,21 +84,7 @@ fn update_edit_values(
   keyboard_input: Res<Input<KeyCode>>,
   time: Res<Time>,
 
-  hotbar_res: Res<HotbarResource>,
 ) {
-  let mut voxel_op = Some(1);
-  for i in 0..hotbar_res.bars.len() {
-    let bar = &hotbar_res.bars[i];
-    if  hotbar_res.selected_keycode == bar.key_code {
-      voxel_op = Some(bar.voxel);
-    }
-
-  }
-
-  if voxel_op.is_none() {
-    return;
-  }
-
   for event in mouse_wheels.iter() {
     for mut chunk_edit in chunk_edits.iter_mut() {
       // Need to clamp as event.y is returning -120.0 to 120.0 (Bevy bug)
@@ -125,18 +111,14 @@ fn update_edit_values(
   }
 
   for mut chunk_edit in chunk_edits.iter_mut() {
-    
-
     if keyboard_input.just_pressed(KeyCode::Equals) {
       if chunk_edit.scale < 3 {
-        chunk_edit.voxel = voxel_op.unwrap();
         chunk_edit.scale += 1;
       }
     }
 
     if keyboard_input.just_pressed(KeyCode::Minus) {
       if chunk_edit.scale > 0 {
-        chunk_edit.voxel = voxel_op.unwrap();
         chunk_edit.scale -= 1;
       }
     }
