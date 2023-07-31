@@ -18,8 +18,8 @@ impl Plugin for CustomPlugin {
       .add_plugin(delete_normal::CustomPlugin)
       .add_system(add)
       .add_system(manage_modes)
-      // .add_system(update_edit_values)
-      // .add_system(edit)
+      .add_system(update_edit_values)
+      .add_system(edit)
       ;
   }
 }
@@ -32,8 +32,8 @@ fn add(
     commands
       .entity(entity)
       .insert(ChunkEdit::default())
-      .insert(CreateNormal::default())
-      // .insert(DeleteNormal::default())
+      // .insert(CreateNormal::default())
+      .insert(DeleteNormal::default())
       ;
   }
 }

@@ -6,7 +6,18 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_system(on_change_voxel_changed)
       .add_system(update);
+  }
+}
+
+fn on_change_voxel_changed(
+  mut edits: Query<&mut ChunkEdit, With<DeleteNormal>>,
+) {
+  for mut edit in &mut edits {
+    if edit.voxel != 0 {
+      edit.voxel = 0;
+    }
   }
 }
 
@@ -23,13 +34,6 @@ fn update(
     if edit.max != size as i64 {
       edit.max = size as i64;
     }
-    
-
-    /*
-      Don't use snap value
-      Return here once the other features have been implemented
-     */
-    
 
     let mut pos_op = None;
     let total_div = 10;
@@ -42,7 +46,10 @@ fn update(
       let size = 2_u32.pow(edit.scale as u32);
       // point -= (size as f32 * 0.5 - 0.5);
       // let p = get_snapped_position(point, size);
-      let p = point;
+      let mut p = point;
+      p.x = (p.x as i64) as f32;
+      p.y = (p.y as i64) as f32;
+      p.z = (p.z as i64) as f32;
 
       for x in edit.min..edit.max {
         for y in edit.min..edit.max {
@@ -73,15 +80,12 @@ fn update(
       let p = edit.point_op.unwrap();
 
       if p != pos {
-        info!("set {:?}: {:?}", p, pos);
         edit.point_op = Some(pos);
         edit.voxel = 0;
       }
     }
 
     if edit.point_op.is_none() {
-
-      info!("set2 {:?}", pos);
       edit.point_op = Some(pos);
       edit.voxel = 0;
     }

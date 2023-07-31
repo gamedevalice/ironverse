@@ -13,7 +13,7 @@ impl Plugin for CustomPlugin {
 
 fn on_change_voxel_changed(
   hotbar_res: Res<HotbarResource>,
-  mut edits: Query<&mut ChunkEdit>,
+  mut edits: Query<&mut ChunkEdit, With<CreateNormal>>,
 ) {
 
   let mut voxel_op = Some(1);
