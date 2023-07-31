@@ -89,6 +89,8 @@ fn chunk_edit_changed(
         }
       }
     }
+
+    info!("chunk_edit_changed() {:?}", point);
     chunk_preview.chunk_op = Some(chunk);
   }
 }

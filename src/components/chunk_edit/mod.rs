@@ -31,8 +31,8 @@ fn add(
     commands
       .entity(entity)
       .insert(ChunkEdit::default())
-      .insert(CreateNormal::default())
-      // .insert(DeleteNormal::default())
+      // .insert(CreateNormal::default())
+      .insert(DeleteNormal::default())
       ;
   }
 }
@@ -125,16 +125,18 @@ fn update_edit_values(
   }
 
   for mut chunk_edit in chunk_edits.iter_mut() {
-    chunk_edit.voxel = voxel_op.unwrap();
+    
 
     if keyboard_input.just_pressed(KeyCode::Equals) {
       if chunk_edit.scale < 3 {
+        chunk_edit.voxel = voxel_op.unwrap();
         chunk_edit.scale += 1;
       }
     }
 
     if keyboard_input.just_pressed(KeyCode::Minus) {
       if chunk_edit.scale > 0 {
+        chunk_edit.voxel = voxel_op.unwrap();
         chunk_edit.scale -= 1;
       }
     }

@@ -15,14 +15,23 @@ fn update(
   game_res: Res<GameResource>,
 ) {
   for (trans, mut edit) in chunk_edits.iter_mut() {
-    let mut point = trans.translation + trans.forward() * edit.dist;
     let size = 2_u32.pow(edit.scale as u32);
 
-    let min = 0;
-    let max = size as i64;
+    if edit.min != 0 {
+      edit.min = 0;
+    }
+    if edit.max != size as i64 {
+      edit.max = size as i64;
+    }
+    
 
-    let mut result = None;
+    /*
+      Don't use snap value
+      Return here once the other features have been implemented
+     */
+    
 
+    let mut pos_op = None;
     let total_div = 10;
     let max_dist = 12.0 + 12.0;
     'main: for i in 0..total_div {
@@ -34,11 +43,9 @@ fn update(
       point -= (size as f32 * 0.5 - 0.5);
       let p = get_snapped_position(point, size);
 
-      // info!("range.dist {} dist {}", range.dist, dist);
-
-      for x in min..max {
-        for y in min..max {
-          for z in min..max {
+      for x in edit.min..edit.max {
+        for y in edit.min..edit.max {
+          for z in edit.min..edit.max {
             let tmp_pos = [
               p.x as i64 + x,
               p.y as i64 + y,
@@ -47,7 +54,7 @@ fn update(
   
             let res = game_res.chunk_manager.get_voxel_safe(&tmp_pos);
             if res.is_some() && res.unwrap() == 1 {
-              result = Some(p);
+              pos_op = Some(p);
               // info!("i {} dist {}", i, dist);
               break 'main;
             }
@@ -56,61 +63,25 @@ fn update(
       }
     }
 
-    if result.is_none() {
+    if pos_op.is_none() {
       continue;
     }
 
-    let pos = result.unwrap();
-
-    let mut modified = false;
+    let pos = pos_op.unwrap();
     if edit.point_op.is_some() {
       let p = edit.point_op.unwrap();
 
       if p != pos {
+        info!("set {:?}: {:?}", p, pos);
         edit.point_op = Some(pos);
-        modified = true;
       }
     }
 
     if edit.point_op.is_none() {
+
+      info!("set2 {:?}", pos);
       edit.point_op = Some(pos);
-      modified = true;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-    // point -= (size as f32 * 0.5 - 0.5);
-    // let pos = get_snapped_position(point, 1);
-
-    // let mut modified = false;
-    // if edit.point_op.is_some() {
-    //   let p = edit.point_op.unwrap();
-
-    //   if p != pos {
-    //     edit.point_op = Some(pos);
-    //     modified = true;
-    //   }
-    // }
-
-    // if edit.point_op.is_none() {
-    //   edit.point_op = Some(pos);
-    //   modified = true;
-    // }
-
-    // if !modified { return; }
-
-    // let size = 2_u32.pow(edit.scale as u32);
-    // edit.min = 0;
-    // edit.max = size as i64;
   }
 }
 
