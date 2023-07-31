@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use voxels::data::voxel_octree::VoxelMode;
+use crate::components::chunk_edit::{ChunkEditResource, EditMode};
 use crate::components::player::Player;
 use crate::graphics::chunk_preview::ChunkPreviewRender;
 use crate::graphics::{GraphicsResource, ChunkPreviewGraphics};
@@ -40,6 +41,8 @@ fn update(
   graphics_res: Res<GraphicsResource>,
 
   graphics: Query<(Entity, &ChunkPreviewGraphics)>,
+
+  chunk_edit_res: Res<ChunkEditResource>,
 ) {
   for (entity, chunk_preview) in &chunk_previews {
     for (graphics_entity, graphics) in &graphics {
@@ -77,11 +80,18 @@ fn update(
       if !graphics_res.show_preview {
         visibility = Visibility::Hidden;
       }
+
+      let mut color = Color::rgba(0.0, 0.0, 1.0, 0.25);
+      if chunk_edit_res.edit_mode == EditMode::DeleteNormal ||
+      chunk_edit_res.edit_mode == EditMode::DeleteSnap {
+        color = Color::rgba(1.0, 0.0, 0.0, 0.25);
+      }
+
       commands
         .spawn(MaterialMeshBundle {
           visibility: visibility,
           mesh: meshes.add(render_mesh),
-          material: materials.add(Color::rgba(0.0, 0.0, 1.0, 0.25).into()),
+          material: materials.add(color.into()),
           transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
           ..default()
         })

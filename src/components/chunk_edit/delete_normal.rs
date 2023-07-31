@@ -39,6 +39,7 @@ fn update(
     let mut pos_op = None;
     let total_div = 10;
     let max_dist = 12.0 + 12.0;
+    // let max_dist = edit.dist;
     'main: for i in 0..total_div {
       let div_f32 = total_div as f32 - 1.0;
       let dist = (max_dist / div_f32) * i as f32;
