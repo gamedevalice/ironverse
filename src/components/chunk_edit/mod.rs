@@ -3,9 +3,11 @@ use rapier3d::{na::{Point, Isometry}, prelude::{ColliderBuilder, InteractionGrou
 use voxels::{data::voxel_octree::VoxelMode, utils::key_to_world_coord_f32};
 use crate::{input::{MouseInput, hotbar::HotbarResource}, data::GameResource, physics::Physics};
 
-use self::create_normal::CreateNormal;
+use self::{create_normal::CreateNormal, delete_normal::DeleteNormal};
 use super::{player::Player, chunk::{Chunks, Mesh}};
+
 mod create_normal;
+mod delete_normal;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -13,6 +15,7 @@ impl Plugin for CustomPlugin {
     app
       .insert_resource(ChunkEditResource::default())
       .add_plugin(create_normal::CustomPlugin)
+      .add_plugin(delete_normal::CustomPlugin)
       .add_system(add)
       .add_system(manage_modes)
       .add_system(update_edit_values)
@@ -28,7 +31,9 @@ fn add(
     commands
       .entity(entity)
       .insert(ChunkEdit::default())
-      .insert(CreateNormal::default());
+      .insert(CreateNormal::default())
+      // .insert(DeleteNormal::default())
+      ;
   }
 }
 
@@ -43,6 +48,7 @@ fn manage_modes(
   if key_input.just_pressed(KeyCode::M) {
     for entity in &players {
       commands.entity(entity).remove::<CreateNormal>();
+      commands.entity(entity).remove::<DeleteNormal>();
       // Add the remaining 3 mode here
     }
 
@@ -66,8 +72,6 @@ fn manage_modes(
       };
     }
 
-    
-
     info!("Edit_mode {:?}", chunk_edit_res.edit_mode);
   }
 
@@ -79,7 +83,22 @@ fn update_edit_values(
   mut mouse_wheels: EventReader<MouseWheel>,
   keyboard_input: Res<Input<KeyCode>>,
   time: Res<Time>,
+
+  hotbar_res: Res<HotbarResource>,
 ) {
+  let mut voxel_op = Some(1);
+  for i in 0..hotbar_res.bars.len() {
+    let bar = &hotbar_res.bars[i];
+    if  hotbar_res.selected_keycode == bar.key_code {
+      voxel_op = Some(bar.voxel);
+    }
+
+  }
+
+  if voxel_op.is_none() {
+    return;
+  }
+
   for event in mouse_wheels.iter() {
     for mut chunk_edit in chunk_edits.iter_mut() {
       // Need to clamp as event.y is returning -120.0 to 120.0 (Bevy bug)
@@ -101,24 +120,23 @@ fn update_edit_values(
         chunk_edit.dist = min_val;
       }
       
+      
     }
   }
 
-  if keyboard_input.just_pressed(KeyCode::Equals) {
-    for mut chunk_edit in chunk_edits.iter_mut() {
+  for mut chunk_edit in chunk_edits.iter_mut() {
+    chunk_edit.voxel = voxel_op.unwrap();
+
+    if keyboard_input.just_pressed(KeyCode::Equals) {
       if chunk_edit.scale < 3 {
         chunk_edit.scale += 1;
       }
     }
-  }
 
-  if keyboard_input.just_pressed(KeyCode::Minus) {
-    for mut chunk_edit in chunk_edits.iter_mut() {
+    if keyboard_input.just_pressed(KeyCode::Minus) {
       if chunk_edit.scale > 0 {
         chunk_edit.scale -= 1;
-        // info!("range.scale {}", range.scale);
       }
-      
     }
   }
 }
@@ -131,21 +149,14 @@ fn edit(
 
   mut edits: Query<(&ChunkEdit, &mut Chunks)>,
 ) {
-  let mut voxel_op = None;
+  let mut edit_chunk = false;
   for event in mouse_inputs.iter() {
     if event.mouse_button_input.state == ButtonState::Pressed 
     && event.mouse_button_input.button == MouseButton::Left {
-      voxel_op = Some(1);
-      for i in 0..hotbar_res.bars.len() {
-        let bar = &hotbar_res.bars[i];
-        if  hotbar_res.selected_keycode ==  bar.key_code {
-          voxel_op = Some(bar.voxel);
-        }
-
-      }
+      edit_chunk = true;
     }
   }
-  if voxel_op.is_none() {
+  if !edit_chunk {
     return;
   }
 
@@ -164,7 +175,7 @@ fn edit(
             point.y as i64 + y,
             point.z as i64 + z
           ];
-          let chunks = game_res.chunk_manager.set_voxel2(&pos, voxel_op.unwrap());
+          let chunks = game_res.chunk_manager.set_voxel2(&pos, edit.voxel);
           for (key, chunk) in chunks.iter() {
             res.insert(key.clone(), chunk.clone());
           }
@@ -224,6 +235,58 @@ fn edit(
     }
   }
 }
+
+
+
+fn get_snapped_position(pos: Vec3, size: u32) -> Vec3 {
+  let adj_positions = get_nearby_snapped_positions(pos, size);
+
+  let mut min_dist = f32::MAX;
+  let mut snapped_pos = Vec3::ZERO;
+  for adj_pos in adj_positions.iter() {
+    let dist = pos.distance_squared(*adj_pos);
+
+    if dist < min_dist {
+      min_dist = dist;
+      snapped_pos = *adj_pos;
+    }
+  }
+
+  snapped_pos
+}
+
+
+fn get_nearby_snapped_positions(pos: Vec3, size: u32) -> Vec<Vec3> {
+  let mut result = Vec::new();
+
+  let size_i64 = size as i64;
+  let base_x = ( (pos.x as i64) / size_i64 ) * size_i64;
+  let base_y = ( (pos.y as i64) / size_i64 ) * size_i64;
+  let base_z = ( (pos.z as i64) / size_i64 ) * size_i64;
+
+  // println!("base_x {}", base_x);
+
+  let range = 1;
+  let min = -range;
+  let max = range + 1;
+  for x in min..max {
+    for y in min..max {
+      for z in min..max {
+        let adj_x = base_x + (x * size_i64);
+        let adj_y = base_y + (y * size_i64);
+        let adj_z = base_z + (z * size_i64);
+
+        result.push(Vec3::new(adj_x as f32, adj_y as f32, adj_z as f32));
+
+        // println!("adj_x {}", adj_x);
+      }
+    }
+  }
+  
+
+  result
+}
+
 
 
 #[derive(Component)]
