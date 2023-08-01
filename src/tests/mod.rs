@@ -4,8 +4,7 @@ mod chunk;
 
 pub struct ChunkPlugin;
 impl Plugin for ChunkPlugin {
-  fn build(&self, app: &mut App) {
-    // app
-    //   .add_plugin(chunk::CustomPlugin);
+  fn build(&self, _app: &mut App) {
+
   }
 }

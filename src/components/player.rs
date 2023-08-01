@@ -34,8 +34,8 @@ fn init(
   mut physics: ResMut<Physics>,
   game_res: Res<GameResource>,
 ) {
-  // let pos = game_res.data.status.position;
-  let pos = [0.0, 5.0, -13.0];
+  let pos = game_res.data.status.position;
+  // let pos = [0.0, 5.0, 0.0];
   let (body, collider) = physics.spawn_character(1.0, 0.5, Vec3::new(pos[0], pos[1], pos[2]));
   let k = posf32_to_world_key(&pos, game_res.chunk_manager.config.seamless_size);
   commands

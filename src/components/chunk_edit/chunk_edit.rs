@@ -2,7 +2,7 @@ use bevy::{prelude::*, input::ButtonState, utils::HashMap};
 use rapier3d::prelude::{ColliderBuilder, InteractionGroups, Isometry, Point};
 use voxels::{data::voxel_octree::VoxelMode, utils::key_to_world_coord_f32, chunk::chunk_manager::ChunkManager};
 use crate::{physics::Physics, data::{GameResource}, utils::{nearest_voxel_point, nearest_voxel_point_0}, input::{MouseInput, hotbar::HotbarResource}};
-use super::{raycast::Raycast, chunk::{Chunks, Mesh}, range::Range};
+use super::{raycast::Raycast, chunk::{Chunks, Mesh}, range::Range, player::Player};
 use rapier3d::geometry::Group;
 
 pub struct CustomPlugin;
@@ -10,9 +10,55 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       // .add_system(update_by_terrain_hit)
-      .add_system(update_by_range);
+      .add_system(add_to_player)
+      .add_system(update_by_range)
+      .add_system(toggle_snap_mode);
   }
 }
+
+
+fn add_to_player(
+  mut commands: Commands,
+  player_query: Query<Entity, Added<Player>>,
+) {
+  for entity in &player_query {
+    commands
+      .entity(entity)
+      .insert(ChunkEdit::default());
+  }
+}
+
+fn toggle_snap_mode(
+  keys: Res<Input<KeyCode>>,
+  mut chunk_edits: Query<&mut ChunkEdit>,
+) {
+  if keys.just_pressed(KeyCode::M) {
+    for mut edit in &mut chunk_edits.iter_mut() {
+
+      if edit.snap_mode == SnapMode::Normal {
+        edit.snap_mode = SnapMode::Grid;
+      } else {
+        edit.snap_mode = SnapMode::Normal;
+      }
+      info!("SnapMode {:?}", edit.snap_mode);
+    }
+  }
+
+  if keys.just_pressed(KeyCode::N) {
+    for mut edit in &mut chunk_edits.iter_mut() {
+
+      if edit.mode == EditMode::Create {
+        edit.mode = EditMode::Delete;
+      } else {
+        edit.mode = EditMode::Create;
+      }
+      info!("mode {:?}", edit.mode);
+    }
+  }
+}
+
+
+
 
 fn update_by_terrain_hit(
   mut raycasts: Query<(Entity, &Raycast, &mut Chunks)>,
@@ -141,7 +187,7 @@ fn update_by_terrain_hit(
 }
 
 fn update_by_range(
-  mut ranges: Query<(&Range, &mut Chunks)>,
+  mut ranges: Query<(&Range, &ChunkEdit, &mut Chunks)>,
 
   mut game_res: ResMut<GameResource>,
 
@@ -150,22 +196,33 @@ fn update_by_range(
   mut physics: ResMut<Physics>,
 ) {
   let mut voxel_op = None;
+
+
   for event in mouse_inputs.iter() {
-    if event.mouse_button_input.state == ButtonState::Pressed {
-      if event.mouse_button_input.button == MouseButton::Left {
-        voxel_op = Some(0);
+    for (_, chunk_edit, _) in &mut ranges {
+      if chunk_edit.mode == EditMode::Create {
+        if event.mouse_button_input.state == ButtonState::Pressed {
+          if event.mouse_button_input.button == MouseButton::Left {
+            voxel_op = Some(1);
+            for i in 0..hotbar_res.bars.len() {
+              let bar = &hotbar_res.bars[i];
+              if  hotbar_res.selected_keycode ==  bar.key_code {
+                voxel_op = Some(bar.voxel);
+              }
+            }
+          }
+        }
       }
-      
-      if event.mouse_button_input.button == MouseButton::Right {
-        voxel_op = Some(1);
-        for i in 0..hotbar_res.bars.len() {
-          let bar = &hotbar_res.bars[i];
-          if  hotbar_res.selected_keycode ==  bar.key_code {
-            voxel_op = Some(bar.voxel);
+
+      if chunk_edit.mode == EditMode::Delete {
+        if event.mouse_button_input.state == ButtonState::Pressed {
+          if event.mouse_button_input.button == MouseButton::Left {
+            voxel_op = Some(0);
           }
         }
       }
     }
+    
   }
   if voxel_op.is_none() {
     return;
@@ -173,9 +230,19 @@ fn update_by_range(
 
   let voxel = voxel_op.unwrap();
 
-  for (range, mut chunks) in &mut ranges {
-    let min = -(range.scale as i64);
-    let max = (range.scale as i64) + 1;
+  for (range, chunk_edit, mut chunks) in &mut ranges {
+    let size = 2_u32.pow(range.scale as u32);
+
+    // info!("size {}", size_u32);
+
+    let mut min = -(range.scale as i64);
+    let mut max = (range.scale as i64);
+
+    if chunk_edit.snap_mode == SnapMode::Grid {
+      min = 0;
+      max = size as i64;
+    }
+    
 
     if is_inside_chunk(min, max, range.point, &game_res.chunk_manager) {
       info!("is_inside_chunk");
@@ -286,10 +353,28 @@ fn is_inside_chunk(
 }
 
 #[derive(Component)]
-pub struct ChunkEdit { }
+pub struct ChunkEdit {
+  pub mode: EditMode,
+  pub snap_mode: SnapMode
+}
 
 impl Default for ChunkEdit {
   fn default() -> Self {
-    Self { }
+    Self {
+      mode: EditMode::Create,
+      snap_mode: SnapMode::Grid,
+    }
   }
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Hash)]
+pub enum EditMode {
+  Create,
+  Delete,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Hash)]
+pub enum SnapMode {
+  Normal,
+  Grid,
 }

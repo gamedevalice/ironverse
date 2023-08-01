@@ -55,10 +55,10 @@ default = [
   "core",
   "player",
   "chunk",
-  "ui_prompt",
-  "ui",
-  # "graphics_low",
-  "graphics_normal",  # Either graphics_low or graphics_normal
+  # "ui_prompt",
+  # "ui",
+  "graphics_low",
+  # "graphics_normal",  # Either graphics_low or graphics_normal
 ]
 
 core = [

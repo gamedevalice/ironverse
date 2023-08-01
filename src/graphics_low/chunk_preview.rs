@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
-use voxels::{data::voxel_octree::VoxelMode};
+use voxels::data::voxel_octree::VoxelMode;
+use crate::components::chunk_edit::{ChunkEditResource, EditMode};
 use crate::components::player::Player;
 use crate::graphics::chunk_preview::ChunkPreviewRender;
 use crate::graphics::{GraphicsResource, ChunkPreviewGraphics};
@@ -33,24 +34,30 @@ fn update(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut game_res: ResMut<GameResource>,
-  mut chunk_previews: Query<
+  chunk_previews: Query<
     (Entity, &ChunkPreview), Changed<ChunkPreview>
   >,
   mut materials: ResMut<Assets<StandardMaterial>>,
   graphics_res: Res<GraphicsResource>,
 
   graphics: Query<(Entity, &ChunkPreviewGraphics)>,
-) {
-  let config = game_res.chunk_manager.config.clone();
 
-  for (entity, mut chunk_preview) in &mut chunk_previews {
+  chunk_edit_res: Res<ChunkEditResource>,
+) {
+  for (entity, chunk_preview) in &chunk_previews {
     for (graphics_entity, graphics) in &graphics {
       if entity == graphics.parent {
         commands.entity(graphics_entity).despawn_recursive();
       }
     }
 
-    let data = chunk_preview.chunk.octree.compute_mesh(
+    if chunk_preview.chunk_op.is_none() {
+      continue;
+    }
+
+    let chunk = chunk_preview.chunk_op.clone().unwrap();
+
+    let data = chunk.octree.compute_mesh(
       VoxelMode::SurfaceNets, 
       &mut game_res.chunk_manager.voxel_reuse
     );
@@ -64,7 +71,7 @@ fn update(
       render_mesh.insert_attribute(VOXEL_WEIGHT, data.weights.clone());
       render_mesh.insert_attribute(VOXEL_TYPE_1, data.types_1.clone());
 
-      let chunk_size = (chunk_preview.chunk.octree.get_size() / 2) as f32;
+      let chunk_size = (chunk.octree.get_size() / 2) as f32;
       let p = &chunk_preview.new;
       let adj = [p[0] as f32, p[1] as f32, p[2] as f32];
       let coord_f32 = [adj[0] - chunk_size, adj[1] - chunk_size, adj[2] - chunk_size];
@@ -73,11 +80,18 @@ fn update(
       if !graphics_res.show_preview {
         visibility = Visibility::Hidden;
       }
+
+      let mut color = Color::rgba(0.0, 0.0, 1.0, 0.25);
+      if chunk_edit_res.edit_mode == EditMode::DeleteNormal ||
+      chunk_edit_res.edit_mode == EditMode::DeleteSnap {
+        color = Color::rgba(1.0, 0.0, 0.0, 0.25);
+      }
+
       commands
         .spawn(MaterialMeshBundle {
           visibility: visibility,
           mesh: meshes.add(render_mesh),
-          material: materials.add(Color::rgba(0.0, 0.0, 1.0, 0.25).into()),
+          material: materials.add(color.into()),
           transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
           ..default()
         })
