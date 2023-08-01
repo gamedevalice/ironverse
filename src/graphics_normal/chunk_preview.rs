@@ -59,8 +59,11 @@ fn update(
       }
     }
 
-    local_res.last_chunk_op = Some(chunk_preview.chunk.clone());
-    local_res.chunk_op = Some(chunk_preview.chunk.clone());
+    // local_res.last_chunk_op = Some(chunk_preview.chunk.clone());
+    // local_res.chunk_op = Some(chunk_preview.chunk.clone());
+
+    local_res.last_chunk_op = chunk_preview.chunk_op.clone();
+    local_res.chunk_op = chunk_preview.chunk_op.clone();
     local_res.preview_entity = entity;
   }
 }

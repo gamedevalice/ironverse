@@ -37,7 +37,7 @@ fn update(
     }
 
     let mut pos_op = None;
-    let total_div = 10;
+    let total_div = 20;
     let max_dist = 12.0 + 12.0;
     // let max_dist = edit.dist;
     'main: for i in 0..total_div {
@@ -50,7 +50,6 @@ fn update(
       }
 
       let p = get_point_by_edit_mode(&trans, dist, size, snap);
-
       for x in edit.min..edit.max {
         for y in edit.min..edit.max {
           for z in edit.min..edit.max {
