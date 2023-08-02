@@ -17,7 +17,7 @@ cfg_if! {
 
 
 cfg_if! {
-  if #[cfg(target_arch = "wasm32")] {
+  if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
     mod wasm;
   }
 }
@@ -28,11 +28,9 @@ cfg_if! {
   }
 }
 
-
-
 // mod native;
 cfg_if! {
-  if #[cfg(not(target_arch = "wasm32") )] {
+  if #[cfg(all(not(feature = "tests"), not(target_arch = "wasm32") ))] {
     mod native;
   }
 }
@@ -145,7 +143,7 @@ fn main() {
   }
 
   cfg_if! {
-    if #[cfg(target_arch = "wasm32")] {
+    if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
       app
         .add_plugin(wasm::CustomPlugin);
     }
@@ -159,7 +157,7 @@ fn main() {
   }
 
   cfg_if! {
-    if #[cfg(not(target_arch = "wasm32") )] {
+    if #[cfg(all(not(feature = "tests"), not(target_arch = "wasm32") ))] {
       app
         .add_plugin(native::CustomPlugin);
     }

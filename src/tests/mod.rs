@@ -1,10 +1,27 @@
 use bevy::prelude::*;
+use cfg_if::cfg_if;
 
-mod chunk;
+cfg_if! {
+  if #[cfg(feature = "test_fast_surface_nets")] {
+    mod chunk;
+  }
+}
+
+cfg_if! {
+  if #[cfg(feature = "test_mesh_color")] {
+    mod mesh_color;
+  }
+}
 
 pub struct ChunkPlugin;
 impl Plugin for ChunkPlugin {
-  fn build(&self, _app: &mut App) {
-
+  fn build(&self, app: &mut App) {
+    cfg_if! {
+      if #[cfg(feature = "test_mesh_color")] {
+        app
+          .add_plugin(mesh_color::CustomPlugin);
+      }
+    }
+    
   }
 }
