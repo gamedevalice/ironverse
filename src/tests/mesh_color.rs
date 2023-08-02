@@ -1,15 +1,16 @@
-use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PrimaryWindow, CursorGrabMode}};
+use bevy::{prelude::*, render::{render_resource::{PrimitiveTopology, VertexFormat, AsBindGroup, RawRenderPipelineDescriptor, RenderPipelineDescriptor, ShaderRef, SpecializedMeshPipelineError}, mesh::{Indices, MeshVertexAttribute, MeshVertexBufferLayout}}, window::{PrimaryWindow, CursorGrabMode}, reflect::TypeUuid, pbr::{MaterialPipeline, MaterialPipelineKey}};
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
-use voxels::{chunk::chunk_manager::ChunkManager, utils::key_to_world_coord_f32, data::voxel_octree::VoxelMode};
+use voxels::{chunk::chunk_manager::{ChunkManager, Chunk}, utils::key_to_world_coord_f32, data::voxel_octree::{VoxelMode, VoxelOctree}};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugin(EguiPlugin)
-      .add_startup_system(startup)
+      .add_plugin(MaterialPlugin::<CustomMaterial>::default())
       .add_startup_system(setup_camera)
+      .add_startup_system(startup)
       .add_system(show_diagnostic_texts);
   }
 }
@@ -21,8 +22,8 @@ fn setup_camera(
 ) {
   commands
     .spawn(Camera3dBundle {
-      transform: Transform::from_xyz(0.0, 5.0, -12.0)
-        .looking_to(Vec3::new(0.0, -0.2, 0.97), Vec3::Y),
+      transform: Transform::from_xyz(4.2, 2.4, 0.0)
+        .looking_to(Vec3::new(-0.66, -0.25, 0.7), Vec3::Y),
       ..Default::default()
     })
     .insert(FlyCam);
@@ -47,29 +48,37 @@ fn startup(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
+  mut custom_materials: ResMut<Assets<CustomMaterial>>,
 ) {
   let mut manager = ChunkManager::default();
-
-  let mut chunk = manager.new_chunk3(&[0, -1, 0], manager.config.lod);
-  // chunk.octree.set_voxel(4, 13, 11, 0);
-  chunk.octree.set_voxel(4, 13, 12, 0);
+  let mut chunk = Chunk::default();
+  chunk.octree.set_voxel(2, 2, 2, 1);
 
   let data = chunk
     .octree
     .compute_mesh(VoxelMode::SurfaceNets, &mut manager.voxel_reuse);
 
+  // println!("positions");
+  for i in 0..data.positions.len() {
+    println!("{:?} {:?}", data.positions[i], data.normals[i]);
+  }
+
   let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
   render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
   render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+  render_mesh.insert_attribute(VOXEL_COLOR, data.colors.clone());
   render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
   let mesh_handle = meshes.add(render_mesh);
+  let material_handle = custom_materials.add(CustomMaterial {
+    base_color: Color::rgb(1.0, 1.0, 1.0),
+  });
 
   let coord_f32 = key_to_world_coord_f32(&[0, 0, 0], manager.config.seamless_size);
   commands
     .spawn(MaterialMeshBundle {
       mesh: mesh_handle,
-      material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+      material: material_handle,
       transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
       ..default()
     });
@@ -139,3 +148,38 @@ fn show_diagnostic_texts(
 }
 
 
+
+pub const VOXEL_COLOR: MeshVertexAttribute =
+  MeshVertexAttribute::new("VOXEL_COLOR", 988540918, VertexFormat::Float32x3);
+
+
+
+#[derive(AsBindGroup, Reflect, FromReflect, Debug, Clone, TypeUuid)]
+#[uuid = "2f3d7f74-4bf7-4f32-98cd-858edafa5ca2"]
+pub struct CustomMaterial {
+  pub base_color: Color,
+}
+
+impl Material for CustomMaterial {
+  fn vertex_shader() -> ShaderRef {
+    "shaders/color_vertex.wgsl".into()
+  }
+  fn fragment_shader() -> ShaderRef {
+    "shaders/color_fragment.wgsl".into()
+  }
+  fn specialize(
+    _pipeline: &MaterialPipeline<Self>,
+    descriptor: &mut RenderPipelineDescriptor,
+    layout: &MeshVertexBufferLayout,
+    _key: MaterialPipelineKey<Self>,
+  ) -> Result<(), SpecializedMeshPipelineError> {
+    let vertex_layout = layout.get_layout(&[
+      Mesh::ATTRIBUTE_POSITION.at_shader_location(0),
+      Mesh::ATTRIBUTE_NORMAL.at_shader_location(1),
+      VOXEL_COLOR.at_shader_location(2),
+    ])?;
+    descriptor.vertex.buffers = vec![vertex_layout];
+
+    Ok(())
+  }
+}

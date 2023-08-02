@@ -34,6 +34,8 @@ pub struct MeshData {
   pub types_1: Vec<[u32; 4]>,
   pub types_2: Vec<[u32; 4]>,
   pub voxel_positions: Vec<[f32; 3]>,
+
+  pub colors: Vec<[f32; 3]>,
 }
 
 #[derive(Default, Clone, Debug)]

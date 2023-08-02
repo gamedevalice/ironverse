@@ -130,8 +130,8 @@ pub fn get_surface_nets(octree: &VoxelOctree, voxel_reuse: &mut VoxelReuse) -> M
       for z in start..end {
         init_grid(&mut layout, voxel_reuse, x, y, z);
         detect_face_x(&mut data, &mut layout, voxel_reuse, x, y, z);
-        detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z);
-        detect_face_z(&mut data, &mut layout, voxel_reuse, x, y, z);
+        // detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z);
+        // detect_face_z(&mut data, &mut layout, voxel_reuse, x, y, z);
       }
     }
   }
@@ -283,83 +283,89 @@ fn detect_face_x(
       data.normals.push(grid_000.normal);
       data.types_1.push(all_voxels);
       data.weights.push(weights_000);
+      data.colors.push([1.0, 0.0, 0.0]);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_010.pos.unwrap());
       data.normals.push(grid_010.normal);
       data.types_1.push(all_voxels);
       data.weights.push(weights_010);
+      data.colors.push([1.0, 0.0, 0.0]);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
       data.types_1.push(all_voxels);
       data.weights.push(weights_011);
+      data.colors.push([1.0, 0.0, 0.0]);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
       data.types_1.push(all_voxels);
       data.weights.push(weights_000);
+      data.colors.push([1.0, 0.0, 0.0]);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
       data.types_1.push(all_voxels);
       data.weights.push(weights_011);
+      data.colors.push([1.0, 0.0, 0.0]);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
       data.types_1.push(all_voxels);
       data.weights.push(weights_001);
+      data.colors.push([1.0, 0.0, 0.0]);
     }
 
     let end_index = voxel_reuse.size - 1;
     if face_right && x != end_index {
-      let weights_000 = get_weights(&all_voxels, &grid_000);
-      let weights_011 = get_weights(&all_voxels, &grid_011);
-      let weights_010 = get_weights(&all_voxels, &grid_010);
-      let weights_001 = get_weights(&all_voxels, &grid_001);
+      // let weights_000 = get_weights(&all_voxels, &grid_000);
+      // let weights_011 = get_weights(&all_voxels, &grid_011);
+      // let weights_010 = get_weights(&all_voxels, &grid_010);
+      // let weights_001 = get_weights(&all_voxels, &grid_001);
 
-      modify_to_texture_indices(&mut all_voxels);
+      // modify_to_texture_indices(&mut all_voxels);
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_000.pos.unwrap());
-      data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_000.pos.unwrap());
+      // data.normals.push(grid_000.normal);
+      // data.types_1.push(all_voxels);
+      // data.weights.push(weights_000);
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_011.pos.unwrap());
-      data.normals.push(grid_011.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_011);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_011.pos.unwrap());
+      // data.normals.push(grid_011.normal);
+      // data.types_1.push(all_voxels);
+      // data.weights.push(weights_011);
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_010.pos.unwrap());
-      data.normals.push(grid_010.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_010);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_010.pos.unwrap());
+      // data.normals.push(grid_010.normal);
+      // data.types_1.push(all_voxels);
+      // data.weights.push(weights_010);
 
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_000.pos.unwrap());
-      data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_000.pos.unwrap());
+      // data.normals.push(grid_000.normal);
+      // data.types_1.push(all_voxels);
+      // data.weights.push(weights_000);
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_001.pos.unwrap());
-      data.normals.push(grid_001.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_001);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_001.pos.unwrap());
+      // data.normals.push(grid_001.normal);
+      // data.types_1.push(all_voxels);
+      // data.weights.push(weights_001);
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_011.pos.unwrap());
-      data.normals.push(grid_011.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_011);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_011.pos.unwrap());
+      // data.normals.push(grid_011.normal);
+      // data.types_1.push(all_voxels);
+      // data.weights.push(weights_011);
     }
   }
 }
