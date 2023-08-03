@@ -19,6 +19,8 @@ fn setup_camera(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
+
+  mut windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
   commands
     .spawn(Camera3dBundle {
@@ -42,12 +44,20 @@ fn setup_camera(
     material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
     ..default()
   });
+
+
+  let mut window = match windows.get_single_mut() {
+    Ok(w) => { w },
+    Err(_e) => return,
+  };
+
+  window.cursor.grab_mode = CursorGrabMode::None;
 }
 
 fn startup(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
+  // mut materials: ResMut<Assets<StandardMaterial>>,
   mut custom_materials: ResMut<Assets<CustomMaterial>>,
 ) {
   let mut manager = ChunkManager::default();
