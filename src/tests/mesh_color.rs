@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::{render_resource::{PrimitiveTopology, VertexFormat, AsBindGroup, RawRenderPipelineDescriptor, RenderPipelineDescriptor, ShaderRef, SpecializedMeshPipelineError}, mesh::{Indices, MeshVertexAttribute, MeshVertexBufferLayout}}, window::{PrimaryWindow, CursorGrabMode}, reflect::TypeUuid, pbr::{MaterialPipeline, MaterialPipelineKey}};
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
-use voxels::{chunk::chunk_manager::{ChunkManager, Chunk}, utils::key_to_world_coord_f32, data::voxel_octree::{VoxelMode, VoxelOctree}};
+use voxels::{chunk::chunk_manager::{ChunkManager, Chunk}, utils::key_to_world_coord_f32, data::voxel_octree::{VoxelMode, VoxelOctree, MeshData}};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -24,8 +24,10 @@ fn setup_camera(
 ) {
   commands
     .spawn(Camera3dBundle {
-      transform: Transform::from_xyz(4.2, 2.4, 0.0)
-        .looking_to(Vec3::new(-0.66, -0.25, 0.7), Vec3::Y),
+      // transform: Transform::from_xyz(4.2, 2.4, 0.0)
+      //   .looking_to(Vec3::new(-0.66, -0.25, 0.7), Vec3::Y),
+      transform: Transform::from_xyz(1.0, 1.4, -2.5)
+        .looking_to(Vec3::new(-0.0, -0.16, 0.98), Vec3::Y),
       ..Default::default()
     })
     .insert(FlyCam);
@@ -61,16 +63,19 @@ fn startup(
   mut custom_materials: ResMut<Assets<CustomMaterial>>,
 ) {
   let mut manager = ChunkManager::default();
-  let mut chunk = Chunk::default();
-  chunk.octree.set_voxel(2, 2, 2, 1);
+  // let mut chunk = Chunk::default();
+  // chunk.octree.set_voxel(2, 2, 2, 1);
+  // chunk.octree.set_voxel(3, 2, 2, 3);
 
-  let data = chunk
-    .octree
-    .compute_mesh(VoxelMode::SurfaceNets, &mut manager.voxel_reuse);
+  // let data = chunk
+  //   .octree
+  //   .compute_mesh(VoxelMode::SurfaceNets, &mut manager.voxel_reuse);
+
+  let data = get_data();
 
   // println!("positions");
   for i in 0..data.positions.len() {
-    println!("{:?} {:?}", data.positions[i], data.normals[i]);
+    println!("{:?} {:?}", data.positions[i], data.colors[i]);
   }
 
   let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
@@ -192,4 +197,44 @@ impl Material for CustomMaterial {
 
     Ok(())
   }
+}
+
+
+fn get_data() -> MeshData {
+  let mut data = MeshData::default();
+
+  /*
+    Set the positions
+    Normals
+    Colors
+
+    Set values between
+    1.0, 0.0, -1.0
+
+   */
+  data.positions = vec![
+    [0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [1.0, 1.0, 0.0],
+  ];
+
+  data.normals = vec![
+    [0.0, 0.0, -1.0],
+    [0.0, 0.0, -1.0],
+    [0.0, 0.0, -1.0],
+  ];
+
+  data.colors = vec![
+    [1.0, 0.0, 0.0],
+    [1.0, 0.0, 0.0],
+    [0.5, 0.0, 0.5],
+  ];
+
+  data.indices = vec![
+    0, 1, 2
+  ];
+
+
+  println!("test");
+  data
 }

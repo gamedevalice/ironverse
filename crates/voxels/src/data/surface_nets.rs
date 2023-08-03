@@ -511,36 +511,36 @@ fn detect_face_z(
 
     let start = 0;
     if face_front && z != start {
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_000.pos.unwrap());
-      data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_000.pos.unwrap());
+      // data.normals.push(grid_000.normal);
+      // data.colors.push(color);
       
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_110.pos.unwrap());
-      data.normals.push(grid_110.normal);
-      data.colors.push(color);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_110.pos.unwrap());
+      // data.normals.push(grid_110.normal);
+      // data.colors.push(color);
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_010.pos.unwrap());
-      data.normals.push(grid_010.normal);
-      data.colors.push(color);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_010.pos.unwrap());
+      // data.normals.push(grid_010.normal);
+      // data.colors.push(color);
 
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_000.pos.unwrap());
-      data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_000.pos.unwrap());
+      // data.normals.push(grid_000.normal);
+      // data.colors.push(color);
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_100.pos.unwrap());
-      data.normals.push(grid_100.normal);
-      data.colors.push(color);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_100.pos.unwrap());
+      // data.normals.push(grid_100.normal);
+      // data.colors.push(color);
 
-      data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_110.pos.unwrap());
-      data.normals.push(grid_110.normal);
-      data.colors.push(color);
+      // data.indices.push(data.positions.len() as u32);
+      // data.positions.push(grid_110.pos.unwrap());
+      // data.normals.push(grid_110.normal);
+      // data.colors.push(color);
     }
 
     let end_index = voxel_reuse.size - 1;
@@ -583,6 +583,16 @@ fn get_color(voxels: &[u32; 4]) -> [f32; 3] {
   let mapped_colors = vec![[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
 
   let mut color = [0.0, 0.0, 0.0];
+
+  let mut voxel_count = 0;
+  for voxel in voxels.iter() {
+    if *voxel > 0 {
+      voxel_count += 1;
+    }
+  }
+
+  let percentage = (voxel_count as f32) / (voxels.len() as f32); 
+
   for voxel in voxels.iter() {
     let res = mapped_colors.get(*voxel as usize);
 
@@ -594,6 +604,11 @@ fn get_color(voxels: &[u32; 4]) -> [f32; 3] {
       color[2] += c[2];
     }
   }
+
+  color[0] /= voxel_count as f32;
+  color[1] /= voxel_count as f32;
+  color[2] /= voxel_count as f32;
+  
   
   color
 }
