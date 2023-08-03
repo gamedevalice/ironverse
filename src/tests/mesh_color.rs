@@ -26,8 +26,10 @@ fn setup_camera(
     .spawn(Camera3dBundle {
       // transform: Transform::from_xyz(4.2, 2.4, 0.0)
       //   .looking_to(Vec3::new(-0.66, -0.25, 0.7), Vec3::Y),
-      transform: Transform::from_xyz(1.7, 1.4, -5.5)
-        .looking_to(Vec3::new(-0.0, -0.16, 0.98), Vec3::Y),
+      // transform: Transform::from_xyz(1.7, 1.4, -5.5)
+      //   .looking_to(Vec3::new(-0.0, -0.16, 0.98), Vec3::Y),
+      transform: Transform::from_xyz(2.8, 1.9, -0.5)
+        .looking_to(Vec3::new(-0.1, -0.0, 0.98), Vec3::Y),
       ..Default::default()
     })
     .insert(FlyCam);
@@ -63,15 +65,15 @@ fn startup(
   mut custom_materials: ResMut<Assets<CustomMaterial>>,
 ) {
   let mut manager = ChunkManager::default();
-  // let mut chunk = Chunk::default();
-  // chunk.octree.set_voxel(2, 2, 2, 1);
-  // chunk.octree.set_voxel(3, 2, 2, 3);
+  let mut chunk = Chunk::default();
+  chunk.octree.set_voxel(2, 2, 2, 1);
+  chunk.octree.set_voxel(3, 2, 2, 3);
 
-  // let data = chunk
-  //   .octree
-  //   .compute_mesh(VoxelMode::SurfaceNets, &mut manager.voxel_reuse);
+  let data = chunk
+    .octree
+    .compute_mesh(VoxelMode::SurfaceNets, &mut manager.voxel_reuse);
 
-  let data = get_data();
+  // let data = get_data();
 
   // println!("positions");
   for i in 0..data.positions.len() {
