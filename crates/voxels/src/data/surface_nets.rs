@@ -603,79 +603,21 @@ fn get_color(
   mapped_colors: &Vec<[f32; 3]>
 ) -> [f32; 3] {
   let mut color = [0.0, 0.0, 0.0];
-  if grid.voxel_count == 1 {
-    for voxel in voxels.iter() {
-      if *voxel > 0 {
-        if grid.types.contains(voxel) {
-          let color_index = *voxel as usize - 1;
-          color[0] += mapped_colors[color_index][0];
-          color[1] += mapped_colors[color_index][1];
-          color[2] += mapped_colors[color_index][2];
-        }
-        
-      }
+  
+  for voxel in grid.types.iter() {
+    if *voxel > 0 {
+      let color_index = *voxel as usize - 1;
+      color[0] += mapped_colors[color_index][0];
+      color[1] += mapped_colors[color_index][1];
+      color[2] += mapped_colors[color_index][2];
     }
   }
 
-  if grid.voxel_count > 1 {
-    for voxel in voxels.iter() {
-      if *voxel > 0 {
-        if grid.types.contains(voxel) {
-          let color_index = *voxel as usize - 1;
-          color[0] += mapped_colors[color_index][0];
-          color[1] += mapped_colors[color_index][1];
-          color[2] += mapped_colors[color_index][2];
-        }
-      }
-    }
-
-    color[0] /= grid.voxel_count as f32;
-    color[1] /= grid.voxel_count as f32;
-    color[2] /= grid.voxel_count as f32;
-
-  }
+  color[0] /= grid.voxel_count as f32;
+  color[1] /= grid.voxel_count as f32;
+  color[2] /= grid.voxel_count as f32;
   
   color
-}
-
-
-
-
-fn get_weights(
-  voxels: &[u32; 4],
-  grid: &Grid,
-) -> [f32; 4] {
-  let mut weights = [0.0; 4];
-  if grid.voxel_count == 1 {
-    for (index, voxel) in voxels.iter().enumerate() {
-      if *voxel > 0 {
-        if grid.types.contains(voxel) {
-          weights[index] = 1.0;
-        }
-        
-      }
-    }
-  }
-
-  // println!("grid.voxel_count {}", grid.voxel_count);
-  /*
-    How to identify if the voxel is not a neighboring one?
-
-   */
-  if grid.voxel_count > 1 {
-    for (index, voxel) in voxels.iter().enumerate() {
-
-      if *voxel > 0 {
-        if grid.types.contains(voxel) {
-          // println!("voxel {}", voxel);
-          weights[index] = 0.5;
-        }
-      }
-      
-
-    }
-  }
-  weights
 }
 
 fn get_vertices_voxels(
@@ -692,49 +634,43 @@ fn get_vertices_voxels(
     let type2 = grid_2.types[i];
     let type3 = grid_3.types[i];
 
-    if !all_voxels.contains(&type0) {
-      // println!("index {} {:?}", index, all_voxels);
-      all_voxels[index] = type0;
-      index += 1;
-      if index == 4 {
-        break;
-      }
-    }
-    if !all_voxels.contains(&type1) {
-      // println!("index {} {:?}", index, all_voxels);
-      all_voxels[index] = type1;
-      index += 1;
-      if index == 4 {
-        break;
-      }
-    }
-    if !all_voxels.contains(&type2) {
-      // println!("index {} {:?}", index, all_voxels);
-      all_voxels[index] = type2;
-      index += 1;
-      if index == 4 {
-        break;
-      }
-    }
-    if !all_voxels.contains(&type3) {
-      // println!("index {} {:?}", index, all_voxels);
-      all_voxels[index] = type3;
-      index += 1;
-      if index == 4 {
-        break;
-      }
-    }
+
+
+    // if !all_voxels.contains(&type0) {
+    //   // println!("index {} {:?}", index, all_voxels);
+    //   all_voxels[index] = type0;
+    //   index += 1;
+    //   if index == 4 {
+    //     break;
+    //   }
+    // }
+    // if !all_voxels.contains(&type1) {
+    //   // println!("index {} {:?}", index, all_voxels);
+    //   all_voxels[index] = type1;
+    //   index += 1;
+    //   if index == 4 {
+    //     break;
+    //   }
+    // }
+    // if !all_voxels.contains(&type2) {
+    //   // println!("index {} {:?}", index, all_voxels);
+    //   all_voxels[index] = type2;
+    //   index += 1;
+    //   if index == 4 {
+    //     break;
+    //   }
+    // }
+    // if !all_voxels.contains(&type3) {
+    //   // println!("index {} {:?}", index, all_voxels);
+    //   all_voxels[index] = type3;
+    //   index += 1;
+    //   if index == 4 {
+    //     break;
+    //   }
+    // }
   }
   // modify_to_texture_indices(&mut all_voxels);
   all_voxels
-}
-
-fn modify_to_texture_indices(voxels: &mut [u32; 4]) {
-  for i in 0..voxels.len() {
-    if voxels[i] > 0 {
-      voxels[i] = voxels[i] - 1;
-    }
-  }
 }
 
 pub fn estimate_surface_edge_intersection(

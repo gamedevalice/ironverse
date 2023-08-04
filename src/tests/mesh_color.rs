@@ -65,10 +65,10 @@ fn startup(
   mut custom_materials: ResMut<Assets<CustomMaterial>>,
 ) {
   let colors = vec![
-    [0.0, 0.0, 0.0], 
     [1.0, 0.0, 0.0], 
     [0.0, 1.0, 0.0], 
-    [0.0, 0.0, 1.0],
+    [0.0, 0.0, 1.0], 
+    [0.0, 0.0, 0.0],
 
     [0.2, 0.0, 0.0],
     [0.4, 0.0, 0.0],
@@ -82,13 +82,13 @@ fn startup(
   let mut manager = ChunkManager::default();
   let mut chunk = Chunk::default();
   chunk.octree.set_voxel(2, 2, 2, 1);
-  chunk.octree.set_voxel(3, 2, 2, 2);
-  chunk.octree.set_voxel(4, 2, 2, 3);
-  chunk.octree.set_voxel(5, 2, 2, 4);
-  chunk.octree.set_voxel(6, 2, 2, 5);
-  chunk.octree.set_voxel(7, 2, 2, 6);
-  chunk.octree.set_voxel(8, 2, 2, 7);
-  chunk.octree.set_voxel(9, 2, 2, 8);
+  chunk.octree.set_voxel(3, 2, 2, 1);
+  // chunk.octree.set_voxel(4, 2, 2, 1);
+  // chunk.octree.set_voxel(5, 2, 2, 4);
+  // chunk.octree.set_voxel(6, 2, 2, 5);
+  // chunk.octree.set_voxel(7, 2, 2, 6);
+  // chunk.octree.set_voxel(8, 2, 2, 7);
+  // chunk.octree.set_voxel(9, 2, 2, 8);
 
   let data = chunk
     .octree
@@ -99,9 +99,9 @@ fn startup(
     );
 
   // let data = get_data();
-  // for i in 0..data.positions.len() {
-  //   println!("{:?} {:?}", data.positions[i], data.colors[i]);
-  // }
+  for i in 0..data.positions.len() {
+    println!("{:?}", data.colors[i]);
+  }
 
   let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
   render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());

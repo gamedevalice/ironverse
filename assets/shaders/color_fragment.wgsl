@@ -31,13 +31,15 @@ struct FragmentInput {
 @fragment
 fn fragment(input: FragmentInput) -> @location(0) vec4<f32> {
   // let pos = seamless_pos(input.world_position.xyz);
-  // var color = triplanar_color(pos, input) * material.base_color;
-  // color = normalize(color);
+
 
   // var pbr_input: PbrInput = pbr_input_new();
-  // pbr_input.material.base_color = pbr_input.material.base_color * color;
+  // pbr_input.material.base_color = vec4<f32>(input.color, 1.0);
   // pbr_input.frag_coord = input.frag_coord;
   // pbr_input.world_position = input.world_position;
+  // pbr_input.world_normal = input.world_normal;
+
+
   // pbr_input.world_normal = prepare_world_normal(
   //   input.world_normal,
   //   true,
@@ -64,6 +66,7 @@ fn fragment(input: FragmentInput) -> @location(0) vec4<f32> {
   //   triplanar
   // );
 
+  // pbr_input.N = input.world_normal;
   // pbr_input.V = calculate_view(input.world_position, pbr_input.is_orthographic);
 
   // return tone_mapping(pbr(pbr_input));
