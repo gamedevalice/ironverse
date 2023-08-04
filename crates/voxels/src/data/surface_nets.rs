@@ -129,8 +129,8 @@ pub fn get_surface_nets(octree: &VoxelOctree, voxel_reuse: &mut VoxelReuse) -> M
     for y in start..end {
       for z in start..end {
         init_grid(&mut layout, voxel_reuse, x, y, z);
-        // detect_face_x(&mut data, &mut layout, voxel_reuse, x, y, z);
-        // detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z);
+        detect_face_x(&mut data, &mut layout, voxel_reuse, x, y, z);
+        detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z);
         detect_face_z(&mut data, &mut layout, voxel_reuse, x, y, z);
       }
     }
@@ -267,40 +267,43 @@ fn detect_face_x(
     let voxels = get_vertices_voxels(
       &grid_000, &grid_010, &grid_001, &grid_011
     );
-    let color = get_color(&voxels);
+    let color_000 = get_color2(&voxels, &grid_000);
+    let color_010 = get_color2(&voxels, &grid_010);
+    let color_011 = get_color2(&voxels, &grid_011);
+    let color_001 = get_color2(&voxels, &grid_001);
 
     let start = 0;
     if face_left && x != start {
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_010.pos.unwrap());
       data.normals.push(grid_010.normal);
-      data.colors.push(color);
+      data.colors.push(color_010);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
-      data.colors.push(color);
+      data.colors.push(color_011);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
-      data.colors.push(color);
+      data.colors.push(color_011);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
-      data.colors.push(color);
+      data.colors.push(color_001);
     }
 
     let end_index = voxel_reuse.size - 1;
@@ -308,33 +311,33 @@ fn detect_face_x(
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
-      data.colors.push(color);
+      data.colors.push(color_011);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_010.pos.unwrap());
       data.normals.push(grid_010.normal);
-      data.colors.push(color);
+      data.colors.push(color_010);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
-      data.colors.push(color);
+      data.colors.push(color_001);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
-      data.colors.push(color);
+      data.colors.push(color_011);
     }
   }
 }
@@ -383,10 +386,14 @@ fn detect_face_y(
 
   let create = face_up ^ face_down;
   if create {
-    let mut voxels = get_vertices_voxels(
+    let voxels = get_vertices_voxels(
       &grid_000, &grid_101, &grid_100, &grid_001
     );
-    let color = get_color(&voxels);
+    
+    let color_000 = get_color2(&voxels, &grid_000);
+    let color_101 = get_color2(&voxels, &grid_101);
+    let color_100 = get_color2(&voxels, &grid_100);
+    let color_001 = get_color2(&voxels, &grid_001);
 
     let start = 0;
     if face_up && y != start {
@@ -394,33 +401,33 @@ fn detect_face_y(
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      data.colors.push(color_000);
       
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_101.pos.unwrap());
       data.normals.push(grid_101.normal);
-      data.colors.push(color);
+      data.colors.push(color_101);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_100.pos.unwrap());
       data.normals.push(grid_100.normal);
-      data.colors.push(color);
+      data.colors.push(color_100);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
-      data.colors.push(color);
+      data.colors.push(color_001);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_101.pos.unwrap());
       data.normals.push(grid_101.normal);
-      data.colors.push(color);
+      data.colors.push(color_101);
 
     }
 
@@ -429,33 +436,33 @@ fn detect_face_y(
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_100.pos.unwrap());
       data.normals.push(grid_100.normal);
-      data.colors.push(color);
+      data.colors.push(color_100);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_101.pos.unwrap());
       data.normals.push(grid_101.normal);
-      data.colors.push(color);
+      data.colors.push(color_101);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.colors.push(color);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_101.pos.unwrap());
       data.normals.push(grid_101.normal);
-      data.colors.push(color);
+      data.colors.push(color_101);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
-      data.colors.push(color);
+      data.colors.push(color_001);
     }
   }
 }
@@ -507,82 +514,80 @@ fn detect_face_z(
     let voxels = get_vertices_voxels(
       &grid_000, &grid_100, &grid_010, &grid_110
     );
-    let color = get_color(&voxels);
+    
+    let color_000 = get_color2(&voxels, &grid_000);
+    let color_100 = get_color2(&voxels, &grid_100);
+    let color_010 = get_color2(&voxels, &grid_010);
+    let color_110 = get_color2(&voxels, &grid_110);
 
     let start = 0;
     if face_front && z != start {
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_000.pos.unwrap());
-      // data.normals.push(grid_000.normal);
-      // data.colors.push(color);
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_000.pos.unwrap());
+      data.normals.push(grid_000.normal);
+      data.colors.push(color_000);
       
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_110.pos.unwrap());
-      // data.normals.push(grid_110.normal);
-      // data.colors.push(color);
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_110.pos.unwrap());
+      data.normals.push(grid_110.normal);
+      data.colors.push(color_110);
 
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_010.pos.unwrap());
-      // data.normals.push(grid_010.normal);
-      // data.colors.push(color);
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_010.pos.unwrap());
+      data.normals.push(grid_010.normal);
+      data.colors.push(color_010);
 
-
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_000.pos.unwrap());
-      // data.normals.push(grid_000.normal);
-      // data.colors.push(color);
-
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_100.pos.unwrap());
-      // data.normals.push(grid_100.normal);
-      // data.colors.push(color);
-
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_110.pos.unwrap());
-      // data.normals.push(grid_110.normal);
-      // data.colors.push(color);
-    }
-
-    let end_index = voxel_reuse.size - 1;
-    if face_back && z != end_index {
-      let weights_000 = get_weights(&voxels, &grid_000);
-      let weights_100 = get_weights(&voxels, &grid_100);
-      let weights_010 = get_weights(&voxels, &grid_010);
-      let weights_110 = get_weights(&voxels, &grid_110);
-
-      let color_000 = get_color2(&voxels, &grid_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
       data.colors.push(color_000);
-      // data.colors.push(color);
 
       data.indices.push(data.positions.len() as u32);
-      data.positions.push(grid_010.pos.unwrap());
-      data.normals.push(grid_010.normal);
-      data.colors.push(color);
+      data.positions.push(grid_100.pos.unwrap());
+      data.normals.push(grid_100.normal);
+      data.colors.push(color_100);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_110.pos.unwrap());
       data.normals.push(grid_110.normal);
-      data.colors.push(color);
+      data.colors.push(color_110);
+    }
+
+    let end_index = voxel_reuse.size - 1;
+    if face_back && z != end_index {
+      
+
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_000.pos.unwrap());
+      data.normals.push(grid_000.normal);
+      data.colors.push(color_000);
+
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_010.pos.unwrap());
+      data.normals.push(grid_010.normal);
+      data.colors.push(color_010);
+
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_110.pos.unwrap());
+      data.normals.push(grid_110.normal);
+      data.colors.push(color_110);
 
 
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_000.pos.unwrap());
-      // data.normals.push(grid_000.normal);
-      // data.colors.push(color_000);
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_000.pos.unwrap());
+      data.normals.push(grid_000.normal);
+      data.colors.push(color_000);
 
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_110.pos.unwrap());
-      // data.normals.push(grid_110.normal);
-      // data.colors.push(color);
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_110.pos.unwrap());
+      data.normals.push(grid_110.normal);
+      data.colors.push(color_110);
 
-      // data.indices.push(data.positions.len() as u32);
-      // data.positions.push(grid_100.pos.unwrap());
-      // data.normals.push(grid_100.normal);
-      // data.colors.push(color);
+      data.indices.push(data.positions.len() as u32);
+      data.positions.push(grid_100.pos.unwrap());
+      data.normals.push(grid_100.normal);
+      data.colors.push(color_100);
     }
   }
 }
@@ -632,10 +637,10 @@ fn get_color2(voxels: &[u32; 4], grid: &Grid) -> [f32; 3] {
 
   let mut color = [0.0, 0.0, 0.0];
 
+
+  // println!("grid.voxel_count {}: {:?}", grid.voxel_count, grid.pos);
+
   if grid.voxel_count == 1 {
-
-    
-
     for (index, voxel) in voxels.iter().enumerate() {
       if *voxel > 0 {
         if grid.types.contains(voxel) {
@@ -643,12 +648,29 @@ fn get_color2(voxels: &[u32; 4], grid: &Grid) -> [f32; 3] {
           color[1] += mapped_colors[*voxel as usize][1];
           color[2] += mapped_colors[*voxel as usize][2];
 
-
-          println!("grid.voxel_count {}", grid.voxel_count);
+          // println!("grid.voxel_count {}: {:?}", grid.voxel_count, grid.pos);
         }
         
       }
     }
+  }
+
+  if grid.voxel_count > 1 {
+    for (index, voxel) in voxels.iter().enumerate() {
+
+      if *voxel > 0 {
+        if grid.types.contains(voxel) {
+          color[0] += mapped_colors[*voxel as usize][0];
+          color[1] += mapped_colors[*voxel as usize][1];
+          color[2] += mapped_colors[*voxel as usize][2];
+        }
+      }
+    }
+
+    color[0] /= grid.voxel_count as f32;
+    color[1] /= grid.voxel_count as f32;
+    color[2] /= grid.voxel_count as f32;
+
   }
   
   color
