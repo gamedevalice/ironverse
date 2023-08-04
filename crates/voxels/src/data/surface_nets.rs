@@ -88,7 +88,11 @@ impl Layout {
   }
 }
 
-pub fn get_surface_nets(octree: &VoxelOctree, voxel_reuse: &mut VoxelReuse) -> MeshData {
+pub fn get_surface_nets(
+  octree: &VoxelOctree, 
+  voxel_reuse: &mut VoxelReuse,
+  colors: &Vec<[f32; 3]>,
+) -> MeshData {
   /*Refactor
       Start from scratch
       Piece together what is needed for the new system
@@ -129,9 +133,9 @@ pub fn get_surface_nets(octree: &VoxelOctree, voxel_reuse: &mut VoxelReuse) -> M
     for y in start..end {
       for z in start..end {
         init_grid(&mut layout, voxel_reuse, x, y, z);
-        detect_face_x(&mut data, &mut layout, voxel_reuse, x, y, z);
-        detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z);
-        detect_face_z(&mut data, &mut layout, voxel_reuse, x, y, z);
+        detect_face_x(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
+        detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
+        detect_face_z(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
       }
     }
   }
@@ -223,7 +227,8 @@ fn detect_face_x(
   voxel_reuse: &mut VoxelReuse, 
   x: u32, 
   y: u32, 
-  z: u32
+  z: u32,
+  colors: &Vec<[f32; 3]>,
 ) {
   /*Detect grids to create surface mesh x-axis:
       0, 0, 0
@@ -267,10 +272,10 @@ fn detect_face_x(
     let voxels = get_vertices_voxels(
       &grid_000, &grid_010, &grid_001, &grid_011
     );
-    let color_000 = get_color2(&voxels, &grid_000);
-    let color_010 = get_color2(&voxels, &grid_010);
-    let color_011 = get_color2(&voxels, &grid_011);
-    let color_001 = get_color2(&voxels, &grid_001);
+    let color_000 = get_color(&voxels, &grid_000, colors);
+    let color_010 = get_color(&voxels, &grid_010, colors);
+    let color_011 = get_color(&voxels, &grid_011, colors);
+    let color_001 = get_color(&voxels, &grid_001, colors);
 
     let start = 0;
     if face_left && x != start {
@@ -348,7 +353,8 @@ fn detect_face_y(
   voxel_reuse: &mut VoxelReuse, 
   x: u32, 
   y: u32, 
-  z: u32
+  z: u32,
+  colors: &Vec<[f32; 3]>,
 ) {
   if x == 0 || z == 0 {
     return;
@@ -390,10 +396,10 @@ fn detect_face_y(
       &grid_000, &grid_101, &grid_100, &grid_001
     );
     
-    let color_000 = get_color2(&voxels, &grid_000);
-    let color_101 = get_color2(&voxels, &grid_101);
-    let color_100 = get_color2(&voxels, &grid_100);
-    let color_001 = get_color2(&voxels, &grid_001);
+    let color_000 = get_color(&voxels, &grid_000, colors);
+    let color_101 = get_color(&voxels, &grid_101, colors);
+    let color_100 = get_color(&voxels, &grid_100, colors);
+    let color_001 = get_color(&voxels, &grid_001, colors);
 
     let start = 0;
     if face_up && y != start {
@@ -473,7 +479,8 @@ fn detect_face_z(
   voxel_reuse: &mut VoxelReuse, 
   x: u32, 
   y: u32, 
-  z: u32
+  z: u32,
+  colors: &Vec<[f32; 3]>,
 ) {
   if x == 0 || y == 0 {
     return;
@@ -515,10 +522,10 @@ fn detect_face_z(
       &grid_000, &grid_100, &grid_010, &grid_110
     );
     
-    let color_000 = get_color2(&voxels, &grid_000);
-    let color_100 = get_color2(&voxels, &grid_100);
-    let color_010 = get_color2(&voxels, &grid_010);
-    let color_110 = get_color2(&voxels, &grid_110);
+    let color_000 = get_color(&voxels, &grid_000, colors);
+    let color_100 = get_color(&voxels, &grid_100, colors);
+    let color_010 = get_color(&voxels, &grid_010, colors);
+    let color_110 = get_color(&voxels, &grid_110, colors);
 
     let start = 0;
     if face_front && z != start {
@@ -556,8 +563,6 @@ fn detect_face_z(
 
     let end_index = voxel_reuse.size - 1;
     if face_back && z != end_index {
-      
-
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
@@ -592,63 +597,20 @@ fn detect_face_z(
   }
 }
 
-fn get_color(voxels: &[u32; 4]) -> [f32; 3] {
-  let mapped_colors = vec![[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
-
+fn get_color(
+  voxels: &[u32; 4], 
+  grid: &Grid, 
+  mapped_colors: &Vec<[f32; 3]>
+) -> [f32; 3] {
   let mut color = [0.0, 0.0, 0.0];
-
-  let mut voxel_count = 0;
-  for voxel in voxels.iter() {
-    if *voxel > 0 {
-      voxel_count += 1;
-    }
-  }
-
-  let percentage = (voxel_count as f32) / (voxels.len() as f32); 
-
-  for voxel in voxels.iter() {
-    let res = mapped_colors.get(*voxel as usize);
-
-    if res.is_some() {
-      let c = res.unwrap();
-
-      color[0] += c[0];
-      color[1] += c[1];
-      color[2] += c[2];
-    }
-  }
-
-  color[0] /= voxel_count as f32;
-  color[1] /= voxel_count as f32;
-  color[2] /= voxel_count as f32;
-  
-  
-  color
-}
-
-
-fn get_color2(voxels: &[u32; 4], grid: &Grid) -> [f32; 3] {
-  let mapped_colors = vec![
-    [0.0, 0.0, 0.0], 
-    [1.0, 0.0, 0.0], 
-    [0.0, 1.0, 0.0], 
-    [0.0, 0.0, 1.0]
-  ];
-
-  let mut color = [0.0, 0.0, 0.0];
-
-
-  // println!("grid.voxel_count {}: {:?}", grid.voxel_count, grid.pos);
-
   if grid.voxel_count == 1 {
-    for (index, voxel) in voxels.iter().enumerate() {
+    for voxel in voxels.iter() {
       if *voxel > 0 {
         if grid.types.contains(voxel) {
-          color[0] += mapped_colors[*voxel as usize][0];
-          color[1] += mapped_colors[*voxel as usize][1];
-          color[2] += mapped_colors[*voxel as usize][2];
-
-          // println!("grid.voxel_count {}: {:?}", grid.voxel_count, grid.pos);
+          let color_index = *voxel as usize - 1;
+          color[0] += mapped_colors[color_index][0];
+          color[1] += mapped_colors[color_index][1];
+          color[2] += mapped_colors[color_index][2];
         }
         
       }
@@ -656,13 +618,13 @@ fn get_color2(voxels: &[u32; 4], grid: &Grid) -> [f32; 3] {
   }
 
   if grid.voxel_count > 1 {
-    for (index, voxel) in voxels.iter().enumerate() {
-
+    for voxel in voxels.iter() {
       if *voxel > 0 {
         if grid.types.contains(voxel) {
-          color[0] += mapped_colors[*voxel as usize][0];
-          color[1] += mapped_colors[*voxel as usize][1];
-          color[2] += mapped_colors[*voxel as usize][2];
+          let color_index = *voxel as usize - 1;
+          color[0] += mapped_colors[color_index][0];
+          color[1] += mapped_colors[color_index][1];
+          color[2] += mapped_colors[color_index][2];
         }
       }
     }

@@ -48,9 +48,28 @@ fn startup(
   // chunk.octree.set_voxel(4, 13, 11, 0);
   chunk.octree.set_voxel(4, 13, 12, 0);
 
+  let colors = vec![
+    [0.0, 0.0, 0.0], 
+    [1.0, 0.0, 0.0], 
+    [0.0, 1.0, 0.0], 
+    [0.0, 0.0, 1.0],
+
+    [0.2, 0.0, 0.0],
+    [0.4, 0.0, 0.0],
+    [0.6, 0.0, 0.0],
+    [0.8, 0.0, 0.0],
+
+    [0.0, 0.2, 0.0],
+    [0.0, 0.4, 0.0],
+  ];
+
   let data = chunk
     .octree
-    .compute_mesh(VoxelMode::SurfaceNets, &mut manager.voxel_reuse);
+    .compute_mesh(
+      VoxelMode::SurfaceNets, 
+      &mut manager.voxel_reuse,
+      &colors,
+    );
 
   let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
   render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());

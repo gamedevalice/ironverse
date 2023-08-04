@@ -64,21 +64,44 @@ fn startup(
   // mut materials: ResMut<Assets<StandardMaterial>>,
   mut custom_materials: ResMut<Assets<CustomMaterial>>,
 ) {
+  let colors = vec![
+    [0.0, 0.0, 0.0], 
+    [1.0, 0.0, 0.0], 
+    [0.0, 1.0, 0.0], 
+    [0.0, 0.0, 1.0],
+
+    [0.2, 0.0, 0.0],
+    [0.4, 0.0, 0.0],
+    [0.6, 0.0, 0.0],
+    [0.8, 0.0, 0.0],
+
+    [0.0, 0.2, 0.0],
+    [0.0, 0.4, 0.0],
+  ];
+
   let mut manager = ChunkManager::default();
   let mut chunk = Chunk::default();
   chunk.octree.set_voxel(2, 2, 2, 1);
-  chunk.octree.set_voxel(3, 2, 2, 3);
+  chunk.octree.set_voxel(3, 2, 2, 2);
+  chunk.octree.set_voxel(4, 2, 2, 3);
+  chunk.octree.set_voxel(5, 2, 2, 4);
+  chunk.octree.set_voxel(6, 2, 2, 5);
+  chunk.octree.set_voxel(7, 2, 2, 6);
+  chunk.octree.set_voxel(8, 2, 2, 7);
+  chunk.octree.set_voxel(9, 2, 2, 8);
 
   let data = chunk
     .octree
-    .compute_mesh(VoxelMode::SurfaceNets, &mut manager.voxel_reuse);
+    .compute_mesh(
+      VoxelMode::SurfaceNets, 
+      &mut manager.voxel_reuse,
+      &colors,
+    );
 
   // let data = get_data();
-
-  // println!("positions");
-  for i in 0..data.positions.len() {
-    println!("{:?} {:?}", data.positions[i], data.colors[i]);
-  }
+  // for i in 0..data.positions.len() {
+  //   println!("{:?} {:?}", data.positions[i], data.colors[i]);
+  // }
 
   let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
   render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
@@ -168,8 +191,6 @@ fn show_diagnostic_texts(
 
 pub const VOXEL_COLOR: MeshVertexAttribute =
   MeshVertexAttribute::new("VOXEL_COLOR", 988540918, VertexFormat::Float32x3);
-
-
 
 #[derive(AsBindGroup, Reflect, FromReflect, Debug, Clone, TypeUuid)]
 #[uuid = "2f3d7f74-4bf7-4f32-98cd-858edafa5ca2"]

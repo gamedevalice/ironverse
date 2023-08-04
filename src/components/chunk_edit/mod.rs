@@ -195,7 +195,8 @@ fn edit(
 
       let data = chunk.octree.compute_mesh(
         VoxelMode::SurfaceNets, 
-        &mut game_res.chunk_manager.voxel_reuse
+        &mut game_res.chunk_manager.voxel_reuse.clone(),
+        &game_res.colors,
       );
 
       

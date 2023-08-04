@@ -48,7 +48,8 @@ fn export(
     for (key, chunk) in chunks.iter() {
       let mut mesh = chunk.octree.compute_mesh(
         VoxelMode::SurfaceNets, 
-        &mut voxel_reuse
+        &mut voxel_reuse,
+        &game_res.colors,
       );
 
       if mesh.positions.len() == 0 {

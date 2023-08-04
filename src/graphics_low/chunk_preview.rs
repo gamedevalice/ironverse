@@ -59,7 +59,8 @@ fn update(
 
     let data = chunk.octree.compute_mesh(
       VoxelMode::SurfaceNets, 
-      &mut game_res.chunk_manager.voxel_reuse
+      &mut game_res.chunk_manager.voxel_reuse.clone(),
+      &game_res.colors,
     );
 
     if data.indices.len() > 0 { // Temporary, should be removed once the ChunkMode detection is working

@@ -22,16 +22,34 @@ pub struct GameResource {
   pub preview_chunk_manager: ChunkManager,
   pub modified_chunks: HashMap<[i64; 3], Chunk>,
   pub export_obj: Option<String>,
+
+  pub colors: Vec<[f32; 3]>,
 }
 
 impl Default for GameResource {
   fn default() -> Self {
+    let colors = vec![
+      [0.0, 0.0, 0.0], 
+      [1.0, 0.0, 0.0], 
+      [0.0, 1.0, 0.0], 
+      [0.0, 0.0, 1.0],
+
+      [0.2, 0.0, 0.0],
+      [0.4, 0.0, 0.0],
+      [0.6, 0.0, 0.0],
+      [0.8, 0.0, 0.0],
+
+      [0.0, 0.2, 0.0],
+      [0.0, 0.4, 0.0],
+    ];
+
     Self {
       chunk_manager: ChunkManager::default(),
       data: Data::default(),
       preview_chunk_manager: ChunkManager::default(),
       modified_chunks: HashMap::new(),
       export_obj: None,
+      colors: colors,
     }
   }
 }
