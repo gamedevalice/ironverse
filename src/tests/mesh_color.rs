@@ -24,12 +24,10 @@ fn setup_camera(
 ) {
   commands
     .spawn(Camera3dBundle {
-      // transform: Transform::from_xyz(4.2, 2.4, 0.0)
-      //   .looking_to(Vec3::new(-0.66, -0.25, 0.7), Vec3::Y),
-      // transform: Transform::from_xyz(1.7, 1.4, -5.5)
-      //   .looking_to(Vec3::new(-0.0, -0.16, 0.98), Vec3::Y),
-      transform: Transform::from_xyz(2.8, 1.9, -0.5)
-        .looking_to(Vec3::new(-0.1, -0.0, 0.98), Vec3::Y),
+      transform: Transform::from_xyz(6.5, 22.22, -8.4)
+        .looking_to(Vec3::new(-0.0, -0.5, 0.8), Vec3::Y),
+      // transform: Transform::from_xyz(2.8, 1.9, -0.5)
+      //   .looking_to(Vec3::new(-0.1, -0.0, 0.98), Vec3::Y),
       ..Default::default()
     })
     .insert(FlyCam);
@@ -79,10 +77,14 @@ fn startup(
     [0.0, 0.4, 0.0],
   ];
 
-  let mut manager = ChunkManager::default();
-  let mut chunk = Chunk::default();
-  chunk.octree.set_voxel(2, 2, 2, 1);
-  chunk.octree.set_voxel(3, 2, 2, 1);
+  let manager = ChunkManager::default();
+  let config = manager.config.clone();
+  let chunk = ChunkManager::new_chunk(&[0, -1, 0], config.depth, config.lod, config.noise);
+
+
+  // let mut chunk = Chunk::default();
+  // chunk.octree.set_voxel(2, 2, 2, 1);
+  // chunk.octree.set_voxel(3, 2, 2, 1);
   // chunk.octree.set_voxel(4, 2, 2, 1);
   // chunk.octree.set_voxel(5, 2, 2, 4);
   // chunk.octree.set_voxel(6, 2, 2, 5);
@@ -94,14 +96,14 @@ fn startup(
     .octree
     .compute_mesh(
       VoxelMode::SurfaceNets, 
-      &mut manager.voxel_reuse,
+      &mut manager.voxel_reuse.clone(),
       &colors,
     );
 
   // let data = get_data();
-  for i in 0..data.positions.len() {
-    println!("{:?}", data.colors[i]);
-  }
+  // for i in 0..data.positions.len() {
+  //   println!("{:?}", data.colors[i]);
+  // }
 
   let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
   render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
@@ -119,7 +121,8 @@ fn startup(
     .spawn(MaterialMeshBundle {
       mesh: mesh_handle,
       material: material_handle,
-      transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+      // transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+      transform: Transform::from_xyz(0.0, 0.0, 0.0),
       ..default()
     });
 }

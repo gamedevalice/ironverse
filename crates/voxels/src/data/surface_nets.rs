@@ -65,7 +65,8 @@ struct Grid {
   pub pos: Option<[f32; 3]>,
   normal: [f32; 3],
   // weights: [f32; 4],
-  types: [u32; 4],
+  // types: [u32; 4],
+  types: [u32; 8],
   voxel_count: u8,
 }
 
@@ -148,7 +149,8 @@ fn init_grid(layout: &mut Layout, voxel_reuse: &mut VoxelReuse, x: u32, y: u32, 
   let mut voxel_count = 0;
   let mut dists = [1.0; 8];
 
-  let mut voxels = [0; 4];
+  // let mut voxels = [0; 4];
+  let mut voxels = [0; 8];
   let mut voxel_index = 0;
   for x_offset in 0..2 {
     for y_offset in 0..2 {
@@ -170,10 +172,11 @@ fn init_grid(layout: &mut Layout, voxel_reuse: &mut VoxelReuse, x: u32, y: u32, 
           dists[corner_index as usize] = -1.0;
           voxel_count += 1;
 
-          let surrounding_voxel_limit = 4;
-          if voxel_index < surrounding_voxel_limit {
-            voxels[voxel_index] = voxel as u32;
-          }
+          // let surrounding_voxel_limit = 4;
+          // if voxel_index < surrounding_voxel_limit {
+            // voxels[voxel_index] = voxel as u32;
+          // }
+          voxels[voxel_index] = voxel as u32;
           
           voxel_index += 1;
         }
@@ -603,7 +606,7 @@ fn get_color(
   mapped_colors: &Vec<[f32; 3]>
 ) -> [f32; 3] {
   let mut color = [0.0, 0.0, 0.0];
-  
+
   for voxel in grid.types.iter() {
     if *voxel > 0 {
       let color_index = *voxel as usize - 1;
