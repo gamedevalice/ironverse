@@ -19,7 +19,6 @@ struct CustomMaterial {
 var<uniform> material: CustomMaterial;
 
 struct FragmentInput {
-  // @builtin(position) frag_coord: vec4<f32>,
   @builtin(front_facing) is_front: bool,
   @builtin(position) frag_coord: vec4<f32>,
 
@@ -30,51 +29,22 @@ struct FragmentInput {
 
 @fragment
 fn fragment(input: FragmentInput) -> @location(0) vec4<f32> {
-  // let pos = seamless_pos(input.world_position.xyz);
+  var pbr_input: PbrInput = pbr_input_new();
+  pbr_input.material.base_color = vec4<f32>(input.color, 1.0);
+  pbr_input.frag_coord = input.frag_coord;
+  pbr_input.world_position = input.world_position;
 
+  pbr_input.world_normal = prepare_world_normal(
+    input.world_normal,
+    true,
+    false,
+  );
 
-  // var pbr_input: PbrInput = pbr_input_new();
-  // pbr_input.material.base_color = vec4<f32>(input.color, 1.0);
-  // pbr_input.frag_coord = input.frag_coord;
-  // pbr_input.world_position = input.world_position;
-  // pbr_input.world_normal = input.world_normal;
+  pbr_input.N = normalize(input.world_normal);
+  pbr_input.V = calculate_view(input.world_position, pbr_input.is_orthographic);
 
-
-  // pbr_input.world_normal = prepare_world_normal(
-  //   input.world_normal,
-  //   true,
-  //   false,
-  // );
-
-  // pbr_input.is_orthographic = view.projection[3].w == 1.0;
-
-  // let sharpness_1 = 8.0;
-  // var weights_1 = pow(abs(input.world_normal), vec3(sharpness_1));
-  // weights_1 = weights_1 / (weights_1.x + weights_1.y + weights_1.z);
-
-  // let scale = 1.0;
-  // let uv_x = pos.zy * scale;
-  // let uv_y = pos.xz * scale;
-  // let uv_z = pos.xy * scale;
-  // var triplanar = Triplanar(weights_1, uv_x, uv_y, uv_z);
-
-  // pbr_input.N = triplanar_normal_to_world_splatted(
-  //   material.flags,
-  //   input.voxel_weight, 
-  //   input.world_normal, 
-  //   input.voxel_type_1, 
-  //   triplanar
-  // );
-
-  // pbr_input.N = input.world_normal;
-  // pbr_input.V = calculate_view(input.world_position, pbr_input.is_orthographic);
-
-  // return tone_mapping(pbr(pbr_input));
-
-
-
-  return vec4<f32>(input.color, 1.0);
-  // return vec4<f32>(0.0, 0.0, 0.0, 1.0);
+  return tone_mapping(pbr(pbr_input));
+  // return vec4<f32>(input.color, 1.0);
 }
 
 
