@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use voxels::chunk::chunk_manager::Chunk;
 use crate::{data::GameResource, components::{ChunkEditParams, ChunkEdit, get_point_by_edit_mode}};
 
+
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
@@ -14,7 +15,7 @@ impl Plugin for CustomPlugin {
 fn update_position(
   game_res: Res<GameResource>,
   mut chunk_edits: Query<
-  (&Transform, &ChunkEditParams, &mut ChunkEdit), With<Normal>
+  (&Transform, &ChunkEditParams, &mut ChunkEdit), With<SnapGrid>
   >,
 ) {
   for (trans, params, mut edit) in &mut chunk_edits {
@@ -25,8 +26,6 @@ fn update_position(
     let total_div = 10;
     let min_dist = params.size as f32 * 2.0;
 
-    // println!("point {:?}", point);
-    // println!("size {}", params.size);
     'main: for i in (0..total_div).rev() {
       let div_f32 = total_div as f32 - 1.0;
       let dist = (params.dist / div_f32) * i as f32;
@@ -34,8 +33,7 @@ fn update_position(
         break;
       }
 
-      let p = get_point_by_edit_mode(&trans, dist, params.size, false);
-      // println!("p {:?}", p);
+      let p = get_point_by_edit_mode(&trans, dist, params.size, true);
       for x in min..max {
         for y in min..max {
           for z in min..max {
@@ -48,16 +46,12 @@ fn update_position(
             let res = game_res.chunk_manager.get_voxel_safe(&tmp_pos);
             if res.is_some() && res.unwrap() == 0 {
               pos_op = Some(p);
-              // info!("i {} dist {}", i, dist);
               break 'main;
             }
           }
         }
       }
     }
-
-    // println!("pos_op {:?}", pos_op);
-
 
     if pos_op.is_none() {
       if edit.position.is_some() {
@@ -85,7 +79,7 @@ fn update_position(
 
 fn position_changed(
   mut edits: Query<
-  (&mut ChunkEdit, &ChunkEditParams), (Changed<ChunkEdit>, With<Normal>)
+  (&mut ChunkEdit, &ChunkEditParams), (Changed<ChunkEdit>, With<SnapGrid>)
   >,
   mut game_res: ResMut<GameResource>,
 ) {
@@ -138,14 +132,10 @@ fn position_changed(
       }
     }
 
-    // info!("chunk_edit_changed() {:?}", point);
     edit.chunk = Some(chunk);
   }
 }
 
 
-
-
 #[derive(Default, Component)]
-pub struct Normal { }
-
+pub struct SnapGrid { }

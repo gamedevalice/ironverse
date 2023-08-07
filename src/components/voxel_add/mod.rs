@@ -1,18 +1,21 @@
 use bevy::{prelude::*, input::{mouse::MouseWheel, ButtonState}, utils::HashMap};
 use rapier3d::prelude::{Point, ColliderBuilder, InteractionGroups, Group, Isometry};
 use voxels::{data::voxel_octree::VoxelMode, utils::key_to_world_coord_f32};
-use crate::{data::GameResource, input::{MouseInput, hotbar::HotbarResource}, physics::Physics};
-use self::normal::Normal;
-use super::{ChunkEdit, ChunkEditParams, chunk::{Chunks, Mesh}, player::Player};
+use crate::{data::GameResource, input::{MouseInput, hotbar::HotbarResource}, physics::Physics, components::EditMode};
+use self::{normal::Normal, snap::SnapGrid};
+use super::{ChunkEdit, ChunkEditParams, chunk::{Chunks, Mesh}, player::Player, ChunkEditResource};
 
 mod normal;
+mod snap;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugin(normal::CustomPlugin)
+      .add_plugin(snap::CustomPlugin)
       .add_system(add)
+      .add_system(switch_modes)
       .add_system(update_edit_params)
       .add_system(on_edit);
   }
@@ -25,9 +28,51 @@ fn add(
   for entity in &player_query {
     commands
       .entity(entity)
-      .insert(Normal::default());
+      // .insert(Normal::default())
+      .insert(SnapGrid::default())
+      ;
   }
 }
+
+fn switch_modes(
+  mut commands: Commands,
+  key_input: Res<Input<KeyCode>>,
+  players: Query<Entity, With<Player>>,
+
+  mut chunk_edit_res: ResMut<ChunkEditResource>,
+) {
+
+  if key_input.just_pressed(KeyCode::M) {
+    match chunk_edit_res.edit_mode {
+      EditMode::CreateNormal => {
+        chunk_edit_res.edit_mode = EditMode::CreateSnap;
+        for entity in &players {
+          commands.entity(entity).remove::<Normal>();
+          commands.entity(entity).insert(SnapGrid::default());
+        }
+      },
+      EditMode::CreateSnap => {
+        chunk_edit_res.edit_mode = EditMode::CreateNormal;
+        for entity in &players {
+          commands.entity(entity).remove::<SnapGrid>();
+          commands.entity(entity).insert(Normal::default());
+        }
+      },
+      _ => {
+        chunk_edit_res.edit_mode = EditMode::CreateNormal;
+        for entity in &players {
+          commands.entity(entity).remove::<SnapGrid>();
+          commands.entity(entity).insert(Normal::default());
+        }
+      },
+    };
+
+    info!("Edit_mode {:?}", chunk_edit_res.edit_mode);
+  }
+}
+
+
+
 
 
 fn update_edit_params(
@@ -183,6 +228,9 @@ fn on_edit(
 }
 
 
+struct LocalResource {
+  
+}
 
 
 /*

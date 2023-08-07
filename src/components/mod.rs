@@ -17,6 +17,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
+      .insert_resource(ChunkEditResource::default())
       .add_plugin(voxel_add::CustomPlugin);
 
     app
@@ -128,4 +129,27 @@ impl Default for ChunkEditParams {
     }
   }
 }
+
+
+#[derive(PartialEq, Eq, Debug, Clone, Hash)]
+pub enum EditMode {
+  CreateNormal,
+  CreateSnap,
+  DeleteNormal,
+  DeleteSnap,
+}
+
+#[derive(Resource)]
+pub struct ChunkEditResource {
+  pub edit_mode: EditMode
+}
+
+impl Default for ChunkEditResource {
+  fn default() -> Self {
+    Self {
+      edit_mode: EditMode::CreateNormal,
+    }
+  }
+}
+
 
