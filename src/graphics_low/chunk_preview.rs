@@ -3,7 +3,7 @@ use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use voxels::data::voxel_octree::VoxelMode;
 use crate::components::ChunkEdit;
-use crate::graphics::{GraphicsResource, ChunkPreviewGraphics};
+use crate::graphics::ChunkPreviewGraphics;
 use crate::data::GameResource;
 
 pub struct CustomPlugin;
@@ -17,12 +17,11 @@ impl Plugin for CustomPlugin {
 fn update(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut game_res: ResMut<GameResource>,
+  game_res: Res<GameResource>,
   edits: Query<
     (Entity, &ChunkEdit), Changed<ChunkEdit>
   >,
   mut materials: ResMut<Assets<StandardMaterial>>,
-  graphics_res: Res<GraphicsResource>,
 
   graphics: Query<(Entity, &ChunkPreviewGraphics)>,
 ) {
@@ -56,12 +55,12 @@ fn update(
       let adj = [p.x as f32, p.y as f32, p.z as f32];
       let coord_f32 = [adj[0] - chunk_size, adj[1] - chunk_size, adj[2] - chunk_size];
       
-      let mut visibility = Visibility::Visible;
+      let visibility = Visibility::Visible;
       // if !graphics_res.show_preview {
       //   visibility = Visibility::Hidden;
       // }
 
-      let mut color = Color::rgba(0.0, 0.0, 1.0, 0.25);
+      let color = Color::rgba(0.0, 0.0, 1.0, 0.25);
       commands
         .spawn(MaterialMeshBundle {
           visibility: visibility,
