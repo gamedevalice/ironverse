@@ -48,11 +48,11 @@ cfg_if! {
   }
 }
 
-cfg_if! {
-  if #[cfg(feature = "graphics_normal")] {
-    mod graphics_normal;
-  }
-}
+// cfg_if! {
+//   if #[cfg(feature = "graphics_normal")] {
+//     mod graphics_normal;
+//   }
+// }
 
 cfg_if! {
   if #[cfg(feature = "ui")] {
@@ -89,10 +89,11 @@ fn main() {
         .add_plugin(data::CustomPlugin)
         .add_plugin(physics::CustomPlugin)
         .add_plugin(input::CustomPlugin)
-        .add_plugin(components::raycast::CustomPlugin)
-        .add_plugin(components::range::CustomPlugin)
-        .add_plugin(components::chunk_edit::CustomPlugin)
-        .add_plugin(components::chunk_preview::CustomPlugin)
+        .add_plugin(components::CustomPlugin)
+        // .add_plugin(components::raycast::CustomPlugin)
+        // .add_plugin(components::range::CustomPlugin)
+        // .add_plugin(components::chunk_edit::CustomPlugin)
+        // .add_plugin(components::chunk_preview::CustomPlugin)
         .add_plugin(graphics::CustomPlugin)
         .add_plugin(states::CustomPlugin)
         .add_plugin(obj::CustomPlugin);
@@ -118,20 +119,21 @@ fn main() {
   }
 
   cfg_if! {
-    if #[cfg(feature = "graphics_normal")] {
-      app
-        .add_plugin(graphics_normal::chunks::CustomPlugin)
-        .add_plugin(graphics_normal::chunk_preview::CustomPlugin);
-    }
-  }
-
-  cfg_if! {
     if #[cfg(feature = "graphics_low")] {
       app
         .add_plugin(graphics_low::chunks::CustomPlugin)
-        .add_plugin(graphics_low::chunk_preview::CustomPlugin);
+        .add_plugin(graphics_low::chunk_preview::CustomPlugin)
+        ;
     }
   }
+
+  // cfg_if! {
+  //   if #[cfg(feature = "graphics_normal")] {
+  //     app
+  //       .add_plugin(graphics_normal::chunks::CustomPlugin)
+  //       .add_plugin(graphics_normal::chunk_preview::CustomPlugin);
+  //   }
+  // }
 
   cfg_if! {
     if #[cfg(feature = "ui")] {
