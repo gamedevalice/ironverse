@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow, diagnostic::{FrameTimeDiagnosticsPlugin, Diagnostics}};
 use bevy_egui::{EguiContexts, egui::{self, Frame, Color32, Style, Rect, Vec2, Pos2, RichText}};
-use crate::components::{player::Player, ChunkEdit};
+use crate::components::{player::Player, chunk_edit::ChunkEdit};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {

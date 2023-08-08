@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use voxels::data::voxel_octree::VoxelMode;
-use crate::components::ChunkEdit;
+use crate::components::chunk_edit::ChunkEdit;
 use crate::graphics::ChunkPreviewGraphics;
 use crate::data::GameResource;
 

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use voxels::chunk::chunk_manager::Chunk;
-use crate::{data::GameResource, components::{ChunkEditParams, ChunkEdit, get_point_by_edit_mode}};
+use crate::{data::GameResource, components::chunk_edit::{ChunkEditParams, ChunkEdit, get_point_by_edit_mode}};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -25,8 +25,6 @@ fn update_position(
     let total_div = 10;
     let min_dist = params.size as f32 * 2.0;
 
-    // println!("point {:?}", point);
-    // println!("size {}", params.size);
     'main: for i in (0..total_div).rev() {
       let div_f32 = total_div as f32 - 1.0;
       let dist = (params.dist / div_f32) * i as f32;
@@ -35,7 +33,6 @@ fn update_position(
       }
 
       let p = get_point_by_edit_mode(&trans, dist, params.size, false);
-      // println!("p {:?}", p);
       for x in min..max {
         for y in min..max {
           for z in min..max {
@@ -48,7 +45,6 @@ fn update_position(
             let res = game_res.chunk_manager.get_voxel_safe(&tmp_pos);
             if res.is_some() && res.unwrap() == 0 {
               pos_op = Some(p);
-              // info!("i {} dist {}", i, dist);
               break 'main;
             }
           }

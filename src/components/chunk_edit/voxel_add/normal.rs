@@ -1,22 +1,30 @@
 use bevy::prelude::*;
 use voxels::chunk::chunk_manager::Chunk;
-use crate::{data::GameResource, components::{ChunkEditParams, ChunkEdit, get_point_by_edit_mode}};
-
+use crate::{data::GameResource, components::chunk_edit::{ChunkEditParams, ChunkEdit, get_point_by_edit_mode, EditState}};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(update_position)
-      .add_system(position_changed.after(update_position));
+      .add_system(
+        update_position
+          .run_if(add_normal)
+      )
+      .add_system(
+        position_changed
+          .after(update_position)
+          .run_if(add_normal)
+      );
   }
+}
+
+fn add_normal(state: Res<State<EditState>>) -> bool {
+  state.0 == EditState::AddNormal
 }
 
 fn update_position(
   game_res: Res<GameResource>,
-  mut chunk_edits: Query<
-  (&Transform, &ChunkEditParams, &mut ChunkEdit), With<SnapGrid>
-  >,
+  mut chunk_edits: Query<(&Transform, &ChunkEditParams, &mut ChunkEdit)>,
 ) {
   for (trans, params, mut edit) in &mut chunk_edits {
     let min = 0;
@@ -33,7 +41,7 @@ fn update_position(
         break;
       }
 
-      let p = get_point_by_edit_mode(&trans, dist, params.size, true);
+      let p = get_point_by_edit_mode(&trans, dist, params.size, false);
       for x in min..max {
         for y in min..max {
           for z in min..max {
@@ -79,7 +87,7 @@ fn update_position(
 
 fn position_changed(
   mut edits: Query<
-  (&mut ChunkEdit, &ChunkEditParams), (Changed<ChunkEdit>, With<SnapGrid>)
+  (&mut ChunkEdit, &ChunkEditParams), Changed<ChunkEdit>
   >,
   mut game_res: ResMut<GameResource>,
 ) {
@@ -136,6 +144,3 @@ fn position_changed(
   }
 }
 
-
-#[derive(Default, Component)]
-pub struct SnapGrid { }
