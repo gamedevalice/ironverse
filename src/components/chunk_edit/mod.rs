@@ -3,16 +3,15 @@ use voxels::chunk::chunk_manager::Chunk;
 use super::player::Player;
 
 mod voxel_add;
-// mod voxel_remove;
+mod voxel_remove;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      // .insert_resource(ChunkEditResource::default())
       .add_state::<EditState>()
       .add_plugin(voxel_add::CustomPlugin)
-      // .add_plugin(voxel_remove::CustomPlugin)
+      .add_plugin(voxel_remove::CustomPlugin)
       .add_system(add_to_player)
       .add_system(update_edit_params)
       .add_system(switch_state);
@@ -96,10 +95,6 @@ fn switch_state(
     }
   }
 }
-
-
-
-
 
 
 /* Helper functions */
@@ -192,24 +187,9 @@ impl Default for ChunkEditParams {
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum EditState {
-  #[default]
   AddNormal,
   AddSnap,
+  #[default]
   RemoveNormal,
   RemoveSnap,
 }
-
-// #[derive(Resource)]
-// pub struct ChunkEditResource {
-//   pub edit_mode: EditMode
-// }
-
-// impl Default for ChunkEditResource {
-//   fn default() -> Self {
-//     Self {
-//       edit_mode: EditMode::CreateNormal,
-//     }
-//   }
-// }
-
-

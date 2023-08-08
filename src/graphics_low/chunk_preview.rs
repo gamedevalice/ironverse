@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use voxels::data::voxel_octree::VoxelMode;
-use crate::components::chunk_edit::ChunkEdit;
+use crate::components::chunk_edit::{ChunkEdit, EditState};
 use crate::graphics::ChunkPreviewGraphics;
 use crate::data::GameResource;
 
@@ -18,11 +18,10 @@ fn update(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   game_res: Res<GameResource>,
-  edits: Query<
-    (Entity, &ChunkEdit), Changed<ChunkEdit>
-  >,
+  edits: Query<(Entity, &ChunkEdit), Changed<ChunkEdit>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 
+  edit_state: Res<State<EditState>>,
   graphics: Query<(Entity, &ChunkPreviewGraphics)>,
 ) {
   for (entity, edit) in &edits {
@@ -55,15 +54,18 @@ fn update(
       let adj = [p.x as f32, p.y as f32, p.z as f32];
       let coord_f32 = [adj[0] - chunk_size, adj[1] - chunk_size, adj[2] - chunk_size];
       
-      let visibility = Visibility::Visible;
-      // if !graphics_res.show_preview {
-      //   visibility = Visibility::Hidden;
-      // }
+      let mut color = Color::rgba(0.0, 0.0, 1.0, 0.25);
+      match edit_state.0 {
+        EditState::RemoveNormal |
+        EditState::RemoveSnap => {
+          color = Color::rgba(1.0, 0.0, 0.0, 0.25);
+        },
+        _ => {}
+      }
 
-      let color = Color::rgba(0.0, 0.0, 1.0, 0.25);
       commands
         .spawn(MaterialMeshBundle {
-          visibility: visibility,
+          // visibility: visibility,
           mesh: meshes.add(render_mesh),
           material: materials.add(color.into()),
           transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
