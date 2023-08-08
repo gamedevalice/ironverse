@@ -1,18 +1,18 @@
 use bevy::{prelude::*, utils::HashMap, input::ButtonState};
 use rapier3d::prelude::{ColliderBuilder, InteractionGroups, Group, Isometry, Point};
 use voxels::{utils::key_to_world_coord_f32, data::voxel_octree::VoxelMode};
-
 use crate::{components::chunk::{Chunks, Mesh}, physics::Physics, input::MouseInput, data::GameResource};
-
 use super::{EditState, ChunkEditParams, ChunkEdit};
 
 mod normal;
+mod snap;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugin(normal::CustomPlugin)
+      .add_plugin(snap::CustomPlugin)
       .add_system(on_edit.run_if(remove_state));
   }
 }

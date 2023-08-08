@@ -88,10 +88,20 @@ fn switch_state(
       EditState::AddNormal => {
         next_state.set(EditState::AddSnap);
       },
-      EditState::AddSnap => {
+      EditState::AddSnap | _ => {
         next_state.set(EditState::AddNormal);
       }
-      _ => {}
+    }
+  }
+
+  if key_input.just_pressed(KeyCode::N) {
+    match state.0 {
+      EditState::RemoveNormal => {
+        next_state.set(EditState::RemoveSnap);
+      },
+      EditState::RemoveSnap | _ => {
+        next_state.set(EditState::RemoveNormal);
+      }
     }
   }
 }
