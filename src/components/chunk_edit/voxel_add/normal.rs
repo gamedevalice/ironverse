@@ -98,8 +98,6 @@ fn position_changed(
       continue;
     }
 
-    println!("position_changed");
-
     game_res.preview_chunk_manager.chunks = game_res.chunk_manager.chunks.clone();
     
     let min = 0;

@@ -93,23 +93,8 @@ pub fn get_surface_nets(
   octree: &VoxelOctree, 
   voxel_reuse: &mut VoxelReuse,
   colors: &Vec<[f32; 3]>,
+  scale: f32,
 ) -> MeshData {
-  /*Refactor
-      Start from scratch
-      Piece together what is needed for the new system
-      Defer any optimization in mind
-      Make it work for now
-
-      Implement Grid based defining mesh data
-      
-      Octree with value of [2, 2, 2] should have:
-        36 positions/vertices
-        36 normals
-        36 weights
-        6 faces
-        12 triangles
-        ? types
-  */
   let voxel_start = 0;
   let voxel_end = octree.get_size();
   for x in voxel_start..voxel_end {
@@ -133,7 +118,7 @@ pub fn get_surface_nets(
   for x in start..end {
     for y in start..end {
       for z in start..end {
-        init_grid(&mut layout, voxel_reuse, x, y, z);
+        init_grid(&mut layout, voxel_reuse, x, y, z, scale);
         detect_face_x(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
         detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
         detect_face_z(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
@@ -145,7 +130,14 @@ pub fn get_surface_nets(
 }
 
 
-fn init_grid(layout: &mut Layout, voxel_reuse: &mut VoxelReuse, x: u32, y: u32, z: u32) {
+fn init_grid(
+  layout: &mut Layout, 
+  voxel_reuse: &mut VoxelReuse, 
+  x: u32, 
+  y: u32, 
+  z: u32,
+  scale: f32,
+) {
   let mut voxel_count = 0;
   let mut dists = [1.0; 8];
 
@@ -198,9 +190,9 @@ fn init_grid(layout: &mut Layout, voxel_reuse: &mut VoxelReuse, x: u32, y: u32, 
         sum[2] += intersection[2];
       }
     }
-    let pos_x = sum[0] / count as f32 + x as f32;
-    let pos_y = sum[1] / count as f32 + y as f32;
-    let pos_z = sum[2] / count as f32 + z as f32;
+    let pos_x = (sum[0] / count as f32 + x as f32) * scale;
+    let pos_y = (sum[1] / count as f32 + y as f32) * scale;
+    let pos_z = (sum[2] / count as f32 + z as f32) * scale;
     let avg_pos = Some([pos_x, pos_y, pos_z]);
 
     layout.grids[grid_index].types = voxels;

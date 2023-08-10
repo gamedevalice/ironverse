@@ -55,8 +55,8 @@ default = [
   "chunk",
   # "ui_prompt",
   "ui",
-  # "graphics_low",
-  "graphics_normal",  # Either graphics_low or graphics_normal
+  "graphics_low",
+  # "graphics_normal",  # Either graphics_low or graphics_normal
 ]
 
 core = [
@@ -73,9 +73,10 @@ ui = ["bevy_egui"]
 ui_prompt = ["rfd"]
 
 
-tests = ["test_mesh_color", "bevy_flycam", "voxels", "bevy_egui"]
+tests = ["test_voxel_size_config", "bevy_flycam", "voxels", "bevy_egui"]
 test_fast_surface_nets = ["fast-surface-nets"]
 test_mesh_color = []
+test_voxel_size_config = []
 test_raycast = []
 
 
