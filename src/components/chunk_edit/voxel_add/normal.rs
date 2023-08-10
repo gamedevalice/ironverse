@@ -87,7 +87,8 @@ fn update_position(
 
 fn position_changed(
   mut edits: Query<
-  (&mut ChunkEdit, &ChunkEditParams), Changed<ChunkEdit>
+  (&mut ChunkEdit, &ChunkEditParams), 
+  Or<(Changed<ChunkEdit>, Changed<ChunkEditParams>)>
   >,
   mut game_res: ResMut<GameResource>,
 ) {
@@ -96,6 +97,8 @@ fn position_changed(
       edit.chunk = None;
       continue;
     }
+
+    println!("position_changed");
 
     game_res.preview_chunk_manager.chunks = game_res.chunk_manager.chunks.clone();
     
@@ -112,7 +115,7 @@ fn position_changed(
             point.z as i64 + z
           ];
 
-          let _ = game_res.preview_chunk_manager.set_voxel2(&pos, 1);
+          let _ = game_res.preview_chunk_manager.set_voxel2(&pos, params.voxel);
         }
       }
     }

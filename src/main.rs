@@ -48,11 +48,11 @@ cfg_if! {
   }
 }
 
-// cfg_if! {
-//   if #[cfg(feature = "graphics_normal")] {
-//     mod graphics_normal;
-//   }
-// }
+cfg_if! {
+  if #[cfg(feature = "graphics_normal")] {
+    mod graphics_normal;
+  }
+}
 
 cfg_if! {
   if #[cfg(feature = "ui")] {
@@ -127,13 +127,13 @@ fn main() {
     }
   }
 
-  // cfg_if! {
-  //   if #[cfg(feature = "graphics_normal")] {
-  //     app
-  //       .add_plugin(graphics_normal::chunks::CustomPlugin)
-  //       .add_plugin(graphics_normal::chunk_preview::CustomPlugin);
-  //   }
-  // }
+  cfg_if! {
+    if #[cfg(feature = "graphics_normal")] {
+      app
+        .add_plugin(graphics_normal::chunks::CustomPlugin)
+        .add_plugin(graphics_normal::chunk_preview::CustomPlugin);
+    }
+  }
 
   cfg_if! {
     if #[cfg(feature = "ui")] {

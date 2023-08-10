@@ -10,7 +10,7 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugin(text::CustomPlugin)
-      .add_startup_system(startup)
+      // .add_startup_system(startup)
       // .add_plugin(LogDiagnosticsPlugin::default())
       // .add_plugin(raycast::CustomPlugin)
       // .add_plugin(camera::CustomPlugin)

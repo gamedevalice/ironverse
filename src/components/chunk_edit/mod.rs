@@ -1,5 +1,7 @@
 use bevy::{prelude::*, input::mouse::MouseWheel};
 use voxels::chunk::chunk_manager::Chunk;
+use crate::input::hotbar::HotbarResource;
+
 use super::player::Player;
 
 mod voxel_add;
@@ -35,6 +37,8 @@ fn update_edit_params(
   key_input: Res<Input<KeyCode>>,
   time: Res<Time>,
   mut chunk_edit_params: Query<&mut ChunkEditParams>,
+
+  hotbar_res: Res<HotbarResource>,
 ) {
   for event in mouse_wheels.iter() {
     for mut params in chunk_edit_params.iter_mut() {
@@ -75,6 +79,20 @@ fn update_edit_params(
       }
     }
   }
+
+  for i in 0..hotbar_res.bars.len() {
+    let bar = &hotbar_res.bars[i];
+    let voxel = bar.voxel;
+
+    if bar.key_code == hotbar_res.selected_keycode {
+      for mut params in chunk_edit_params.iter_mut() {
+        if params.voxel != voxel {
+          params.voxel = voxel;
+        }
+      }
+    }
+  }
+    
 }
 
 fn switch_state(
@@ -179,8 +197,9 @@ pub struct ChunkEdit {
 pub struct ChunkEditParams {
   pub level: u8,
   pub dist: f32,
+  pub voxel: u8,
 
-  pub size: u32, 
+  pub size: u32,
 }
 
 impl Default for ChunkEditParams {
@@ -189,6 +208,7 @@ impl Default for ChunkEditParams {
     Self {
       level: level,
       dist: 8.0,
+      voxel: 0,
       size: 2_u32.pow(level as u32),
     }
   }
@@ -197,9 +217,9 @@ impl Default for ChunkEditParams {
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum EditState {
+  #[default]
   AddNormal,
   AddSnap,
-  #[default]
   RemoveNormal,
   RemoveSnap,
 }
