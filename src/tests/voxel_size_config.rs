@@ -197,10 +197,10 @@ fn voxel_preview(
   cam: Query<&Transform, (With<FlyCam>, Without<EditPreview>)>,
 ) {
   // Positioning the preview hitting a voxel
-  let total_div = 20;
-  let min_dist = 1.0;
   let max_dist = 50.0;
-
+  let total_div = max_dist as i64 * 2;
+  let min_dist = 1.0;
+  
   let mut pos_op = None;
   for cam_trans in &cam {
     // println!("{:?}", cam_trans.translation);
@@ -230,7 +230,7 @@ fn voxel_preview(
     }
   }
 
-  println!("voxel_preview {:?}", pos_op);
+  // println!("voxel_preview {:?}", pos_op);
 
   // if pos_op.is_some() {
   //   println!("voxel_preview {:?}", pos_op.unwrap());

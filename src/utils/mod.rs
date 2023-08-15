@@ -166,9 +166,9 @@ impl RayUtils {
     let mut result = Vec::new();
   
     let size_i64 = size as i64;
-    let base_x = ( (pos.x as i64) / size_i64 ) * size_i64;
-    let base_y = ( (pos.y as i64) / size_i64 ) * size_i64;
-    let base_z = ( (pos.z as i64) / size_i64 ) * size_i64;
+    let base_x = ( (pos.x.round() as i64) / size_i64 ) * size_i64;
+    let base_y = ( (pos.y.round() as i64) / size_i64 ) * size_i64;
+    let base_z = ( (pos.z.round() as i64) / size_i64 ) * size_i64;
   
     // println!("base_x {}", base_x);
   
