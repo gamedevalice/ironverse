@@ -1,10 +1,10 @@
 use bevy::{prelude::*, window::PresentMode};
 use cfg_if::cfg_if;
 
+mod utils;
 
 cfg_if! {
   if #[cfg(feature = "core")] {
-    mod utils;
     mod input;
     mod components;
     mod states;

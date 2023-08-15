@@ -3,6 +3,8 @@ use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, Ric
 use bevy_flycam::FlyCam;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::voxel_octree::{VoxelMode, VoxelOctree, MeshData}};
 
+use crate::utils::RayUtils;
+
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
@@ -11,6 +13,12 @@ impl Plugin for CustomPlugin {
       .add_startup_system(setup_camera)
       .add_startup_system(startup)
       .add_system(show_diagnostic_texts);
+
+    app
+      .insert_resource(LocalResource::default())
+      .add_startup_system(startup_voxel_preview)
+      .add_system(voxel_preview)
+      .add_system(voxel_edit);
   }
 }
 
@@ -25,21 +33,11 @@ fn setup_camera(
     .spawn(Camera3dBundle {
       // transform: Transform::from_xyz(6.5, 22.22, -8.4)
       //   .looking_to(Vec3::new(-0.0, -0.5, 0.8), Vec3::Y),
-      transform: Transform::from_xyz(7.2, 37.40, 5.5)
-        .looking_to(Vec3::new(-0.0, -0.99, 0.03), Vec3::Y),
+      transform: Transform::from_xyz(1.6, 11.3, -20.5)
+        .looking_to(Vec3::new(0.09, -0.48, 0.86), Vec3::Y),
       ..Default::default()
     })
     .insert(FlyCam);
-
-  // commands.spawn(PointLightBundle {
-  //   point_light: PointLight {
-  //     intensity: 6000.0,
-  //     ..Default::default()
-  //   },
-  //   // transform: Transform::from_xyz(6.0, 30.0, 6.0),
-  //   transform: Transform::from_xyz(6.0, 15.0, 6.0),
-  //   ..Default::default()
-  // });
 
   // Sun
   commands.spawn(DirectionalLightBundle {
@@ -76,10 +74,11 @@ fn startup(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
+  mut local_res: ResMut<LocalResource>,
 ) {
   let size = 16;
   let seamless_size = 12;
-  let scale = 0.5;
+  let scale = 1.0;
 
   let calc_size = (size - 2) as f32 * scale;
 
@@ -108,32 +107,33 @@ fn startup(
     [0.0, 0.4, 0.0],
   ];
 
-  let manager = ChunkManager::default();
-  let config = manager.config.clone();
+  let config = local_res.chunk_manager.config.clone();
+  let mut voxel_reuse = local_res.chunk_manager.voxel_reuse.clone();
   // let chunk = ChunkManager::new_chunk(&[0, -1, 0], config.depth, config.lod, config.noise);
-  let mut chunk = Chunk::default();
+  // let mut chunk = Chunk::default();
 
-  for x in 0..size {
-    for y in 0..size {
-      for z in 0..size {
-        if y < 3 {
-          chunk.octree.set_voxel(x, y, z, 1);
-        }
-      }
-    }
-  }
+  // for x in 0..size {
+  //   for y in 0..size {
+  //     for z in 0..size {
+  //       if y < 3 {
+  //         chunk.octree.set_voxel(x, y, z, 1);
+  //       }
+  //     }
+  //   }
+  // }
 
 
   let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
 
   for key in adj_keys.iter() {
     let chunk = ChunkManager::new_chunk(key, config.depth, config.lod, config.noise);
+    local_res.chunk_manager.set_chunk(key, &chunk);
 
     let data = chunk
       .octree
       .compute_mesh(
         VoxelMode::SurfaceNets, 
-        &mut manager.voxel_reuse.clone(),
+        &mut voxel_reuse,
         &colors,
         scale
       );
@@ -145,10 +145,10 @@ fn startup(
 
     let mesh_handle = meshes.add(render_mesh);
 
-    let mut coord_f32 = key_to_world_coord_f32(key, manager.config.seamless_size);
-    coord_f32[0] *= scale;
-    coord_f32[1] *= scale;
-    coord_f32[2] *= scale;
+    let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
+    // coord_f32[0] *= scale;
+    // coord_f32[1] *= scale;
+    // coord_f32[2] *= scale;
     commands
       .spawn(MaterialMeshBundle {
         mesh: mesh_handle,
@@ -158,10 +158,86 @@ fn startup(
         ..default()
       });
   }
-
-
-  
 }
+
+
+fn startup_voxel_preview(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+  /*
+    Make it changeable later
+   */
+  let size = 1.5;
+  let pos = [0.0, 0.0, 0.0];
+  let color = Color::rgba(0.0, 1.0, 0.0, 1.0);
+  commands
+    .spawn(PbrBundle {
+      mesh: meshes.add(Mesh::from(shape::Box::new(0.5, 1.5, 0.5))),
+      material: materials.add(color.into()),
+      transform: Transform::from_xyz(pos[0], pos[1], pos[2]),
+      ..default()
+    });
+
+
+  commands.spawn(PbrBundle {
+    mesh: meshes.add(Mesh::from(shape::Cube { size: 0.5 })),
+    material: materials.add(Color::rgba(1.0, 0.0, 0.0, 0.5).into()),
+    transform: Transform::from_xyz(2.0, 0.0, 0.0),
+    ..default()
+  })
+  .insert(EditPreview {});
+}
+
+
+fn voxel_preview(
+  local_res: Res<LocalResource>,
+  mut preview: Query<&mut Transform, With<EditPreview>>,
+  cam: Query<&Transform, (With<FlyCam>, Without<EditPreview>)>,
+) {
+  // Positioning the preview hitting a voxel
+  let total_div = 20;
+  let min_dist = 1.0;
+  let max_dist = 50.0;
+
+  let mut pos_op = None;
+  for cam_trans in &cam {
+    // println!("{:?}", cam_trans.translation);
+
+    'main: for i in (0..total_div).rev() {
+      let div_f32 = total_div as f32 - 1.0;
+      let dist = (max_dist / div_f32) * i as f32;
+      if dist < min_dist {
+        break;
+      }
+
+      let p = RayUtils::get_normal_point(&cam_trans, dist, 1);
+      let p_i64 = [p.x as i64, p.y as i64, p.z as i64];
+
+      let res = local_res.chunk_manager.get_voxel_safe(&p_i64);
+      if res.is_some() && res.unwrap() != 0 {
+        pos_op = Some(p);
+        break 'main;
+      }
+    }
+  }
+
+  println!("voxel_preview {:?}", pos_op);
+
+  // if pos_op.is_some() {
+  //   println!("voxel_preview {:?}", pos_op.unwrap());
+  // }
+
+}
+
+fn voxel_edit() {
+
+}
+
+
+
+
 
 fn show_diagnostic_texts(
   cameras: Query<&Transform, With<FlyCam>>,
@@ -227,3 +303,28 @@ fn show_diagnostic_texts(
 }
 
 
+#[derive(Resource)]
+struct LocalResource {
+  chunk_manager: ChunkManager,
+}
+
+impl Default for LocalResource {
+  fn default() -> Self {
+    Self {
+      chunk_manager: ChunkManager::default(),
+    }
+  }
+}
+
+
+#[derive(Component, Clone)]
+struct EditPreview {
+
+}
+
+
+/*
+  Voxel to edit coordinates to edit
+  Working demo before deploying
+
+*/
