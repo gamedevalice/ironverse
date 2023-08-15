@@ -146,9 +146,9 @@ fn startup(
     let mesh_handle = meshes.add(render_mesh);
 
     let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
-    // coord_f32[0] *= scale;
-    // coord_f32[1] *= scale;
-    // coord_f32[2] *= scale;
+    coord_f32[0] *= scale;
+    coord_f32[1] *= scale;
+    coord_f32[2] *= scale;
     commands
       .spawn(MaterialMeshBundle {
         mesh: mesh_handle,
@@ -182,7 +182,7 @@ fn startup_voxel_preview(
 
 
   commands.spawn(PbrBundle {
-    mesh: meshes.add(Mesh::from(shape::Cube { size: 0.5 })),
+    mesh: meshes.add(Mesh::from(shape::Cube { size: 1.1 })),
     material: materials.add(Color::rgba(1.0, 0.0, 0.0, 0.5).into()),
     transform: Transform::from_xyz(2.0, 0.0, 0.0),
     ..default()
@@ -205,12 +205,13 @@ fn voxel_preview(
   for cam_trans in &cam {
     // println!("{:?}", cam_trans.translation);
 
-    'main: for i in (0..total_div).rev() {
+    'main: for i in 0..total_div {
       let div_f32 = total_div as f32 - 1.0;
       let dist = (max_dist / div_f32) * i as f32;
       if dist < min_dist {
-        break;
+        continue;
       }
+      // println!("dist {}", dist);
 
       let p = RayUtils::get_normal_point(&cam_trans, dist, 1);
       let p_i64 = [p.x as i64, p.y as i64, p.z as i64];
@@ -220,6 +221,12 @@ fn voxel_preview(
         pos_op = Some(p);
         break 'main;
       }
+    }
+  }
+
+  if pos_op.is_some() {
+    for mut trans in &mut preview {
+      trans.translation = pos_op.unwrap();
     }
   }
 
