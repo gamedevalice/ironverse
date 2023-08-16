@@ -131,7 +131,7 @@ impl RayUtils {
     trans: &Transform, dist: f32, size: u32
   ) -> Vec3 {
     let mut point = trans.translation + trans.forward() * dist;
-    point -= (size as f32 * 0.5 - 0.5);
+    point -= size as f32 * 0.5 - 0.5;
   
     RayUtils::get_snapped_position(point, 1)
   }
@@ -140,7 +140,7 @@ impl RayUtils {
     trans: &Transform, dist: f32, size: u32
   ) -> Vec3 {
     let mut point = trans.translation + trans.forward() * dist;
-    point -= (size as f32 * 0.5 - 0.5);
+    point -= size as f32 * 0.5 - 0.5;
   
     RayUtils::get_snapped_position(point, size)
   }
@@ -192,5 +192,36 @@ impl RayUtils {
   
     result
   }
+
+
+  pub fn get_normal_point_with_scale(
+    trans: &Transform, dist: f32, size: u32, scale: f32
+  ) -> Vec3 {
+    let mut point = trans.translation + trans.forward() * dist;
+    // point -= size as f32 * 0.5 - 0.5;
+
+    /*
+      Need to return divisible by scale, Ex: 0.0, 0.5, 1.0
+     */
+
+    Vec3::ZERO
+  }
   
+}
+
+#[cfg(test)]
+mod tests {
+  use bevy::prelude::Transform;
+  use super::RayUtils;
+
+
+  #[test]
+  fn test_potential_positions() -> Result<(), String> {
+
+    RayUtils::get_normal_point_with_scale(
+      &Transform::default(), 1.0, 1, 0.5
+    );
+
+    Ok(())
+  }
 }
