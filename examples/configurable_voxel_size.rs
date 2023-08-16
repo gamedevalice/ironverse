@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PresentMode, PrimaryWindow, CursorGrabMode}};
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
-use voxels::{chunk::{chunk_manager::ChunkManager, adjacent_keys}, utils::key_to_world_coord_f32, data::voxel_octree::VoxelMode};
+use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::voxel_octree::VoxelMode};
 use bevy_flycam::NoCameraAndGrabPlugin;
 
 fn main() {
@@ -113,56 +113,57 @@ fn startup(
 
   let config = local_res.chunk_manager.config.clone();
   let mut voxel_reuse = local_res.chunk_manager.voxel_reuse.clone();
-  // let chunk = ChunkManager::new_chunk(&[0, -1, 0], config.depth, config.lod, config.noise);
-  // let mut chunk = Chunk::default();
+  let mut chunk = Chunk::default();
 
-  // for x in 0..size {
-  //   for y in 0..size {
-  //     for z in 0..size {
-  //       if y < 3 {
-  //         chunk.octree.set_voxel(x, y, z, 1);
-  //       }
-  //     }
-  //   }
-  // }
-
-
-  let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
-
-  for key in adj_keys.iter() {
-    let chunk = ChunkManager::new_chunk(key, config.depth, config.lod, config.noise);
-    local_res.chunk_manager.set_chunk(key, &chunk);
-
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &colors,
-        scale
-      );
-
-    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
-
-    let mesh_handle = meshes.add(render_mesh);
-
-    let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
-    coord_f32[0] *= scale;
-    coord_f32[1] *= scale;
-    coord_f32[2] *= scale;
-    commands
-      .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        // transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..default()
-      })
-      .insert(ChunkGraphics {});
+  /*
+    Start doing in single chunk no seamless
+    Then do multiple chunks with seamless
+   */
+  
+  let size = (1.0 / scale) as u32;
+  println!("size {}", size);
+  let start = 2;
+  for x in 0..size {
+    for y in 0..size {
+      for z in 0..size  {
+        chunk.octree.set_voxel(start + x, start + y, start + z, 1);
+      }
+    }
   }
+
+  
+  let key = &[0, 0, 0];
+  local_res.chunk_manager.set_chunk(key, &chunk);
+
+  let data = chunk
+    .octree
+    .compute_mesh(
+      VoxelMode::SurfaceNets, 
+      &mut voxel_reuse,
+      &colors,
+      scale
+    );
+
+  let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+  render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+  render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+  render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
+
+  let mesh_handle = meshes.add(render_mesh);
+
+  let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
+  coord_f32[0] *= scale;
+  coord_f32[1] *= scale;
+  coord_f32[2] *= scale;
+  commands
+    .spawn(MaterialMeshBundle {
+      mesh: mesh_handle,
+      material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+      transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+      // transform: Transform::from_xyz(0.0, 0.0, 0.0),
+      ..default()
+    })
+    .insert(ChunkGraphics {});
 }
 
 
@@ -419,11 +420,9 @@ struct EditPreview { }
 struct ChunkGraphics { }
 
 
-
-
-
 /*
-  Voxel to edit coordinates to edit
-  Working demo before deploying
+  Set how to test
+  Create a 1x1x1 cube using world size
+  Preview cube corresponding to the voxel size
 
 */
