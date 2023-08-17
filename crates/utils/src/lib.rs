@@ -103,7 +103,6 @@ fn round(num: f32, nearest: f32) -> f32 {
   let modulus = num % nearest;
   let mut res = base_val;
 
-
   if modulus.abs() >= half {
     if num < 0.0 { 
       res -= nearest;
@@ -111,17 +110,6 @@ fn round(num: f32, nearest: f32) -> f32 {
       res += nearest
     }
   }
-
-  // if num >= 0.0 {
-  //   if modulus >= half {
-  //     res += nearest;
-  //   }
-  // } else {
-  //   if modulus.abs() >= half {
-  //     res -= nearest;
-  //   }
-  // }
-  
 
   // println!(
   //   "num {}, div {}, half {} base_div {}, base_val {}, modulus {}", 
@@ -133,6 +121,68 @@ fn round(num: f32, nearest: f32) -> f32 {
 #[cfg(test)]
 mod tests {
   use crate::round;
+
+  #[test]
+  fn test_nearest_negative_positions_by_4_0() -> Result<(), String> {
+    let scale = 4.0;
+    assert_eq!(round(-0.1,   scale), 0.0);
+    assert_eq!(round(-1.99,  scale), 0.0);
+    assert_eq!(round(-2.0,   scale),-4.0);
+    assert_eq!(round(-3.99,  scale),-4.0);
+
+    assert_eq!(round(-4.1,   scale),-4.0);
+    assert_eq!(round(-5.99,  scale),-4.0);
+    assert_eq!(round(-6.1,   scale),-8.0);
+    assert_eq!(round(-7.99,  scale),-8.0);
+    Ok(())
+  }
+
+  #[test]
+  fn test_nearest_positive_positions_by_4_0() -> Result<(), String> {
+    let scale = 4.0;
+    assert_eq!(round(0.1,   scale), 0.0);
+    assert_eq!(round(1.99,  scale), 0.0);
+    assert_eq!(round(2.0,   scale), 4.0);
+    assert_eq!(round(3.99,  scale), 4.0);
+
+    assert_eq!(round(4.1,   scale), 4.0);
+    assert_eq!(round(5.99,  scale), 4.0);
+    assert_eq!(round(6.1,   scale), 8.0);
+    assert_eq!(round(7.99,  scale), 8.0);
+    Ok(())
+  }
+
+
+  #[test]
+  fn test_nearest_negative_positions_by_2_0() -> Result<(), String> {
+    let scale = 2.0;
+    assert_eq!(round(-0.1,   scale), 0.0);
+    assert_eq!(round(-0.99,  scale), 0.0);
+    assert_eq!(round(-1.0,   scale),-2.0);
+    assert_eq!(round(-1.99,  scale),-2.0);
+
+    assert_eq!(round(-2.1,   scale),-2.0);
+    assert_eq!(round(-2.99,  scale),-2.0);
+    assert_eq!(round(-3.1,   scale),-4.0);
+    assert_eq!(round(-3.99,  scale),-4.0);
+    Ok(())
+  }
+
+  #[test]
+  fn test_nearest_positive_positions_by_2_0() -> Result<(), String> {
+    let scale = 2.0;
+    assert_eq!(round(0.1,   scale), 0.0);
+    assert_eq!(round(0.99,  scale), 0.0);
+    assert_eq!(round(1.0,   scale), 2.0);
+    assert_eq!(round(1.99,  scale), 2.0);
+
+    assert_eq!(round(2.1,   scale), 2.0);
+    assert_eq!(round(2.99,  scale), 2.0);
+    assert_eq!(round(3.1,   scale), 4.0);
+    assert_eq!(round(3.99,  scale), 4.0);
+    Ok(())
+  }
+
 
   #[test]
   fn test_nearest_negative_positions_by_1_0() -> Result<(), String> {
@@ -152,103 +202,6 @@ mod tests {
 
   #[test]
   fn test_nearest_positive_positions_by_1_0() -> Result<(), String> {
-    // let transform = Transform::from_translation(Vec3::new(0.0, 0.0, 0.0))
-    //   .looking_to(Vec3::Z, Vec3::Y);
-
-    // let dist = 0.0;
-    // let scale = 1.0;
-
-    // RayUtils::get_normal_point_with_scale(
-    //   &transform, 1.0, 0.5
-    // );
-
-    
-    /*
-      Ex:
-        1:
-          Position: 0.0, 0.0, 0.0
-          Scale: 1.0
-          Result: 0.0, 0.0, 0.0
-        2:
-          Position: 0.4, 0.4, 0.4
-          Scale: 1.0
-          Result: 0.0, 0.0, 0.0
-        3:
-          Position: 0.5, 0.5, 0.5
-          Scale: 1.0
-          Result: 1.0, 1.0, 1.0
-
-      Scale down the problem for now
-      Ex:
-        1. 
-          Position: 0.0
-          Scale: 1.0
-          Result: 0.0
-        2. 
-          Position: 0.4
-          Scale: 1.0
-          Result: 0.0
-        3. 
-          Position: 0.5
-          Scale: 1.0
-          Result: 1.0
-
-        3. 
-          Position: 0.0
-          Scale: 0.5
-          Result: 0.0
-        4. 
-          Position: 0.24
-          Scale: 0.5
-          Result: 0.0
-        5. 
-          Position: 0.25
-          Scale: 0.5
-          Result: 0.5
-
-        6. 
-          Position: -0.24
-          Scale: 0.5
-          Result: 0.0
-        7. 
-          Position: -0.25
-          Scale: 0.5
-          Result: -0.5
-     */
-
-    
-    /*
-      Scale = 1.0
-        Res = -1.0  if pos > -1.5   && pos <= -0.5
-        Res =  0.0  if pos > -0.5   && pos <=  0.5
-        Res =  1.0  if pos >  0.5   && pos <=  1.5
-
-      Scale = 0.5
-        Res =  0.0  if pos > -0.25  && pos <=  0.25
-        Res =  0.5  if pos >  0.25  && pos <=  0.75
-        Res =  1.0  if pos >  0.75  && pos <=  1.25
-
-      Scale = 0.25
-        Res =  0.0  if pos > -0.125 && pos <=  0.125
-        Res =  0.25 if pos >  0.125 && pos <=  0.375
-        Res =  0.5  if pos >  0.375 && pos <=  0.625
-        Res =  0.75 if pos >  0.625 && pos <=  0.875
-        Res =  1.0  if pos >  0.875 && pos <=  1.125
-     */
-    /*
-      Get the base
-      Or multiple by the div
-      Then divide after
-
-      Ex:
-        Scale = 1.0
-          Pos = 0.4
-          Res = 0.0
-        
-
-
-     */
-    
     let scale = 1.0;
     assert_eq!(round(0.1,   scale), 0.0);
     assert_eq!(round(0.49,  scale), 0.0);
