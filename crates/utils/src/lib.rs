@@ -93,37 +93,61 @@ impl RayUtils {
 }
 
 fn round(num: f32, nearest: f32) -> f32 {
-  let div = 1.0 / nearest;
-
   let half = nearest / 2.0;
-  
-  let base_div = (num / nearest).floor();
-  let base_val = nearest * base_div;
-
-  let modulus = num % nearest;
-
-  
-  let mut res = base_val;
-  if modulus >= half {
-    res += nearest;
+  let mut base_div = (num / nearest).floor();
+  if num < 0.0 {
+    base_div = (num / nearest).ceil();
   }
 
-  println!(
-    "num {}, div {}, half {} base_div {}, base_val {}, modulus {}", 
-    num, div, half, base_div, base_val, modulus
-  );
+  let base_val = nearest * base_div;
+  let modulus = num % nearest;
+  let mut res = base_val;
 
 
+  if modulus.abs() >= half {
+    if num < 0.0 { 
+      res -= nearest;
+    } else {
+      res += nearest
+    }
+  }
 
+  // if num >= 0.0 {
+  //   if modulus >= half {
+  //     res += nearest;
+  //   }
+  // } else {
+  //   if modulus.abs() >= half {
+  //     res -= nearest;
+  //   }
+  // }
+  
+
+  // println!(
+  //   "num {}, div {}, half {} base_div {}, base_val {}, modulus {}", 
+  //   num, div, half, base_div, base_val, modulus
+  // );
   res
 }
 
 #[cfg(test)]
 mod tests {
-  use bevy::prelude::{Transform, Vec3};
   use crate::round;
 
-use super::RayUtils;
+  #[test]
+  fn test_nearest_negative_positions_by_1_0() -> Result<(), String> {
+    let scale = 1.0;
+    assert_eq!(round(-0.1,   scale), 0.0);
+    assert_eq!(round(-0.49,  scale), 0.0);
+    assert_eq!(round(-0.5,   scale),-1.0);
+    assert_eq!(round(-0.99,  scale),-1.0);
+
+    assert_eq!(round(-1.3,   scale),-1.0);
+    assert_eq!(round(-1.49,  scale),-1.0);
+    assert_eq!(round(-1.5,   scale),-2.0);
+    assert_eq!(round(-1.99,  scale),-2.0);
+    Ok(())
+  }
 
 
   #[test]
@@ -226,16 +250,45 @@ use super::RayUtils;
      */
     
     let scale = 1.0;
-    assert_eq!(round(0.3,   scale), 0.0);
+    assert_eq!(round(0.1,   scale), 0.0);
     assert_eq!(round(0.49,  scale), 0.0);
     assert_eq!(round(0.5,   scale), 1.0);
     assert_eq!(round(0.99,  scale), 1.0);
 
-    assert_eq!(round(1.3,   scale), 1.0);
+    assert_eq!(round(1.1,   scale), 1.0);
     assert_eq!(round(1.49,  scale), 1.0);
     assert_eq!(round(1.5,   scale), 2.0);
     assert_eq!(round(1.99,  scale), 2.0);
+    Ok(())
+  }
 
+  #[test]
+  fn test_nearest_negative_positions_by_0_5() -> Result<(), String> {
+    let scale = 0.5;
+    assert_eq!(round(-0.1,   scale), 0.0);
+    assert_eq!(round(-0.24,  scale), 0.0);
+    assert_eq!(round(-0.25,  scale),-0.5);
+    assert_eq!(round(-0.49,  scale),-0.5);
+    
+    assert_eq!(round(-0.6,   scale),-0.5);
+    assert_eq!(round(-0.749, scale),-0.5);
+    assert_eq!(round(-0.75,  scale),-1.0);
+    assert_eq!(round(-0.99,  scale),-1.0);
+
+    assert_eq!(round(-1.1,   scale),-1.0);
+    assert_eq!(round(-1.24,  scale),-1.0);
+    assert_eq!(round(-1.25,  scale),-1.5);
+    assert_eq!(round(-1.49,  scale),-1.5);
+    
+    assert_eq!(round(-1.6,   scale),-1.5);
+    assert_eq!(round(-1.749, scale),-1.5);
+    assert_eq!(round(-1.75,  scale),-2.0);
+    assert_eq!(round(-1.99,  scale),-2.0);
+    Ok(())
+  }
+
+  #[test]
+  fn test_nearest_positive_positions_by_0_5() -> Result<(), String> {
     let scale = 0.5;
     assert_eq!(round(0.1,   scale), 0.0);
     assert_eq!(round(0.24,  scale), 0.0);
@@ -256,8 +309,37 @@ use super::RayUtils;
     assert_eq!(round(1.749, scale), 1.5);
     assert_eq!(round(1.75,  scale), 2.0);
     assert_eq!(round(1.99,  scale), 2.0);
+    Ok(())
+  }
 
+  #[test]
+  fn test_nearest_negative_positions_by_0_25() -> Result<(), String> {
+    let scale = 0.25;
+    assert_eq!(round(-0.1,   scale), 0.0);
+    assert_eq!(round(-0.124, scale), 0.0);
+    assert_eq!(round(-0.125, scale),-0.25);
+    assert_eq!(round(-0.249, scale),-0.25);
 
+    assert_eq!(round(-0.26,  scale),-0.25);
+    assert_eq!(round(-0.374, scale),-0.25);
+    assert_eq!(round(-0.375, scale),-0.5);
+    assert_eq!(round(-0.499, scale),-0.5);
+
+    assert_eq!(round(-1.1,   scale),-1.0);
+    assert_eq!(round(-1.124, scale),-1.0);
+    assert_eq!(round(-1.125, scale),-1.25);
+    assert_eq!(round(-1.249, scale),-1.25);
+
+    assert_eq!(round(-1.26,  scale),-1.25);
+    assert_eq!(round(-1.374, scale),-1.25);
+    assert_eq!(round(-1.375, scale),-1.5);
+    assert_eq!(round(-1.499, scale),-1.5);
+
+    Ok(())
+  }
+
+  #[test]
+  fn test_nearest_positive_positions_by_0_25() -> Result<(), String> {
     let scale = 0.25;
     assert_eq!(round(0.1,   scale), 0.0);
     assert_eq!(round(0.124, scale), 0.0);
@@ -269,6 +351,15 @@ use super::RayUtils;
     assert_eq!(round(0.375, scale), 0.5);
     assert_eq!(round(0.499, scale), 0.5);
 
+    assert_eq!(round(1.1,   scale), 1.0);
+    assert_eq!(round(1.124, scale), 1.0);
+    assert_eq!(round(1.125, scale), 1.25);
+    assert_eq!(round(1.249, scale), 1.25);
+
+    assert_eq!(round(1.26,  scale), 1.25);
+    assert_eq!(round(1.374, scale), 1.25);
+    assert_eq!(round(1.375, scale), 1.5);
+    assert_eq!(round(1.499, scale), 1.5);
 
     Ok(())
   }
