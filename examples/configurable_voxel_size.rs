@@ -118,6 +118,8 @@ fn startup(
   /*
     Start doing in single chunk no seamless
     Then do multiple chunks with seamless
+
+
    */
   
   let size = (1.0 / scale) as u32;
@@ -320,6 +322,8 @@ fn show_diagnostic_texts(
   mut windows: Query<&mut Window, With<PrimaryWindow>>,
   key_input: Res<Input<KeyCode>>,
 
+  local_res: Res<LocalResource>,
+
   mut ctx: EguiContexts,
 ) {
   let mut window = match windows.get_single_mut() {
@@ -393,7 +397,7 @@ impl Default for LocalResource {
     Self {
       chunk_manager: ChunkManager::default(),
       voxel_pos: None,
-      scale: 1.0,
+      scale: 0.5,
       colors: vec![
         [1.0, 0.0, 0.0], 
         [0.0, 1.0, 0.0], 
@@ -426,3 +430,5 @@ struct ChunkGraphics { }
   Preview cube corresponding to the voxel size
 
 */
+
+
