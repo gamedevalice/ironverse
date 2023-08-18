@@ -23,5 +23,6 @@ pub fn get_dual_contour(octree: &VoxelOctree, _start_pos: &[f32; 3]) -> MeshData
     types_1: Vec::new(),
     types_2: Vec::new(),
     voxel_positions: Vec::new(),
+    colors: Vec::new(),
   }
 }

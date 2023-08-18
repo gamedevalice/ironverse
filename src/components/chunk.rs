@@ -53,7 +53,9 @@ fn on_player_add(
   
       let data = chunk.octree.compute_mesh(
         VoxelMode::SurfaceNets, 
-        &mut game_res.chunk_manager.voxel_reuse
+        &mut game_res.chunk_manager.voxel_reuse.clone(),
+        &game_res.colors,
+        1.0,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);
@@ -140,7 +142,9 @@ fn on_player_move(
 
       let data = chunk.octree.compute_mesh(
         VoxelMode::SurfaceNets, 
-        &mut game_res.chunk_manager.voxel_reuse
+        &mut game_res.chunk_manager.voxel_reuse.clone(),
+        &game_res.colors,
+        1.0,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);

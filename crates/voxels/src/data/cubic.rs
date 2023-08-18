@@ -60,6 +60,7 @@ pub fn get_cube(octree: &VoxelOctree, start_pos: &[f32; 3]) -> MeshData {
     types_1: Vec::new(),
     types_2: Vec::new(),
     voxel_positions: Vec::new(),
+    colors: Vec::new(),
   }
 }
 

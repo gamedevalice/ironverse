@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::{render_resource::{PrimitiveTopology, VertexFormat}, mesh::{MeshVertexAttribute, Indices}}};
+use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}};
 use voxels::{utils::key_to_world_coord_f32, chunk::adjacent_keys};
 use crate::{data::{GameResource}, components::{chunk::Chunks, player::Player}, graphics::{ChunkGraphics}};
 
@@ -41,13 +41,8 @@ fn add(
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
       render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-      render_mesh.insert_attribute(VOXEL_WEIGHT, data.weights.clone());
-      render_mesh.insert_attribute(VOXEL_TYPE_1, data.types_1.clone());
-
       let mesh_handle = meshes.add(render_mesh);
-
       let coord_f32 = key_to_world_coord_f32(&mesh.key, config.seamless_size);
-
       let mat = materials.add(Color::rgb(0.8, 0.7, 0.6).into());
       commands
         .spawn(MaterialMeshBundle {
@@ -79,12 +74,4 @@ fn remove(
     
   }
 }
-
-
-pub const VOXEL_WEIGHT: MeshVertexAttribute =
-  MeshVertexAttribute::new("Voxel_Weight", 988540917, VertexFormat::Float32x4);
-
-pub const VOXEL_TYPE_1: MeshVertexAttribute =
-  MeshVertexAttribute::new("Voxel_Type_1", 988540918, VertexFormat::Uint32x4);
-
 
