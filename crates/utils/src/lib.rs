@@ -1,9 +1,7 @@
-use bevy::prelude::{Transform, Vec3};
-
 pub struct RayUtils;
 
 impl RayUtils {
-  pub fn get_normal_point(
+/*   pub fn get_normal_point(
     trans: &Transform, dist: f32, size: u32
   ) -> Vec3 {
     let mut point = trans.translation + trans.forward() * dist;
@@ -82,12 +80,30 @@ impl RayUtils {
 
     Vec3::ZERO
   }
+ */
 
-  pub fn get_nearest_coord(pos: Vec3, scale: f32) -> Vec3 {
-    let mut nearest = Vec3::NAN;
+  pub fn get_normal_point_with_scale(
+    pos: [f32; 3], forward: [f32; 3], dist: f32, nearest: f32
+  ) -> [f32; 3] {
+    // let mut point = trans.translation + trans.forward() * dist;
+    let point = [
+      pos[0] + forward[0] * dist,
+      pos[1] + forward[1] * dist,
+      pos[2] + forward[2] * dist,
+    ];
+    
+    [
+      round(point[0], nearest),
+      round(point[1], nearest),
+      round(point[2], nearest),
+    ]
+  }
 
 
-    nearest
+  pub fn get_nearest_coord(pos: [f32; 3], nearest: f32) -> [f32; 3] {
+    [round(pos[0], nearest), 
+      round(pos[1], nearest), 
+      round(pos[2], nearest)]
   }
   
 }

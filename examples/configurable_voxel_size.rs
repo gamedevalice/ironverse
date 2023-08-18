@@ -217,20 +217,22 @@ fn voxel_preview(
         continue;
       }
 
-
-      /*
-        Have to change by changing the scale
-        For now, use 0.5
-        RayUtils::get_normal_point()
-          Need to return divisible by scale, Ex: 0.0, 0.5, 1.0
-          Previously 0.0, 1.0
-       */
-      let p = utils::RayUtils::get_normal_point(&cam_trans, dist, 1);
-      let p_i64 = [p.x as i64, p.y as i64, p.z as i64];
+      let t = cam_trans.translation;
+      let f = cam_trans.forward();
+      let p = utils::RayUtils::get_normal_point_with_scale(
+        [t.x, t.y, t.z], [f.x, f.y, f.z], dist, local_res.scale
+      );
+      let mul = 1.0 / local_res.scale;
+      let voxel_x = (p[0] * mul) as i64;
+      let voxel_y = (p[1] * mul) as i64;
+      let voxel_z = (p[2] * mul) as i64;
+      
+      let p_i64 = [voxel_x, voxel_y, voxel_z];
 
       let res = local_res.chunk_manager.get_voxel_safe(&p_i64);
       if res.is_some() && res.unwrap() != 0 {
-        pos_op = Some(p);
+        let s = local_res.scale;
+        pos_op = Some(Vec3::new(p[0], p[1], p[2]));
 
         local_res.voxel_pos = Some(p_i64);
         break 'main;
@@ -241,6 +243,8 @@ fn voxel_preview(
   if pos_op.is_some() {
     for mut trans in &mut preview {
       trans.translation = pos_op.unwrap();
+
+      // println!("pos_op {:?}", pos_op.unwrap());
     }
     
   }
