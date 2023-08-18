@@ -1,6 +1,6 @@
-use bevy::{prelude::*, window::PrimaryWindow, diagnostic::{Diagnostic, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin, Diagnostics}};
-use bevy_egui::{EguiContexts, egui::{self, TextureId, Frame, Color32, Style, ImageButton, Rect, Vec2, Pos2, RichText}};
-use crate::{components::{player::Player, range::Range}};
+use bevy::{prelude::*, window::PrimaryWindow, diagnostic::{FrameTimeDiagnosticsPlugin, Diagnostics}};
+use bevy_egui::{EguiContexts, egui::{self, Frame, Color32, Style, Rect, Vec2, Pos2, RichText}};
+use crate::components::{player::Player, chunk_edit::ChunkEdit};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -8,7 +8,6 @@ impl Plugin for CustomPlugin {
     app
       .insert_resource(LocalResource::default())
       .add_plugin(FrameTimeDiagnosticsPlugin::default())
-      // .add_plugin(LogDiagnosticsPlugin::default())
       .add_system(show_texts)
       ;
   }
@@ -23,7 +22,7 @@ fn show_texts(
   mut local_res: ResMut<LocalResource>,
 
   players: Query<&Transform, With<Player>>,
-  ranges: Query<&Range>,
+  chunk_edits: Query<&ChunkEdit>,
 ) {
   let res = windows.get_single();
   if res.is_err() {
@@ -64,9 +63,11 @@ fn show_texts(
     player_pos = trans.translation.clone();
   }
 
-  let mut range_pos = Vec3::ZERO;
-  for range in &ranges {
-    range_pos = range.point;
+  let mut range_pos = Vec3::NAN;
+  for edit in &chunk_edits {
+    if edit.position.is_some() {
+      range_pos = edit.position.unwrap();
+    }
   }
 
   egui::Window::new("DebuggerTexts")
@@ -94,12 +95,12 @@ fn show_texts(
             .size(20.0)
         );
 
-        
         ui.label(
           RichText::new(format!("Raycast: {:?}", range_pos))
             .color(Color32::WHITE)
             .size(20.0)
         );
+        
       });
     });
 }

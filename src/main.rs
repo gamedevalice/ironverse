@@ -1,10 +1,10 @@
 use bevy::{prelude::*, window::PresentMode};
 use cfg_if::cfg_if;
 
+mod utils;
 
 cfg_if! {
   if #[cfg(feature = "core")] {
-    mod utils;
     mod input;
     mod components;
     mod states;
@@ -17,17 +17,30 @@ cfg_if! {
 
 
 cfg_if! {
-  if #[cfg(target_arch = "wasm32")] {
+  if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
     mod wasm;
+  }
+}
+
+cfg_if! {
+  if #[cfg(all(feature = "ui_prompt", target_arch = "wasm32") )] {
+    mod wasm_ui;
   }
 }
 
 // mod native;
 cfg_if! {
-  if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
+  if #[cfg(all(not(feature = "tests"), not(target_arch = "wasm32") ))] {
     mod native;
   }
 }
+
+cfg_if! {
+  if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
+    mod native_ui;
+  }
+}
+
 
 cfg_if! {
   if #[cfg(feature = "graphics_low")] {
@@ -55,9 +68,6 @@ cfg_if! {
   }
 }
 
-
-
-
 fn main() {
   let mut app = App::new();
   app
@@ -72,17 +82,18 @@ fn main() {
       }),
       ..default()
     }));
-  
+
   cfg_if! {
     if #[cfg(feature = "core")] {
       app
         .add_plugin(data::CustomPlugin)
         .add_plugin(physics::CustomPlugin)
         .add_plugin(input::CustomPlugin)
-        .add_plugin(components::raycast::CustomPlugin)
-        .add_plugin(components::range::CustomPlugin)
-        .add_plugin(components::chunk_edit::CustomPlugin)
-        .add_plugin(components::chunk_preview::CustomPlugin)
+        .add_plugin(components::CustomPlugin)
+        // .add_plugin(components::raycast::CustomPlugin)
+        // .add_plugin(components::range::CustomPlugin)
+        // .add_plugin(components::chunk_edit::CustomPlugin)
+        // .add_plugin(components::chunk_preview::CustomPlugin)
         .add_plugin(graphics::CustomPlugin)
         .add_plugin(states::CustomPlugin)
         .add_plugin(obj::CustomPlugin);
@@ -108,18 +119,19 @@ fn main() {
   }
 
   cfg_if! {
-    if #[cfg(feature = "graphics_normal")] {
+    if #[cfg(feature = "graphics_low")] {
       app
-        .add_plugin(graphics_normal::chunks::CustomPlugin)
-        .add_plugin(graphics_normal::chunk_preview::CustomPlugin);
+        .add_plugin(graphics_low::chunks::CustomPlugin)
+        .add_plugin(graphics_low::chunk_preview::CustomPlugin)
+        ;
     }
   }
 
   cfg_if! {
-    if #[cfg(feature = "graphics_low")] {
+    if #[cfg(feature = "graphics_normal")] {
       app
-        .add_plugin(graphics_low::chunks::CustomPlugin)
-        .add_plugin(graphics_low::chunk_preview::CustomPlugin);
+        .add_plugin(graphics_normal::chunks::CustomPlugin)
+        .add_plugin(graphics_normal::chunk_preview::CustomPlugin);
     }
   }
 
@@ -133,16 +145,30 @@ fn main() {
   }
 
   cfg_if! {
-    if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
+    if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
+      app
+        .add_plugin(wasm::CustomPlugin);
+    }
+  }
+
+  cfg_if! {
+    if #[cfg(all(feature = "ui_prompt", target_arch = "wasm32") )] {
+      app
+        .add_plugin(wasm_ui::CustomPlugin);
+    }
+  }
+
+  cfg_if! {
+    if #[cfg(all(not(feature = "tests"), not(target_arch = "wasm32") ))] {
       app
         .add_plugin(native::CustomPlugin);
     }
   }
 
   cfg_if! {
-    if #[cfg(target_arch = "wasm32")] {
+    if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
       app
-        .add_plugin(wasm::CustomPlugin);
+        .add_plugin(native_ui::CustomPlugin);
     }
   }
 
@@ -156,5 +182,3 @@ fn main() {
   
   app.run();
 }
-
-

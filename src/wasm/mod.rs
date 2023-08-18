@@ -5,9 +5,6 @@ use flume::*;
 use wasm_bindgen::prelude::*;
 use crate::{input::MouseInput, data::{CursorState, UIState}};
 
-mod load_data;
-mod save_data;
-
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
@@ -16,8 +13,6 @@ impl Plugin for CustomPlugin {
       .add_event::<PointerLockEvent>()
       .add_event::<MouseMoveEvent>()
       .add_event::<WasmInputEvent>()
-      .add_plugin(save_data::CustomPlugin)
-      .add_plugin(load_data::CustomPlugin)
       .add_system(update_fullscreen)
       .add_system(grab_mouse)
       .add_system(cursor_free.in_schedule(OnEnter(CursorState::None)))

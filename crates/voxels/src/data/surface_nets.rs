@@ -65,7 +65,8 @@ struct Grid {
   pub pos: Option<[f32; 3]>,
   normal: [f32; 3],
   // weights: [f32; 4],
-  types: [u32; 4],
+  // types: [u32; 4],
+  types: [u32; 8],
   voxel_count: u8,
 }
 
@@ -88,23 +89,12 @@ impl Layout {
   }
 }
 
-pub fn get_surface_nets(octree: &VoxelOctree, voxel_reuse: &mut VoxelReuse) -> MeshData {
-  /*Refactor
-      Start from scratch
-      Piece together what is needed for the new system
-      Defer any optimization in mind
-      Make it work for now
-
-      Implement Grid based defining mesh data
-      
-      Octree with value of [2, 2, 2] should have:
-        36 positions/vertices
-        36 normals
-        36 weights
-        6 faces
-        12 triangles
-        ? types
-  */
+pub fn get_surface_nets(
+  octree: &VoxelOctree, 
+  voxel_reuse: &mut VoxelReuse,
+  colors: &Vec<[f32; 3]>,
+  scale: f32,
+) -> MeshData {
   let voxel_start = 0;
   let voxel_end = octree.get_size();
   for x in voxel_start..voxel_end {
@@ -128,10 +118,10 @@ pub fn get_surface_nets(octree: &VoxelOctree, voxel_reuse: &mut VoxelReuse) -> M
   for x in start..end {
     for y in start..end {
       for z in start..end {
-        init_grid(&mut layout, voxel_reuse, x, y, z);
-        detect_face_x(&mut data, &mut layout, voxel_reuse, x, y, z);
-        detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z);
-        detect_face_z(&mut data, &mut layout, voxel_reuse, x, y, z);
+        init_grid(&mut layout, voxel_reuse, x, y, z, scale);
+        detect_face_x(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
+        detect_face_y(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
+        detect_face_z(&mut data, &mut layout, voxel_reuse, x, y, z, colors);
       }
     }
   }
@@ -140,11 +130,19 @@ pub fn get_surface_nets(octree: &VoxelOctree, voxel_reuse: &mut VoxelReuse) -> M
 }
 
 
-fn init_grid(layout: &mut Layout, voxel_reuse: &mut VoxelReuse, x: u32, y: u32, z: u32) {
+fn init_grid(
+  layout: &mut Layout, 
+  voxel_reuse: &mut VoxelReuse, 
+  x: u32, 
+  y: u32, 
+  z: u32,
+  scale: f32,
+) {
   let mut voxel_count = 0;
   let mut dists = [1.0; 8];
 
-  let mut voxels = [0; 4];
+  // let mut voxels = [0; 4];
+  let mut voxels = [0; 8];
   let mut voxel_index = 0;
   for x_offset in 0..2 {
     for y_offset in 0..2 {
@@ -166,10 +164,11 @@ fn init_grid(layout: &mut Layout, voxel_reuse: &mut VoxelReuse, x: u32, y: u32, 
           dists[corner_index as usize] = -1.0;
           voxel_count += 1;
 
-          let surrounding_voxel_limit = 4;
-          if voxel_index < surrounding_voxel_limit {
-            voxels[voxel_index] = voxel as u32;
-          }
+          // let surrounding_voxel_limit = 4;
+          // if voxel_index < surrounding_voxel_limit {
+            // voxels[voxel_index] = voxel as u32;
+          // }
+          voxels[voxel_index] = voxel as u32;
           
           voxel_index += 1;
         }
@@ -191,9 +190,9 @@ fn init_grid(layout: &mut Layout, voxel_reuse: &mut VoxelReuse, x: u32, y: u32, 
         sum[2] += intersection[2];
       }
     }
-    let pos_x = sum[0] / count as f32 + x as f32;
-    let pos_y = sum[1] / count as f32 + y as f32;
-    let pos_z = sum[2] / count as f32 + z as f32;
+    let pos_x = (sum[0] / count as f32 + x as f32) * scale;
+    let pos_y = (sum[1] / count as f32 + y as f32) * scale;
+    let pos_z = (sum[2] / count as f32 + z as f32) * scale;
     let avg_pos = Some([pos_x, pos_y, pos_z]);
 
     layout.grids[grid_index].types = voxels;
@@ -223,7 +222,8 @@ fn detect_face_x(
   voxel_reuse: &mut VoxelReuse, 
   x: u32, 
   y: u32, 
-  z: u32
+  z: u32,
+  colors: &Vec<[f32; 3]>,
 ) {
   /*Detect grids to create surface mesh x-axis:
       0, 0, 0
@@ -264,102 +264,80 @@ fn detect_face_x(
 
   let create = face_left ^ face_right;  // Only one should be true
   if create {
-    let mut all_voxels = get_vertices_voxels(
+    let voxels = get_vertices_voxels(
       &grid_000, &grid_010, &grid_001, &grid_011
     );
+    let color_000 = get_color(&voxels, &grid_000, colors);
+    let color_010 = get_color(&voxels, &grid_010, colors);
+    let color_011 = get_color(&voxels, &grid_011, colors);
+    let color_001 = get_color(&voxels, &grid_001, colors);
 
     let start = 0;
     if face_left && x != start {
-      let voxels = all_voxels.clone();
-      let weights_000 = get_weights(&voxels, &grid_000);
-      let weights_010 = get_weights(&voxels, &grid_010);
-      let weights_001 = get_weights(&voxels, &grid_001);
-      let weights_011 = get_weights(&voxels, &grid_011);
-
-      modify_to_texture_indices(&mut all_voxels);
-
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_010.pos.unwrap());
       data.normals.push(grid_010.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_010);
+      data.colors.push(color_010);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_011);
+      data.colors.push(color_011);
+
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_011);
+      data.colors.push(color_011);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_001);
+      data.colors.push(color_001);
     }
 
     let end_index = voxel_reuse.size - 1;
     if face_right && x != end_index {
-      let weights_000 = get_weights(&all_voxels, &grid_000);
-      let weights_011 = get_weights(&all_voxels, &grid_011);
-      let weights_010 = get_weights(&all_voxels, &grid_010);
-      let weights_001 = get_weights(&all_voxels, &grid_001);
-
-      modify_to_texture_indices(&mut all_voxels);
-
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_011);
+      data.colors.push(color_011);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_010.pos.unwrap());
       data.normals.push(grid_010.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_010);
+      data.colors.push(color_010);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_001);
+      data.colors.push(color_001);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_011.pos.unwrap());
       data.normals.push(grid_011.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_011);
+      data.colors.push(color_011);
     }
   }
 }
@@ -370,7 +348,8 @@ fn detect_face_y(
   voxel_reuse: &mut VoxelReuse, 
   x: u32, 
   y: u32, 
-  z: u32
+  z: u32,
+  colors: &Vec<[f32; 3]>,
 ) {
   if x == 0 || z == 0 {
     return;
@@ -408,106 +387,83 @@ fn detect_face_y(
 
   let create = face_up ^ face_down;
   if create {
-    let mut all_voxels = get_vertices_voxels(
+    let voxels = get_vertices_voxels(
       &grid_000, &grid_101, &grid_100, &grid_001
     );
+    
+    let color_000 = get_color(&voxels, &grid_000, colors);
+    let color_101 = get_color(&voxels, &grid_101, colors);
+    let color_100 = get_color(&voxels, &grid_100, colors);
+    let color_001 = get_color(&voxels, &grid_001, colors);
 
     let start = 0;
     if face_up && y != start {
-      let voxels = all_voxels.clone();
-      let weights_000 = get_weights(&voxels, &grid_000);
-      let weights_101 = get_weights(&voxels, &grid_101);
-      let weights_100 = get_weights(&voxels, &grid_100);
-      let weights_001 = get_weights(&voxels, &grid_001);
-
-      modify_to_texture_indices(&mut all_voxels);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
       
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_101.pos.unwrap());
       data.normals.push(grid_101.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_101);
+      data.colors.push(color_101);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_100.pos.unwrap());
       data.normals.push(grid_100.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_100);
-
+      data.colors.push(color_100);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_001);
+      data.colors.push(color_001);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_101.pos.unwrap());
       data.normals.push(grid_101.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_101);
+      data.colors.push(color_101);
 
     }
 
     let end_index = voxel_reuse.size - 1;
     if face_down && y != end_index {
-      let voxels = all_voxels.clone();
-      let weights_000 = get_weights(&voxels, &grid_000);
-      let weights_101 = get_weights(&voxels, &grid_101);
-      let weights_100 = get_weights(&voxels, &grid_100);
-      let weights_001 = get_weights(&voxels, &grid_001);
-
-      modify_to_texture_indices(&mut all_voxels);
-
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_100.pos.unwrap());
       data.normals.push(grid_100.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_100);
+      data.colors.push(color_100);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_101.pos.unwrap());
       data.normals.push(grid_101.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_101);
+      data.colors.push(color_101);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_101.pos.unwrap());
       data.normals.push(grid_101.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_101);
+      data.colors.push(color_101);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_001.pos.unwrap());
       data.normals.push(grid_001.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_001);
+      data.colors.push(color_001);
     }
   }
 }
@@ -518,7 +474,8 @@ fn detect_face_z(
   voxel_reuse: &mut VoxelReuse, 
   x: u32, 
   y: u32, 
-  z: u32
+  z: u32,
+  colors: &Vec<[f32; 3]>,
 ) {
   if x == 0 || y == 0 {
     return;
@@ -556,143 +513,106 @@ fn detect_face_z(
 
   let create = face_front ^ face_back;
   if create {
-    let mut all_voxels = get_vertices_voxels(
+    let voxels = get_vertices_voxels(
       &grid_000, &grid_100, &grid_010, &grid_110
     );
+    
+    let color_000 = get_color(&voxels, &grid_000, colors);
+    let color_100 = get_color(&voxels, &grid_100, colors);
+    let color_010 = get_color(&voxels, &grid_010, colors);
+    let color_110 = get_color(&voxels, &grid_110, colors);
 
     let start = 0;
     if face_front && z != start {
-      let voxels = all_voxels.clone();
-      let weights_000 = get_weights(&voxels, &grid_000);
-      let weights_100 = get_weights(&voxels, &grid_100);
-      let weights_010 = get_weights(&voxels, &grid_010);
-      let weights_110 = get_weights(&voxels, &grid_110);
-
-      modify_to_texture_indices(&mut all_voxels);
-
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
       
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_110.pos.unwrap());
       data.normals.push(grid_110.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_110);
+      data.colors.push(color_110);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_010.pos.unwrap());
       data.normals.push(grid_010.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_010);
+      data.colors.push(color_010);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_100.pos.unwrap());
       data.normals.push(grid_100.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_100);
+      data.colors.push(color_100);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_110.pos.unwrap());
       data.normals.push(grid_110.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_110);
+      data.colors.push(color_110);
     }
 
     let end_index = voxel_reuse.size - 1;
     if face_back && z != end_index {
-      let voxels = all_voxels.clone();
-      let weights_000 = get_weights(&voxels, &grid_000);
-      let weights_010 = get_weights(&voxels, &grid_010);
-      let weights_110 = get_weights(&voxels, &grid_110);
-      let weights_100 = get_weights(&voxels, &grid_100);
-
-      modify_to_texture_indices(&mut all_voxels);
-
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_010.pos.unwrap());
       data.normals.push(grid_010.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_010);
+      data.colors.push(color_010);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_110.pos.unwrap());
       data.normals.push(grid_110.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_110);
+      data.colors.push(color_110);
 
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_000.pos.unwrap());
       data.normals.push(grid_000.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_000);
+      data.colors.push(color_000);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_110.pos.unwrap());
       data.normals.push(grid_110.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_110);
+      data.colors.push(color_110);
 
       data.indices.push(data.positions.len() as u32);
       data.positions.push(grid_100.pos.unwrap());
       data.normals.push(grid_100.normal);
-      data.types_1.push(all_voxels);
-      data.weights.push(weights_100);
+      data.colors.push(color_100);
     }
   }
 }
 
-fn get_weights(
-  voxels: &[u32; 4],
-  grid: &Grid,
-) -> [f32; 4] {
-  let mut weights = [0.0; 4];
-  if grid.voxel_count == 1 {
-    for (index, voxel) in voxels.iter().enumerate() {
-      if *voxel > 0 {
-        if grid.types.contains(voxel) {
-          weights[index] = 1.0;
-        }
-        
-      }
+fn get_color(
+  voxels: &[u32; 4], 
+  grid: &Grid, 
+  mapped_colors: &Vec<[f32; 3]>
+) -> [f32; 3] {
+  let mut color = [0.0, 0.0, 0.0];
+
+  for voxel in grid.types.iter() {
+    if *voxel > 0 {
+      let color_index = *voxel as usize - 1;
+      color[0] += mapped_colors[color_index][0];
+      color[1] += mapped_colors[color_index][1];
+      color[2] += mapped_colors[color_index][2];
     }
   }
 
-  // println!("grid.voxel_count {}", grid.voxel_count);
-  /*
-    How to identify if the voxel is not a neighboring one?
-
-   */
-  if grid.voxel_count > 1 {
-    for (index, voxel) in voxels.iter().enumerate() {
-
-      if *voxel > 0 {
-        if grid.types.contains(voxel) {
-          // println!("voxel {}", voxel);
-          weights[index] = 0.5;
-        }
-      }
-      
-
-    }
-  }
-  weights
+  color[0] /= grid.voxel_count as f32;
+  color[1] /= grid.voxel_count as f32;
+  color[2] /= grid.voxel_count as f32;
+  
+  color
 }
 
 fn get_vertices_voxels(
@@ -709,49 +629,43 @@ fn get_vertices_voxels(
     let type2 = grid_2.types[i];
     let type3 = grid_3.types[i];
 
-    if !all_voxels.contains(&type0) {
-      // println!("index {} {:?}", index, all_voxels);
-      all_voxels[index] = type0;
-      index += 1;
-      if index == 4 {
-        break;
-      }
-    }
-    if !all_voxels.contains(&type1) {
-      // println!("index {} {:?}", index, all_voxels);
-      all_voxels[index] = type1;
-      index += 1;
-      if index == 4 {
-        break;
-      }
-    }
-    if !all_voxels.contains(&type2) {
-      // println!("index {} {:?}", index, all_voxels);
-      all_voxels[index] = type2;
-      index += 1;
-      if index == 4 {
-        break;
-      }
-    }
-    if !all_voxels.contains(&type3) {
-      // println!("index {} {:?}", index, all_voxels);
-      all_voxels[index] = type3;
-      index += 1;
-      if index == 4 {
-        break;
-      }
-    }
+
+
+    // if !all_voxels.contains(&type0) {
+    //   // println!("index {} {:?}", index, all_voxels);
+    //   all_voxels[index] = type0;
+    //   index += 1;
+    //   if index == 4 {
+    //     break;
+    //   }
+    // }
+    // if !all_voxels.contains(&type1) {
+    //   // println!("index {} {:?}", index, all_voxels);
+    //   all_voxels[index] = type1;
+    //   index += 1;
+    //   if index == 4 {
+    //     break;
+    //   }
+    // }
+    // if !all_voxels.contains(&type2) {
+    //   // println!("index {} {:?}", index, all_voxels);
+    //   all_voxels[index] = type2;
+    //   index += 1;
+    //   if index == 4 {
+    //     break;
+    //   }
+    // }
+    // if !all_voxels.contains(&type3) {
+    //   // println!("index {} {:?}", index, all_voxels);
+    //   all_voxels[index] = type3;
+    //   index += 1;
+    //   if index == 4 {
+    //     break;
+    //   }
+    // }
   }
   // modify_to_texture_indices(&mut all_voxels);
   all_voxels
-}
-
-fn modify_to_texture_indices(voxels: &mut [u32; 4]) {
-  for i in 0..voxels.len() {
-    if voxels[i] > 0 {
-      voxels[i] = voxels[i] - 1;
-    }
-  }
 }
 
 pub fn estimate_surface_edge_intersection(

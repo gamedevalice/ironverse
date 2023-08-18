@@ -11,20 +11,16 @@ impl Plugin for CustomPlugin {
 
 fn update(
   mut hotbar_res: ResMut<HotbarResource>,
-  mut key_events: EventReader<KeyboardInput>
+  mut key_events: EventReader<KeyboardInput>,
 ) {
   for event in key_events.iter() {
     if event.state == ButtonState::Pressed && event.key_code.is_some() {
       let key_code = event.key_code.unwrap();
 
-      
-      
       for i in 0..hotbar_res.bars.len() {
         let bar = &hotbar_res.bars[i];
         if bar.key_code == key_code {
           hotbar_res.selected_keycode = key_code;
-
-          info!("pressed {:?}", key_code);
         }
       }
       
@@ -70,5 +66,3 @@ impl Bar {
     Bar { key_code: k, voxel: v }
   }
 }
-
-

@@ -53,7 +53,9 @@ fn on_player_add(
   
       let data = chunk.octree.compute_mesh(
         VoxelMode::SurfaceNets, 
-        &mut game_res.chunk_manager.voxel_reuse
+        &mut game_res.chunk_manager.voxel_reuse.clone(),
+        &game_res.colors,
+        1.0,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);
@@ -125,12 +127,6 @@ fn on_player_move(
     chunks.data.clear();
 
     for key in keys.iter() {
-      let test_key = [[0, -1, -2], [0, -1, -1], [0, -1, 0]];
-      if !test_key.contains(key) {
-        // continue;
-      }
-
-
       let mut chunk = Chunk::default();
       let chunk_op = game_res.chunk_manager.get_chunk(key);
       if chunk_op.is_some() {
@@ -146,7 +142,9 @@ fn on_player_move(
 
       let data = chunk.octree.compute_mesh(
         VoxelMode::SurfaceNets, 
-        &mut game_res.chunk_manager.voxel_reuse
+        &mut game_res.chunk_manager.voxel_reuse.clone(),
+        &game_res.colors,
+        1.0,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);
