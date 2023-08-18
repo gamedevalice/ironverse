@@ -80,7 +80,7 @@ fn on_edit(
         VoxelMode::SurfaceNets, 
         &mut game_res.chunk_manager.voxel_reuse.clone(),
         &game_res.colors,
-        1.0,
+        game_res.voxel_scale,
       );
 
       if data.indices.len() > 0 {

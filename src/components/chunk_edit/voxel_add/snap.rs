@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use voxels::chunk::chunk_manager::Chunk;
 use crate::{components::chunk_edit::{ChunkEditParams, ChunkEdit, get_point_by_edit_mode, EditState}, data::GameResource};
 
-
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {

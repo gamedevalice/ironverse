@@ -720,9 +720,6 @@ pub struct MeshColliderData {
 
 #[cfg(test)]
 mod tests {
-  use std::fmt::format;
-
-use hashbrown::HashMap;
   use super::*;
   use std::fs;
 
@@ -738,7 +735,19 @@ use hashbrown::HashMap;
       ParentValueType::DefaultValue,
     );
 
-    let data = octree.compute_mesh2(VoxelMode::SurfaceNets, &mut VoxelReuse::new(4, 3));
+    let colors = vec![
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+    ];
+
+    let data = octree.compute_mesh(
+      VoxelMode::SurfaceNets,
+      &mut VoxelReuse::new(4, 3),
+      &colors,
+      1.0
+    );
 
     /*Set the expected and actual result here
       Order matters for now to make it easier to check(probably should be)
@@ -791,40 +800,6 @@ use hashbrown::HashMap;
     Ok(())
   }
 
-  /* Refactor later */
-  #[test]
-  fn test_calculate_weights() -> Result<(), String> {
-    let mut weights = [0.0, 0.0, 0.0, 0.0];
-    calculate_weights(&mut weights);
-    assert_eq!(weights, [0.0, 0.0, 0.0, 0.0]);
-
-    let mut weights = [1.0, 0.0, 0.0, 0.0];
-    calculate_weights(&mut weights);
-    assert_eq!(weights, [1.0, 0.0, 0.0, 0.0]);
-
-    let mut weights = [0.0, 1.0, 0.0, 0.0];
-    calculate_weights(&mut weights);
-    assert_eq!(weights, [0.0, 1.0, 0.0, 0.0]);
-
-    let mut weights = [1.0, 1.0, 0.0, 0.0];
-    calculate_weights(&mut weights);
-    assert_eq!(weights, [0.5, 0.5, 0.0, 0.0]);
-
-    let mut weights = [1.0, 0.0, 1.0, 0.0];
-    calculate_weights(&mut weights);
-    assert_eq!(weights, [0.5, 0.0, 0.5, 0.0]);
-
-    let result = 1.0 / 3.0;
-    let mut weights = [1.0, 1.0, 1.0, 0.0];
-    calculate_weights(&mut weights);
-    assert_eq!(weights, [result, result, result, 0.0]);
-
-    let mut weights = [1.0, 2.0, 0.0, 0.0];
-    calculate_weights(&mut weights);
-    assert_eq!(weights, [1.0 / 3.0, 2.0 / 3.0, 0.0, 0.0]);
-    Ok(())
-  }
-
 
   #[test]
   fn test_one_voxel_mesh_data() -> Result<(), String> {
@@ -841,14 +816,20 @@ use hashbrown::HashMap;
       ParentValueType::DefaultValue,
     );
 
-    let data = octree.compute_mesh2(VoxelMode::SurfaceNets, &mut VoxelReuse::new(4, 3));
-    for (index, value) in positions.iter().enumerate() {
-      // if index % 3 == 0 {
-      //   println!();
-      // }
+    let colors = vec![
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+    ];
 
-      // let pos = format!("{:.1}, {:.1}, {:.1}", value[0], value[1], value[2]);
-      // println!("{} {:?} {:?}", pos, data.types_1[index], data.weights[index]);
+    let data = octree.compute_mesh(
+      VoxelMode::SurfaceNets,
+      &mut VoxelReuse::new(4, 3),
+      &colors,
+      1.0
+    );
+    for (index, value) in positions.iter().enumerate() {
       assert_eq!(value, &data.positions[index], "at index {}", index);
     }
 
@@ -877,7 +858,19 @@ use hashbrown::HashMap;
       ParentValueType::DefaultValue,
     );
 
-    let data = octree.compute_mesh2(VoxelMode::SurfaceNets, &mut VoxelReuse::new(4, 3));
+    let colors = vec![
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+    ];
+
+    let data = octree.compute_mesh(
+      VoxelMode::SurfaceNets,
+      &mut VoxelReuse::new(4, 3),
+      &colors,
+      1.0
+    );
     for (index, value) in positions.iter().enumerate() {
       assert_eq!(&data.positions[index], value, "at index {}", index);
     }

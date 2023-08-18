@@ -32,12 +32,6 @@ fn on_player_add(
     let mut chunks = Chunks { data: Vec::new() };
 
     for key in keys.iter() {
-      let test_key = [[0, -1, -2], [0, -1, -1], [0, -1, 0]];
-      if !test_key.contains(key) {
-        // continue;
-      }
-
-
       let mut chunk = Chunk::default();
       let chunk_op = game_res.chunk_manager.get_chunk(key);
       if chunk_op.is_some() {
@@ -55,7 +49,7 @@ fn on_player_add(
         VoxelMode::SurfaceNets, 
         &mut game_res.chunk_manager.voxel_reuse.clone(),
         &game_res.colors,
-        1.0,
+        game_res.voxel_scale,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);
@@ -101,11 +95,6 @@ fn on_player_add(
   }
 }
 
-/*
-  0.0, 2.0, -13.0
-  0.0, 2.0, -14.0
- */
-
 fn on_player_move(
   mut commands: Commands,
   mut players: Query<(Entity, &Player, &mut Chunks), Changed<Player>>,
@@ -144,7 +133,7 @@ fn on_player_move(
         VoxelMode::SurfaceNets, 
         &mut game_res.chunk_manager.voxel_reuse.clone(),
         &game_res.colors,
-        1.0,
+        game_res.voxel_scale,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);

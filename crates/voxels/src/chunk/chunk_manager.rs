@@ -423,7 +423,7 @@ pub struct Configuration {
 
 #[cfg(test)]
 mod tests {
-  use crate::{data::surface_nets::{GridPosition, VoxelReuse}, utils::get_length};
+  use crate::{data::{surface_nets::{GridPosition, VoxelReuse}, voxel_octree::VoxelMode}, utils::get_length};
   use super::*;
 
   #[test]
@@ -483,10 +483,17 @@ mod tests {
     let chunk_size = 16;
     let mut chunk_manager = ChunkManager::default();
 
-    let keys = adjacent_keys(&[0, 0, 0], 5);
+    let color = vec![[0.0, 0.0, 0.0]];
+
+    let keys = adjacent_keys(&[0, 0, 0], 5, true);
     for key in keys.iter() {
       let chunk = chunk_manager.new_chunk3(key, chunk_manager.depth as u8);
-      let d = chunk.octree.compute_mesh2(VoxelMode::SurfaceNets, &mut voxel_reuse);
+      let d = chunk.octree.compute_mesh(
+        VoxelMode::SurfaceNets, 
+        &mut voxel_reuse,
+        &color,
+        1.0
+      );
       if d.indices.len() != 0 {
         assert_eq!(chunk.mode, ChunkMode::Loaded, "key {:?}", key);
       } else {

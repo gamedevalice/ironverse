@@ -41,7 +41,7 @@ fn update(
       VoxelMode::SurfaceNets, 
       &mut game_res.chunk_manager.voxel_reuse.clone(),
       &game_res.colors,
-      1.0,
+      game_res.voxel_scale,
     );
 
     if data.indices.len() > 0 { // Temporary, should be removed once the ChunkMode detection is working
