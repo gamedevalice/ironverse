@@ -716,48 +716,12 @@ pub fn get_dist(pos1: &[i64; 3], pos2: &[i64; 3]) -> f32 {
 /// Scale should be rational number, otherwise 
 /// the range will just round off to nearest value
 pub fn adj_keys_by_scale(key: [i64; 3], range: i64, scale: f32) -> Vec<[i64; 3]> {
-  /*
-    1
-      key = [0, 0, 0]
-      range = 1
-      scale = 1.0
-      div = 1
-      min = -1
-      max = 1 = Should be 2 for iteration
-
-    2
-      key = [0, 0, 0]
-      range = 1
-      scale = 0.5
-      div = 2
-      min = -3
-      max = 2
-
-    3
-      key = [0, 0, 0]
-      range = 1
-      scale = 0.25
-      div = 4
-      min = -7
-      max = 4
-
-    3
-      key = [0, 0, 0]
-      range = 1
-      scale = 0.2
-      div = 5
-      min = -9
-      max = 5
-
-   */
-
+  // TODO: Implement the range parameter
   let mut keys = Vec::new();
 
   let div = (1.0 / scale) as i64;
   let min = (div * -2) + 1;
   let max = div + 1;
-
-  // println!("div {} min {} max {}", div, min, max);
 
   for x in min..max {
     for y in min..max {
