@@ -50,6 +50,7 @@ fn export(
         VoxelMode::SurfaceNets, 
         &mut voxel_reuse,
         &game_res.colors,
+        1.0,
       );
 
       if mesh.positions.len() == 0 {

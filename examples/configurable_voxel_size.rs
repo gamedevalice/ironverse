@@ -391,7 +391,7 @@ impl Default for LocalResource {
     Self {
       chunk_manager: ChunkManager::default(),
       voxel_pos: None,
-      scale: 0.25,
+      scale: 0.5,
       colors: vec![
         [1.0, 0.0, 0.0], 
         [0.0, 1.0, 0.0], 

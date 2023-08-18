@@ -50,29 +50,27 @@ js-sys = "0.3"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4.19"
 
-[features]
-default = [
-  "bevy_flycam",
-  "voxels",
-  "utils",
-  "bevy_egui",
-]
-
-
 # [features]
 # default = [
-#   "core",
-#   "player",
-#   "chunk",
-#   # "ui_prompt",
-#   "ui",
-#   "graphics_low",
-#   # "graphics_normal",  # Either graphics_low or graphics_normal
+#   "bevy_flycam",
+#   "voxels",
+#   "utils",
+#   "bevy_egui",
 # ]
 
+[features]
+default = [
+  "core",
+  "player",
+  "chunk",
+  # "ui_prompt",
+  "ui",
+  "graphics_low",
+  # "graphics_normal",  # Either graphics_low or graphics_normal
+]
+
 core = [
-  # "bevy_flycam", "voxels", "ron", "obj-exporter",
-  "bevy_flycam", "ron", "obj-exporter",
+  "bevy_flycam", "voxels", "ron", "obj-exporter",
   "rapier3d", "serde", "toml", "array-bytes"
 ]
 player = []

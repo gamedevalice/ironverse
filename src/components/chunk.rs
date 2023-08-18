@@ -55,6 +55,7 @@ fn on_player_add(
         VoxelMode::SurfaceNets, 
         &mut game_res.chunk_manager.voxel_reuse.clone(),
         &game_res.colors,
+        1.0,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);
@@ -143,6 +144,7 @@ fn on_player_move(
         VoxelMode::SurfaceNets, 
         &mut game_res.chunk_manager.voxel_reuse.clone(),
         &game_res.colors,
+        1.0,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);
