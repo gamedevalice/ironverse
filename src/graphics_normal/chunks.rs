@@ -45,65 +45,50 @@ fn add(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut custom_materials: ResMut<Assets<CustomMaterial>>,
-  mut _materials: ResMut<Assets<StandardMaterial>>,
   mut images: ResMut<Assets<Image>>,
-  terrains: Query<(Entity, &ChunkGraphics)>,
 
   chunk_query: Query<(Entity, &Chunks), Changed<Chunks>>,
+  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 ) {
+  let config = game_res.chunk_manager.config.clone();
   for (_, chunks) in &chunk_query {
     for mesh in &chunks.data {
-      'inner: for (entity, terrain) in &terrains {
-        if mesh.key == terrain.key {
+      'inner: for (entity, graphics) in &chunk_graphics {
+        if mesh.key == graphics.key {
           commands.entity(entity).despawn_recursive();
           break 'inner;
         }
       }
 
-      if mesh.data.positions.len() > 0 {
-        let mut queue = true;
-        for (key, _) in local_res.queued_chunks.iter() {
-          if key == &mesh.key {
-            queue = false;
-          }
-        }
-        
-        if queue {
-          local_res.queued_chunks.push((mesh.key.clone(), mesh.data.clone()));
-        }
-      }
-      
+      let data = &mesh.data;
+      let key = &mesh.key;
+
+      let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+      render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+      render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+      render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
+
+      render_mesh.insert_attribute(VOXEL_COLOR, data.colors.clone());
+
+      let mesh_handle = meshes.add(render_mesh);
+      let material_handle = custom_materials.add(CustomMaterial {
+        base_color: Color::rgb(1.0, 1.0, 1.0),
+      });
+
+      let coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
+      commands
+        .spawn(MaterialMeshBundle {
+          mesh: mesh_handle,
+          material: material_handle,
+          transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+          ..default()
+        })
+        .insert(ChunkGraphics { key: *key });
     }
-    
   }
-  
-  let config = game_res.chunk_manager.config.clone();
-  for (key, data) in local_res.queued_chunks.iter() {
-    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
-
-    render_mesh.insert_attribute(VOXEL_COLOR, data.colors.clone());
-
-    let mesh_handle = meshes.add(render_mesh);
-    let material_handle = custom_materials.add(CustomMaterial {
-      base_color: Color::rgb(1.0, 1.0, 1.0),
-    });
-
-    let coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
-    commands
-      .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: material_handle,
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        ..default()
-      })
-      .insert(ChunkGraphics { key: *key });
-  }
-
-  local_res.queued_chunks.clear();
 }
+
+
 
 fn remove(
   mut commands: Commands,

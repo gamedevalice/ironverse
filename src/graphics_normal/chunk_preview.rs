@@ -172,7 +172,18 @@ fn update_add(
   }
 }
 
-fn update_remove() {
+fn update_remove(
+  mut commands: Commands,
+  edits: Query<(Entity, &ChunkEdit), Changed<ChunkEdit>>,
+  graphics: Query<(Entity, &ChunkPreviewGraphics)>,
+) {
+  for (entity, edit) in &edits {
+    for (graphics_entity, graphics) in &graphics {
+      if entity == graphics.parent {
+        commands.entity(graphics_entity).despawn_recursive();
+      }
+    }
 
+  }
 }
 

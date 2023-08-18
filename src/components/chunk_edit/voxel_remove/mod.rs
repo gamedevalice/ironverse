@@ -13,7 +13,8 @@ impl Plugin for CustomPlugin {
     app
       .add_plugin(normal::CustomPlugin)
       .add_plugin(snap::CustomPlugin)
-      .add_system(on_edit.run_if(remove_state));
+      .add_system(on_edit.run_if(remove_state))
+      .add_system(on_remove.in_schedule(OnEnter(EditState::RemoveNormal)));
   }
 }
 
@@ -113,5 +114,10 @@ fn on_edit(
       }
     }
   }
+
+}
+
+
+fn on_remove() {
 
 }

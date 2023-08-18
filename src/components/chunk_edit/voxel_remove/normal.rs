@@ -6,9 +6,13 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(update_position.run_if(remove_normal))
       .add_system(
-        position_changed.after(update_position).run_if(remove_normal)
+        update_position
+          .run_if(remove_normal))
+      .add_system(
+        position_changed
+          .after(update_position)
+          .run_if(remove_normal)
       );
   }
 }
@@ -55,9 +59,6 @@ fn update_position(
         }
       }
     }
-
-    // println!("pos_op {:?}", pos_op);
-
 
     if pos_op.is_none() {
       if edit.position.is_some() {
