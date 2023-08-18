@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PresentMode, PrimaryWindow, CursorGrabMode}};
+use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PresentMode, PrimaryWindow, CursorGrabMode}, input::mouse::MouseWheel};
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::voxel_octree::VoxelMode};
@@ -27,6 +27,7 @@ fn main() {
     .add_system(voxel_preview)
     .add_system(voxel_edit)
     .add_system(show_diagnostic_texts)
+    .add_system(set_ray_dist)
     .run();
 
 }
@@ -37,8 +38,8 @@ fn setup_camera(
 ) {
   commands
     .spawn(Camera3dBundle {
-      transform: Transform::from_xyz(1.6, 11.3, -20.5)
-        .looking_to(Vec3::new(0.09, -0.48, 0.86), Vec3::Y),
+      transform: Transform::from_xyz(0.9, 2.23, -5.7)
+        .looking_to(Vec3::new(-0.075, -0.145, 0.986), Vec3::Y),
       ..Default::default()
     })
     .insert(FlyCam);
@@ -80,21 +81,7 @@ fn startup(
   mut materials: ResMut<Assets<StandardMaterial>>,
   mut local_res: ResMut<LocalResource>,
 ) {
-  let size = 16;
-  let seamless_size = 12;
   let scale = local_res.scale;
-
-  let calc_size = (size - 2) as f32 * scale;
-
-  // commands.spawn(PbrBundle {
-  //   mesh: meshes.add(shape::Plane::from_size(calc_size).into()),
-  //   transform: Transform::from_translation(
-  //     Vec3::new(calc_size * 0.5, 3.0, calc_size * 0.5)
-  //   ),
-  //   material: materials.add(Color::rgba(1.0, 1.0, 1.0, 0.4).into()),
-  //   ..default()
-  // });
-
 
   let colors = vec![
     [1.0, 0.0, 0.0], 
@@ -115,13 +102,6 @@ fn startup(
   let mut voxel_reuse = local_res.chunk_manager.voxel_reuse.clone();
   let mut chunk = Chunk::default();
 
-  /*
-    Start doing in single chunk no seamless
-    Then do multiple chunks with seamless
-
-
-   */
-  
   let size = (1.0 / scale) as u32;
   println!("size {}", size);
   let start = 2;
@@ -204,7 +184,7 @@ fn voxel_preview(
   mut preview: Query<&mut Transform, With<EditPreview>>,
   cam: Query<&Transform, (With<FlyCam>, Without<EditPreview>)>,
 ) {
-  let max_dist = 50.0;
+  let max_dist = local_res.ray_dist;
   let total_div = max_dist as i64 * 2;
   let min_dist = 1.0;
   
@@ -271,9 +251,6 @@ fn voxel_edit(
   }
   let pos = local_res.voxel_pos.unwrap();
 
-
-  // println!("voxel {}", voxel.unwrap());
-
   local_res.chunk_manager.set_voxel2(&pos, voxel.unwrap());
 
   let scale = local_res.scale;
@@ -286,40 +263,52 @@ fn voxel_edit(
   }
 
 
-  let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
-  for key in adj_keys.iter() {
-    let chunk = local_res.chunk_manager.get_chunk(key).unwrap();
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &colors,
-        scale
-      );
+  let key = &[0, 0, 0];
+  let chunk = local_res.chunk_manager.get_chunk(key).unwrap();
+  let data = chunk
+    .octree
+    .compute_mesh(
+      VoxelMode::SurfaceNets, 
+      &mut voxel_reuse,
+      &colors,
+      scale
+    );
 
-    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
+  let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+  render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+  render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+  render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    let mesh_handle = meshes.add(render_mesh);
+  let mesh_handle = meshes.add(render_mesh);
 
-    let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
-    coord_f32[0] *= scale;
-    coord_f32[1] *= scale;
-    coord_f32[2] *= scale;
-    commands
-      .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        ..default()
-      })
-      .insert(ChunkGraphics {});
-  }
+  let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
+  coord_f32[0] *= scale;
+  coord_f32[1] *= scale;
+  coord_f32[2] *= scale;
+  commands
+    .spawn(MaterialMeshBundle {
+      mesh: mesh_handle,
+      material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+      transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+      ..default()
+    })
+    .insert(ChunkGraphics {});
 
 }
+
+fn set_ray_dist(
+  mut mouse_wheel: EventReader<MouseWheel>,
+  mut local_res: ResMut<LocalResource>,
+  time: Res<Time>,
+) {
+  for event in mouse_wheel.iter() {
+    local_res.ray_dist += event.y.clamp(-1.0, 1.0) * time.delta_seconds() * 50.0;
+    local_res.ray_dist = local_res.ray_dist.clamp(1.0, 50.0);
+    // println!("ray_dist {}", local_res.ray_dist);
+  }
+}
+
+
 
 fn show_diagnostic_texts(
   cameras: Query<&Transform, With<FlyCam>>,
@@ -394,6 +383,7 @@ struct LocalResource {
 
   scale: f32,
   colors: Vec<[f32; 3]>,
+  ray_dist: f32,
 }
 
 impl Default for LocalResource {
@@ -401,7 +391,7 @@ impl Default for LocalResource {
     Self {
       chunk_manager: ChunkManager::default(),
       voxel_pos: None,
-      scale: 0.5,
+      scale: 0.25,
       colors: vec![
         [1.0, 0.0, 0.0], 
         [0.0, 1.0, 0.0], 
@@ -416,6 +406,7 @@ impl Default for LocalResource {
         [0.0, 0.2, 0.0],
         [0.0, 0.4, 0.0],
       ],
+      ray_dist: 50.0
     }
   }
 }
