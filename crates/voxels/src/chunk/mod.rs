@@ -693,7 +693,6 @@ pub fn chunk_mode(octree: &VoxelOctree) -> ChunkMode {
 
 fn noise_elevation(x: &u32, z: &u32, middle: &i64, noise: OpenSimplex) -> i64 {
   let frequency = 0.0125;
-  // let frequency = 0.05;
   let height_scale = 16.0;
   let fx = (*x as i64 - middle) as f64 * frequency;
   let fz = (*z as i64 - middle) as f64 * frequency;
@@ -715,21 +714,34 @@ pub fn get_dist(pos1: &[i64; 3], pos2: &[i64; 3]) -> f32 {
 /// Returns adjacent keys based on voxel scale
 /// Scale should be rational number, otherwise 
 /// the range will just round off to nearest value
-pub fn adj_keys_by_scale(key: [i64; 3], range: i64, scale: f32) -> Vec<[i64; 3]> {
+pub fn adj_keys_by_scale(world_key: [i64; 3], range: i64, scale: f32) -> Vec<[i64; 3]> {
   // TODO: Implement the range parameter
+
+  /*
+    Translate the world key to voxel key with voxel scale
+
+  
+   */
+
   let mut keys = Vec::new();
 
   let div = (1.0 / scale) as i64;
-  let min = (div * -2) + 1;
-  let max = div + 1;
+  let min = -div;
+  let max = div * 2;
+
+  let voxel_key = [
+    world_key[0] * div,
+    world_key[1] * div,
+    world_key[2] * div,
+  ];
 
   for x in min..max {
     for y in min..max {
       for z in min..max {
         let k = [
-          key[0] + x,
-          key[1] + y,
-          key[2] + z
+          voxel_key[0] + x,
+          voxel_key[1] + y,
+          voxel_key[2] + z
         ];
         keys.push(k);  
       }
@@ -811,23 +823,19 @@ mod tests {
   }
 
   #[test]
-  fn test_adjacent_keys_by_scale_0_5() -> Result<(), String> {
-    let key = [0, 0, 0];
-    let scale = 0.5;
-    let range = 1;
-    let keys = adj_keys_by_scale(key, range, scale);
+  fn test_adjacent_keys_by_scale_1_key_10() -> Result<(), String> {
+    let key = [10, 10, 10];
+    let scale = 1.0;
+    let range = (1.0 / scale) as i64;
+    let keys = adj_keys_by_scale(key, range, 1.0);
 
-    assert_eq!(keys.len(), 216);
-    /*
-      Expected Result
-      [-3, -3, -3] -> [2, 2, 2]
-     */
+    assert_eq!(keys.len(), 27);
 
     // Checking validity of values
     for k in keys.iter() {
       for i in 0..k.len() {
-        assert!(k[i] >= -3);
-        assert!(k[i] <= 2);
+        assert!(k[i] >= 9);
+        assert!(k[i] <= 11);
       }
     }
 
@@ -839,65 +847,7 @@ mod tests {
         eval_keys.push(k.clone());
       }
     }
-    
-    Ok(())
-  }
 
-  #[test]
-  fn test_adjacent_keys_by_scale_0_25() -> Result<(), String> {
-    let key = [0, 0, 0];
-    let scale = 0.25;
-    let range = 1;
-    let keys = adj_keys_by_scale(key, range, scale);
-
-    assert_eq!(keys.len(), 1728);
-
-    // Expected Result [-7, -7, -7] -> [4, 4, 4]
-    for k in keys.iter() {
-      for i in 0..k.len() {
-        assert!(k[i] >= -7);
-        assert!(k[i] <= 4);
-      }
-    }
-
-    // Checking duplicates
-    let mut eval_keys = Vec::new();
-    for k in keys.iter() {
-      assert!(!eval_keys.contains(k));
-      if !eval_keys.contains(k) {
-        eval_keys.push(k.clone());
-      }
-    }
-    
-    Ok(())
-  }
-
-  #[test]
-  fn test_adjacent_keys_by_scale_0_2() -> Result<(), String> {
-    let key = [0, 0, 0];
-    let scale = 0.2;
-    let range = 1;
-    let keys = adj_keys_by_scale(key, range, scale);
-
-    assert_eq!(keys.len(), 3375);
-
-    // Expected Result [-9, -9, -9] -> [5, 5, 5]
-    for k in keys.iter() {
-      for i in 0..k.len() {
-        assert!(k[i] >= -9);
-        assert!(k[i] <= 5);
-      }
-    }
-
-    // Checking duplicates
-    let mut eval_keys = Vec::new();
-    for k in keys.iter() {
-      assert!(!eval_keys.contains(k));
-      if !eval_keys.contains(k) {
-        eval_keys.push(k.clone());
-      }
-    }
-    
     Ok(())
   }
 
@@ -931,20 +881,25 @@ mod tests {
     Ok(())
   }
 
-  #[test]
-  fn test_adjacent_keys_by_scale_1_key_10() -> Result<(), String> {
-    let key = [10, 10, 10];
-    let scale = 1.0;
-    let range = (1.0 / scale) as i64;
-    let keys = adj_keys_by_scale(key, range, 1.0);
 
-    assert_eq!(keys.len(), 27);
+  #[test]
+  fn test_adjacent_keys_by_scale_0_5() -> Result<(), String> {
+    let key = [0, 0, 0];
+    let scale = 0.5;
+    let range = 1;
+    let keys = adj_keys_by_scale(key, range, scale);
+
+    assert_eq!(keys.len(), 216);
+    /*
+      Expected Result
+      [-2, -2, -2] -> [3, 3, 3]
+     */
 
     // Checking validity of values
     for k in keys.iter() {
       for i in 0..k.len() {
-        assert!(k[i] >= 9);
-        assert!(k[i] <= 11);
+        assert!(k[i] >= -2);
+        assert!(k[i] <= 3);
       }
     }
 
@@ -956,7 +911,34 @@ mod tests {
         eval_keys.push(k.clone());
       }
     }
+    
+    Ok(())
+  }
 
+  #[test]
+  fn test_adjacent_keys_by_scale_0_5_key_negative_1() -> Result<(), String> {
+    let key = [-1, -1, -1];
+    let scale = 0.5;
+    let range = 1;
+    let keys = adj_keys_by_scale(key, range, scale);
+
+    assert_eq!(keys.len(), 216);
+    
+    for k in keys.iter() {
+      for i in 0..k.len() {
+        assert!(k[i] >= -4);
+        assert!(k[i] <= 1);
+      }
+    }
+
+    let mut eval_keys = Vec::new();
+    for k in keys.iter() {
+      assert!(!eval_keys.contains(k));
+      if !eval_keys.contains(k) {
+        eval_keys.push(k.clone());
+      }
+    }
+    
     Ok(())
   }
 
@@ -969,11 +951,10 @@ mod tests {
 
     assert_eq!(keys.len(), 216);
 
-    //Expected Result [-13, -13, -13] -> [-8, -8, -8]
     for k in keys.iter() {
       for i in 0..k.len() {
-        assert!(k[i] >= -13);
-        assert!(k[i] <= -8);
+        assert!(k[i] >= -22);
+        assert!(k[i] <= -17);
       }
     }
 
@@ -988,47 +969,20 @@ mod tests {
     Ok(())
   }
 
-  #[test]
-  fn test_adjacent_keys_by_scale_0_5_key_10() -> Result<(), String> {
-    let key = [10, 10, 10];
-    let scale = 0.5;
-    let range = 1;
-    let keys = adj_keys_by_scale(key, range, scale);
-
-    assert_eq!(keys.len(), 216);
-    
-    for k in keys.iter() {
-      for i in 0..k.len() {
-        assert!(k[i] >= 7);
-        assert!(k[i] <= 12);
-      }
-    }
-
-    let mut eval_keys = Vec::new();
-    for k in keys.iter() {
-      assert!(!eval_keys.contains(k));
-      if !eval_keys.contains(k) {
-        eval_keys.push(k.clone());
-      }
-    }
-    
-    Ok(())
-  }
 
   #[test]
-  fn test_adjacent_keys_by_scale_0_25_key_negative_10() -> Result<(), String> {
-    let key = [-10, -10, -10];
+  fn test_adjacent_keys_by_scale_0_25() -> Result<(), String> {
+    let key = [0, 0, 0];
     let scale = 0.25;
     let range = 1;
     let keys = adj_keys_by_scale(key, range, scale);
 
     assert_eq!(keys.len(), 1728);
 
-    // Expected Result [-17, -17, -17] -> [-6, -6, -6]
     for k in keys.iter() {
       for i in 0..k.len() {
-        assert!(k[i] >= -17);
-        assert!(k[i] <= -6);
+        assert!(k[i] >= -4);
+        assert!(k[i] <= 7);
       }
     }
 
@@ -1052,13 +1006,11 @@ mod tests {
     let keys = adj_keys_by_scale(key, range, scale);
 
     assert_eq!(keys.len(), 1728);
-    //Expected Result [3, 3, 3] -> [14, 14, 14]
-
     // Checking validity of values
     for k in keys.iter() {
       for i in 0..k.len() {
-        assert!(k[i] >= 3);
-        assert!(k[i] <= 14);
+        assert!(k[i] >= 36);
+        assert!(k[i] <= 47);
       }
     }
 
@@ -1074,20 +1026,50 @@ mod tests {
     Ok(())
   }
 
+
   #[test]
-  fn test_adjacent_keys_by_scale_0_2_key_negative_10() -> Result<(), String> {
+  fn test_adjacent_keys_by_scale_0_25_key_negative_10() -> Result<(), String> {
     let key = [-10, -10, -10];
+    let scale = 0.25;
+    let range = 1;
+    let keys = adj_keys_by_scale(key, range, scale);
+
+    assert_eq!(keys.len(), 1728);
+
+    // Expected Result [-17, -17, -17] -> [-6, -6, -6]
+    for k in keys.iter() {
+      for i in 0..k.len() {
+        assert!(k[i] >= -44);
+        assert!(k[i] <= -33);
+      }
+    }
+
+    // Checking duplicates
+    let mut eval_keys = Vec::new();
+    for k in keys.iter() {
+      assert!(!eval_keys.contains(k));
+      if !eval_keys.contains(k) {
+        eval_keys.push(k.clone());
+      }
+    }
+    
+    Ok(())
+  }
+
+
+  #[test]
+  fn test_adjacent_keys_by_scale_0_2() -> Result<(), String> {
+    let key = [0, 0, 0];
     let scale = 0.2;
     let range = 1;
     let keys = adj_keys_by_scale(key, range, scale);
 
     assert_eq!(keys.len(), 3375);
-    
-    // Expected Result [-19, -19, -19] -> [-5, -5, -5]
+
     for k in keys.iter() {
       for i in 0..k.len() {
-        assert!(k[i] >= -19);
-        assert!(k[i] <= -5);
+        assert!(k[i] >= -5);
+        assert!(k[i] <= 9);
       }
     }
 
@@ -1112,11 +1094,10 @@ mod tests {
 
     assert_eq!(keys.len(), 3375);
 
-    // Expected Result [1, 1, 1] -> [15, 15, 15]
     for k in keys.iter() {
       for i in 0..k.len() {
-        assert!(k[i] >= 1);
-        assert!(k[i] <= 15);
+        assert!(k[i] >= 45);
+        assert!(k[i] <= 59);
       }
     }
 
@@ -1133,5 +1114,35 @@ mod tests {
   }
 
 
+
+  #[test]
+  fn test_adjacent_keys_by_scale_0_2_key_negative_10() -> Result<(), String> {
+    let key = [-10, -10, -10];
+    let scale = 0.2;
+    let range = 1;
+    let keys = adj_keys_by_scale(key, range, scale);
+
+    assert_eq!(keys.len(), 3375);
+
+    for k in keys.iter() {
+      for i in 0..k.len() {
+        assert!(k[i] >= -55);
+        assert!(k[i] <= -41);
+      }
+    }
+
+    // Checking duplicates
+    let mut eval_keys = Vec::new();
+    for k in keys.iter() {
+      assert!(!eval_keys.contains(k));
+      if !eval_keys.contains(k) {
+        eval_keys.push(k.clone());
+      }
+    }
+    
+    Ok(())
+  }
+
+  
 
 }
