@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use rapier3d::prelude::{Point, ColliderBuilder, InteractionGroups, Isometry, ColliderHandle};
 use rapier3d::geometry::Group;
+use voxels::chunk::adj_keys_by_scale;
 use voxels::chunk::chunk_manager::Chunk;
 use voxels::data::voxel_octree::MeshData;
 use voxels::{chunk::{chunk_manager::ChunkManager, adjacent_keys}, data::voxel_octree::VoxelMode, utils::key_to_world_coord_f32};
@@ -25,9 +26,10 @@ fn on_player_add(
   mut player_query: Query<(Entity, &Player), Added<Player>>,
 ) {
   
+  let scale = game_res.voxel_scale;
   for (entity, player) in &mut player_query {
     let config = game_res.chunk_manager.config.clone();
-    let keys = adjacent_keys(&player.key, 1, true);
+    let keys = adj_keys_by_scale(player.key, 1, scale);
 
     let mut chunks = Chunks { data: Vec::new() };
 
@@ -49,7 +51,7 @@ fn on_player_add(
         VoxelMode::SurfaceNets, 
         &mut game_res.chunk_manager.voxel_reuse.clone(),
         &game_res.colors,
-        game_res.voxel_scale,
+        scale,
       );
 
       game_res.chunk_manager.set_chunk(key, &chunk);
@@ -58,7 +60,12 @@ fn on_player_add(
         continue;
       }
       
-      let pos_f32 = key_to_world_coord_f32(key, config.seamless_size);
+      // TODO: Create key_to_world_coord_f32() version with voxel scale
+      let mut pos_f32 = key_to_world_coord_f32(key, config.seamless_size);
+      pos_f32[0] *= scale;
+      pos_f32[1] *= scale;
+      pos_f32[2] *= scale;
+
       let mut pos = Vec::new();
       for d in data.positions.iter() {
         pos.push(Point::from([d[0], d[1], d[2]]));
@@ -66,7 +73,6 @@ fn on_player_add(
   
       let mut indices = Vec::new();
       for ind in data.indices.chunks(3) {
-        // println!("i {:?}", ind);
         indices.push([ind[0], ind[1], ind[2]]);
       }
   
@@ -76,7 +82,6 @@ fn on_player_add(
       collider.set_position(Isometry::from(pos_f32));
   
       let handle = physics.collider_set.insert(collider);
-
       chunks.data.push(Mesh {
         key: key.clone(),
         data: data.clone(),
@@ -89,9 +94,7 @@ fn on_player_add(
 
     commands
       .entity(entity)
-      .insert(chunks);
-
-    info!("chunks");
+      .insert(chunks); 
   }
 }
 
@@ -105,9 +108,12 @@ fn on_player_move(
     if player.key == player.prev_key {
       continue;
     }
+    println!("player.key {:?}", player.key);
+    
 
+    let scale = game_res.voxel_scale;
+    let mul = (1.0 / scale) as i64;
     let config = game_res.chunk_manager.config.clone();
-    let keys = adjacent_keys(&player.key, 1, true);
     for i in 0..chunks.data.len() {
       let m = &chunks.data[i];
 
@@ -115,6 +121,14 @@ fn on_player_move(
     }
     chunks.data.clear();
 
+    let scaled_key = [
+      player.key[0] * mul,
+      player.key[1] * mul,
+      player.key[2] * mul,
+    ];
+    println!("scaled_key {:?}", scaled_key);
+    
+    let keys = adj_keys_by_scale(scaled_key, 1, scale);
     for key in keys.iter() {
       let mut chunk = Chunk::default();
       let chunk_op = game_res.chunk_manager.get_chunk(key);
@@ -142,7 +156,11 @@ fn on_player_move(
         continue;
       }
       
-      let pos_f32 = key_to_world_coord_f32(key, config.seamless_size);
+      let mut pos_f32 = key_to_world_coord_f32(key, config.seamless_size);
+      pos_f32[0] *= scale;
+      pos_f32[1] *= scale;
+      pos_f32[2] *= scale;
+
       let mut pos = Vec::new();
       for d in data.positions.iter() {
         pos.push(Point::from([d[0], d[1], d[2]]));

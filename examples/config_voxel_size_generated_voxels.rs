@@ -123,15 +123,15 @@ fn startup(
 
     let mesh_handle = meshes.add(render_mesh);
 
-    let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
-    coord_f32[0] *= scale;
-    coord_f32[1] *= scale;
-    coord_f32[2] *= scale;
+    let mut pos_f32 = key_to_world_coord_f32(key, config.seamless_size);
+    pos_f32[0] *= scale;
+    pos_f32[1] *= scale;
+    pos_f32[2] *= scale;
     commands
       .spawn(MaterialMeshBundle {
         mesh: mesh_handle,
         material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+        transform: Transform::from_xyz(pos_f32[0], pos_f32[1], pos_f32[2]),
         // transform: Transform::from_xyz(0.0, 0.0, 0.0),
         ..default()
       })
