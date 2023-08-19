@@ -64,30 +64,18 @@ fn add(
 fn remove(
   mut commands: Commands,
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-
   chunk_query: Query<(Entity, &Chunks, &Player), Changed<Chunks>>,
-
   game_res: Res<GameResource>,
 ) {
   for (_, _chunks, player) in &chunk_query {
-    
     let scale = game_res.voxel_scale;
-    let mul = (1.0 / scale) as i64;
-
-    let scaled_key = [
-      player.key[0] * mul,
-      player.key[1] * mul,
-      player.key[2] * mul,
-    ];
-    let keys = adj_keys_by_scale(scaled_key, 1, scale);
+    let keys = adj_keys_by_scale(player.key, 1, scale);
 
     for (entity, graphics) in &chunk_graphics {
       if !keys.contains(&graphics.key) {
         commands.entity(entity).despawn_recursive();
       }
     }
-  
-    
   }
 }
 

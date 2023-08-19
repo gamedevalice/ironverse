@@ -108,9 +108,7 @@ fn on_player_move(
     if player.key == player.prev_key {
       continue;
     }
-    println!("player.key {:?}", player.key);
     
-
     let scale = game_res.voxel_scale;
     let mul = (1.0 / scale) as i64;
     let config = game_res.chunk_manager.config.clone();
@@ -121,14 +119,7 @@ fn on_player_move(
     }
     chunks.data.clear();
 
-    let scaled_key = [
-      player.key[0] * mul,
-      player.key[1] * mul,
-      player.key[2] * mul,
-    ];
-    println!("scaled_key {:?}", scaled_key);
-    
-    let keys = adj_keys_by_scale(scaled_key, 1, scale);
+    let keys = adj_keys_by_scale(player.key, 1, scale);
     for key in keys.iter() {
       let mut chunk = Chunk::default();
       let chunk_op = game_res.chunk_manager.get_chunk(key);

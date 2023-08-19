@@ -51,7 +51,7 @@ impl Default for GameResource {
       modified_chunks: HashMap::new(),
       export_obj: None,
       colors: colors,
-      voxel_scale: 0.5,
+      voxel_scale: 0.25,
     }
   }
 }

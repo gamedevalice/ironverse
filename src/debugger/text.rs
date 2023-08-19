@@ -59,8 +59,10 @@ fn show_texts(
   };
 
   let mut player_pos = Vec3::ZERO;
+  let mut forward = Vec3::ZERO;
   for trans in &players {
     player_pos = trans.translation.clone();
+    forward = trans.forward();
   }
 
   let mut range_pos = Vec3::NAN;
@@ -97,6 +99,12 @@ fn show_texts(
 
         ui.label(
           RichText::new(format!("Raycast: {:?}", range_pos))
+            .color(Color32::WHITE)
+            .size(20.0)
+        );
+
+        ui.label(
+          RichText::new(format!("forward: {:?}", forward))
             .color(Color32::WHITE)
             .size(20.0)
         );
