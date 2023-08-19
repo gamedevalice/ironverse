@@ -255,36 +255,39 @@ fn voxel_edit(
   }
 
 
-  let key = &[0, 0, 0];
-  let chunk = local_res.chunk_manager.get_chunk(key).unwrap();
-  let data = chunk
-    .octree
-    .compute_mesh(
-      VoxelMode::SurfaceNets, 
-      &mut voxel_reuse,
-      &colors,
-      scale
-    );
+  let keys = adj_keys_by_scale([0, 0, 0], 1, local_res.scale);
+  for key in keys.iter() {
+    let chunk = local_res.chunk_manager.get_chunk(key).unwrap();
+    let data = chunk
+      .octree
+      .compute_mesh(
+        VoxelMode::SurfaceNets, 
+        &mut voxel_reuse,
+        &colors,
+        scale
+      );
 
-  let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-  render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-  render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-  render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
+    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+    render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+    render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-  let mesh_handle = meshes.add(render_mesh);
+    let mesh_handle = meshes.add(render_mesh);
 
-  let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
-  coord_f32[0] *= scale;
-  coord_f32[1] *= scale;
-  coord_f32[2] *= scale;
-  commands
-    .spawn(MaterialMeshBundle {
-      mesh: mesh_handle,
-      material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
-      transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-      ..default()
-    })
-    .insert(ChunkGraphics {});
+    let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
+    coord_f32[0] *= scale;
+    coord_f32[1] *= scale;
+    coord_f32[2] *= scale;
+    commands
+      .spawn(MaterialMeshBundle {
+        mesh: mesh_handle,
+        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+        ..default()
+      })
+      .insert(ChunkGraphics {});
+
+  }
 
 }
 
