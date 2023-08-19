@@ -216,6 +216,9 @@ fn voxel_preview(
     for mut trans in &mut preview {
       trans.translation = pos_op.unwrap();
 
+      let s = local_res.scale;
+      trans.scale = Vec3::new(s + s * 0.10, s + s * 0.10, s + s * 0.10);
+
       // println!("pos_op {:?}", pos_op.unwrap());
     }
     
@@ -386,7 +389,7 @@ impl Default for LocalResource {
     Self {
       chunk_manager: ChunkManager::default(),
       voxel_pos: None,
-      scale: 0.5,
+      scale: 1.0,
       colors: vec![
         [1.0, 0.0, 0.0], 
         [0.0, 1.0, 0.0], 
