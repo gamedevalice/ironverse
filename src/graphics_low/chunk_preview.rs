@@ -50,7 +50,7 @@ fn update(
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
       render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-      let chunk_size = (chunk.octree.get_size() / 2) as f32;
+      let chunk_size = (chunk.octree.get_size() / 2) as f32 * game_res.voxel_scale;
       let p = &edit.position.unwrap();
       let adj = [p.x as f32, p.y as f32, p.z as f32];
       let coord_f32 = [adj[0] - chunk_size, adj[1] - chunk_size, adj[2] - chunk_size];

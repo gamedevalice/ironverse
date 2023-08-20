@@ -228,7 +228,6 @@ impl ChunkManager {
   pub fn get_voxel_safe(&self, pos: &[i64; 3]) -> Option<u8> {
     let seamless_size = self.seamless_size();
     let key = voxel_pos_to_key(pos, seamless_size);
-    // let key = world_pos_to_key(pos, seamless_size);
     
     let octree = match self.get_octree(&pos) {
       Some(o) => o,
@@ -430,6 +429,8 @@ impl ChunkManager {
 
     chunks
   }
+
+
 }
 
 #[cfg(test)]
