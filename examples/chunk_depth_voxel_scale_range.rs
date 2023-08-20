@@ -441,14 +441,12 @@ fn show_diagnostic_texts(
 
 #[derive(Resource)]
 struct LocalResource {
-  chunk_manager: ChunkManager,
   colors: Vec<[f32; 3]>,
 }
 
 impl Default for LocalResource {
   fn default() -> Self {
     Self {
-      chunk_manager: ChunkManager::new(4, 0.5, 1),
       colors: vec![
         [1.0, 0.0, 0.0], 
         [0.0, 1.0, 0.0], 
@@ -467,18 +465,5 @@ impl Default for LocalResource {
   }
 }
 
-
-#[derive(Component, Clone)]
-struct EditPreview { }
-
 #[derive(Component, Clone)]
 struct ChunkGraphics { }
-
-
-/*
-  Refactor ChunkManager
-
-  Implement chunk range
-  Implement voxel per chunk
-
-*/

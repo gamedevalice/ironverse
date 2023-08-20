@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indice
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
 use utils::RayUtils;
-use voxels::{chunk::{chunk_manager::ChunkManager, adjacent_keys}, utils::key_to_world_coord_f32, data::{voxel_octree::VoxelMode, surface_nets::VoxelReuse}};
+use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::{voxel_octree::VoxelMode, surface_nets::VoxelReuse}};
 use bevy_flycam::NoCameraAndGrabPlugin;
 
 fn main() {
@@ -36,8 +36,8 @@ fn setup_camera(
 ) {
   commands
     .spawn(Camera3dBundle {
-      transform: Transform::from_xyz(6.41, 42.63, -26.86)
-        .looking_to(Vec3::new(0.01, -0.81, 0.57), Vec3::Y),
+      transform: Transform::from_xyz(14.30, 9.50, -25.82)
+        .looking_to(Vec3::new(0.09, -0.46, 0.88), Vec3::Y),
       ..Default::default()
     })
     .insert(FlyCam)
@@ -46,13 +46,13 @@ fn setup_camera(
   // Sun
   commands.spawn(DirectionalLightBundle {
     directional_light: DirectionalLight {
-        color: Color::rgb(0.98, 0.95, 0.82),
-        shadows_enabled: true,
-        illuminance: 10000.0,
-        ..default()
+      color: Color::rgb(0.98, 0.95, 0.82),
+      shadows_enabled: true,
+      illuminance: 10000.0,
+      ..default()
     },
     transform: Transform::from_xyz(0.0, 50.0, 0.0)
-        .looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),
+      .looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),
     ..default()
   });
 
@@ -61,7 +61,6 @@ fn setup_camera(
       intensity: 6000.0,
       ..Default::default()
     },
-    // transform: Transform::from_xyz(6.0, 30.0, 6.0),
     transform: Transform::from_xyz(6.0, 15.0, 6.0),
     ..Default::default()
   });
@@ -192,11 +191,80 @@ fn detect_voxel_preview_position(
 }
 
 fn on_preview_changed(
-  previews: Query<&mut Preview, Changed<Preview>>,
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  local_res: Res<LocalResource>,
+
+  previews: Query<&Preview, Changed<Preview>>,
+  preview_graphics: Query<Entity, With<PreviewGraphics>>,
 ) {
+
+  let voxel_scale = local_res.chunk_manager.voxel_scale;
+
   for preview in &previews {
     println!("voxel_pos {:?}", preview.voxel_pos);
+
+    for entity in &preview_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
+
+    if preview.voxel_pos.is_none() {
+      continue;
+    }
+
+    let mut chunk = Chunk::default();
+    let mid_pos = (chunk.octree.get_size() / 2) as i64;
+
+    let preview_size = 1;
+    let min = -preview_size;
+    let max = preview_size;
+    for x in min..max {
+      for y in min..max {
+        for z in min..max {
+          let local_x = (mid_pos + x) as u32;
+          let local_y = (mid_pos + y) as u32;
+          let local_z = (mid_pos + z) as u32;
+          
+          chunk.octree.set_voxel(local_x, local_y, local_z, 1);
+        }
+      }
+    }
+
+    let data = chunk.octree.compute_mesh(
+      VoxelMode::SurfaceNets, 
+      &mut VoxelReuse::default(), 
+      &local_res.colors,
+      voxel_scale
+    );
+
+    let mut render = Mesh::new(PrimitiveTopology::TriangleList);
+    render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+    render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+    render.set_indices(Some(Indices::U32(data.indices.clone())));
+    
+    let v_pos = preview.voxel_pos.unwrap();
+    let mut pos = [
+      v_pos[0] + -(mid_pos) as f32,
+      v_pos[1] + -(mid_pos) as f32,
+      v_pos[2] + -(mid_pos) as f32,
+    ];
+
+    commands
+      .spawn(MaterialMeshBundle {
+        mesh: meshes.add(render),
+        material: materials.add(Color::rgba(1.0, 1.0, 1.0, 1.0).into()),
+        transform: Transform::from_xyz(pos[0], pos[1], pos[2]),
+        ..default()
+      })
+      .insert(PreviewGraphics { });
+    
   }
+
+  /*
+    Defer validation
+    Place a voxel here
+   */
 
 }
 
@@ -306,6 +374,9 @@ impl Default for Preview {
     }
   }
 }
+
+#[derive(Component, Clone)]
+struct PreviewGraphics { }
 
 
 #[derive(Component, Clone)]

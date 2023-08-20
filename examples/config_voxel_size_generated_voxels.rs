@@ -203,7 +203,6 @@ fn voxel_preview(
 
       let res = local_res.chunk_manager.get_voxel_safe(&p_i64);
       if res.is_some() && res.unwrap() != 0 {
-        let s = local_res.scale;
         pos_op = Some(Vec3::new(p[0], p[1], p[2]));
 
         local_res.voxel_pos = Some(p_i64);
@@ -389,7 +388,7 @@ impl Default for LocalResource {
     Self {
       chunk_manager: ChunkManager::default(),
       voxel_pos: None,
-      scale: 1.0,
+      scale: 0.5,
       colors: vec![
         [1.0, 0.0, 0.0], 
         [0.0, 1.0, 0.0], 
