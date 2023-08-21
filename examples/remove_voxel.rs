@@ -1,11 +1,11 @@
 use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PresentMode, PrimaryWindow, CursorGrabMode}};
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
+use rapier3d::prelude::ColliderHandle;
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::{voxel_octree::VoxelMode, surface_nets::VoxelReuse}};
 use bevy_flycam::NoCameraAndGrabPlugin;
 use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource};
-
 
 fn main() {
   let mut app = App::new();
@@ -25,7 +25,7 @@ fn main() {
     .add_plugin(NoCameraAndGrabPlugin)
     .add_plugin(BevyVoxelPlugin)
     .insert_resource(BevyVoxelResource::new(
-      5, 
+      4, 
       1.0, 
       1, 
       vec![
@@ -110,6 +110,10 @@ fn setup_starting_chunks(
   let chunks = bevy_voxel_res.load_adj_chunks(key);
   for chunk in chunks.iter() {
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+    if data.positions.len() == 0 {
+      continue;
+    }
+
     let pos = bevy_voxel_res.get_pos(chunk.key);
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
@@ -128,7 +132,9 @@ fn setup_starting_chunks(
         transform: Transform::from_translation(pos),
         ..default()
       })
-      .insert(ChunkGraphics {}); 
+      .insert(ChunkGraphics {
+        handle: bevy_voxel_res.add_collider(pos, &data)
+      }); 
   }
 
 }
@@ -176,7 +182,6 @@ fn reposition_voxel_preview(
 ) {
 
   for preview in &previews {
-    // println!("voxel_pos {:?}", preview.voxel_pos);
     for entity in &preview_graphics {
       commands.entity(entity).despawn_recursive();
     }
@@ -184,6 +189,8 @@ fn reposition_voxel_preview(
     if preview.voxel_pos.is_none() {
       continue;
     }
+
+    println!("voxel_pos {:?}", preview.voxel_pos);
 
     let p = preview.voxel_pos.unwrap();
     let chunk = bevy_voxel_res.get_preview_chunk(p);
@@ -226,7 +233,7 @@ fn remove_voxel(
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 
   previews: Query<(Entity, &Preview)>,
-  chunk_graphics: Query<Entity, With<ChunkGraphics>>,
+  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 ) {
   let mut voxel = None;
   if mouse.just_pressed(MouseButton::Left) {
@@ -240,8 +247,9 @@ fn remove_voxel(
     if preview.voxel_pos.is_none() {
       continue;
     }
-    for entity in &chunk_graphics {
+    for (entity, graphics) in &chunk_graphics {
       commands.entity(entity).despawn_recursive();
+      bevy_voxel_res.physics.remove_collider(graphics.handle);
     }
 
     let pos = preview.voxel_pos.unwrap();
@@ -251,6 +259,10 @@ fn remove_voxel(
     let chunks = bevy_voxel_res.load_adj_chunks(key);
     for chunk in chunks.iter() {
       let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+
       let pos = bevy_voxel_res.get_pos(chunk.key);
 
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
@@ -262,6 +274,7 @@ fn remove_voxel(
       if chunk.key[0] == key[0] && chunk.key[2] == key[0] {
         color = Color::rgb(1.0, 0.0, 0.0);
       }
+
       commands
         .spawn(MaterialMeshBundle {
           mesh: meshes.add(render_mesh),
@@ -269,7 +282,9 @@ fn remove_voxel(
           transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics {}); 
+        .insert(ChunkGraphics {
+          handle: bevy_voxel_res.add_collider(pos, &data)
+        }); 
     }
   }
 }
@@ -388,7 +403,9 @@ struct PreviewGraphics { }
 
 
 #[derive(Component, Clone)]
-struct ChunkGraphics { }
+struct ChunkGraphics {
+  pub handle: ColliderHandle,
+}
 
 
 /*
