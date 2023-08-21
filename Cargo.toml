@@ -51,14 +51,6 @@ js-sys = "0.3"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4.19"
 
-# [features]
-# default = [
-#   "bevy_flycam",
-#   "voxels",
-#   "utils",
-#   "bevy_egui",
-# ]
-
 [features]
 default = [
   "core",
@@ -102,6 +94,10 @@ test_raycast = []
 
 
 [[example]]
+name = "add_voxel"
+path = "examples/add_voxel.rs"
+
+[[example]]
 name = "remove_voxel"
 path = "examples/remove_voxel.rs"
 
@@ -121,7 +117,5 @@ path = "examples/config_voxel_size_comparison.rs"
 name = "chunk_depth_voxel_scale_range"
 path = "examples/chunk_depth_voxel_scale_range.rs"
 
-[[example]]
-name = "chunk_edit"
-path = "examples/chunk_edit.rs"
+
 

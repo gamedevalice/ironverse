@@ -1,8 +1,11 @@
 use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PresentMode, PrimaryWindow, CursorGrabMode}};
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
-use voxels::{chunk::{chunk_manager::ChunkManager, adjacent_keys}, utils::key_to_world_coord_f32, data::voxel_octree::VoxelMode};
+use utils::RayUtils;
+use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::{voxel_octree::VoxelMode, surface_nets::VoxelReuse}};
 use bevy_flycam::NoCameraAndGrabPlugin;
+use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource};
+
 
 fn main() {
   let mut app = App::new();
@@ -18,14 +21,34 @@ fn main() {
       }),
       ..default()
     }))
-    .insert_resource(LocalResource::default())
     .add_plugin(EguiPlugin)
     .add_plugin(NoCameraAndGrabPlugin)
+    .add_plugin(BevyVoxelPlugin)
+    .insert_resource(BevyVoxelResource::new(
+      5, 
+      1.0, 
+      1, 
+      vec![
+        [1.0, 0.0, 0.0], 
+        [0.0, 1.0, 0.0], 
+        [0.0, 0.0, 1.0], 
+        [0.0, 0.0, 0.0],
+  
+        [0.2, 0.0, 0.0],
+        [0.4, 0.0, 0.0],
+        [0.6, 0.0, 0.0],
+        [0.8, 0.0, 0.0],
+  
+        [0.0, 0.2, 0.0],
+        [0.0, 0.4, 0.0],
+      ]
+    ))
+    .insert_resource(LocalResource::default())
     .add_startup_system(setup_camera)
-    .add_startup_system(startup)
-    .add_startup_system(startup_voxel_preview)
-    .add_system(voxel_preview)
-    .add_system(voxel_edit)
+    .add_startup_system(setup_starting_chunks)
+    .add_system(detect_voxel_preview_position)
+    .add_system(reposition_voxel_preview)
+    .add_system(remove_voxel)
     .add_system(show_diagnostic_texts)
     .run();
 
@@ -33,26 +56,26 @@ fn main() {
 
 fn setup_camera(
   mut commands: Commands,
-  mut windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
   commands
     .spawn(Camera3dBundle {
-      transform: Transform::from_xyz(1.6, 11.3, -20.5)
-        .looking_to(Vec3::new(0.09, -0.48, 0.86), Vec3::Y),
+      transform: Transform::from_xyz(0.91, 11.64, -8.82)
+        .looking_to(Vec3::new(0.03, -0.80, 0.59), Vec3::Y),
       ..Default::default()
     })
-    .insert(FlyCam);
+    .insert(FlyCam)
+    .insert(Preview::default());
 
   // Sun
   commands.spawn(DirectionalLightBundle {
     directional_light: DirectionalLight {
-        color: Color::rgb(0.98, 0.95, 0.82),
-        shadows_enabled: true,
-        illuminance: 10000.0,
-        ..default()
+      color: Color::rgb(0.98, 0.95, 0.82),
+      shadows_enabled: true,
+      illuminance: 10000.0,
+      ..default()
     },
     transform: Transform::from_xyz(0.0, 50.0, 0.0)
-        .looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),
+      .looking_at(Vec3::new(-0.15, -0.05, 0.25), Vec3::Y),
     ..default()
   });
 
@@ -61,258 +84,198 @@ fn setup_camera(
       intensity: 6000.0,
       ..Default::default()
     },
-    // transform: Transform::from_xyz(6.0, 30.0, 6.0),
     transform: Transform::from_xyz(6.0, 15.0, 6.0),
     ..Default::default()
   });
-
-  let mut window = match windows.get_single_mut() {
-    Ok(w) => { w },
-    Err(_e) => return,
-  };
-
-  // window.cursor.grab_mode = CursorGrabMode::None;
 }
 
-fn startup(
+fn setup_starting_chunks(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
   mut local_res: ResMut<LocalResource>,
+
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
-  let size = 16;
-  let seamless_size = 12;
-  let scale = local_res.scale;
+  let scale = bevy_voxel_res.chunk_manager.voxel_scale;
+  let size = scale + (scale * 0.1);
+  // println!("size {}", size);
+  commands.spawn(PbrBundle {
+    mesh: meshes.add(shape::Plane::from_size(size).into()),
+    material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+    ..default()
+  });
 
-  let calc_size = (size - 2) as f32 * scale;
-
-  // commands.spawn(PbrBundle {
-  //   mesh: meshes.add(shape::Plane::from_size(calc_size).into()),
-  //   transform: Transform::from_translation(
-  //     Vec3::new(calc_size * 0.5, 3.0, calc_size * 0.5)
-  //   ),
-  //   material: materials.add(Color::rgba(1.0, 1.0, 1.0, 0.4).into()),
-  //   ..default()
-  // });
-
-
-  let colors = vec![
-    [1.0, 0.0, 0.0], 
-    [0.0, 1.0, 0.0], 
-    [0.0, 0.0, 1.0], 
-    [0.0, 0.0, 0.0],
-
-    [0.2, 0.0, 0.0],
-    [0.4, 0.0, 0.0],
-    [0.6, 0.0, 0.0],
-    [0.8, 0.0, 0.0],
-
-    [0.0, 0.2, 0.0],
-    [0.0, 0.4, 0.0],
-  ];
-
-  let config = local_res.chunk_manager.config.clone();
-  let mut voxel_reuse = local_res.chunk_manager.voxel_reuse.clone();
-  // let chunk = ChunkManager::new_chunk(&[0, -1, 0], config.depth, config.lod, config.noise);
-  // let mut chunk = Chunk::default();
-
-  // for x in 0..size {
-  //   for y in 0..size {
-  //     for z in 0..size {
-  //       if y < 3 {
-  //         chunk.octree.set_voxel(x, y, z, 1);
-  //       }
-  //     }
-  //   }
-  // }
-
-
-  let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
-
-  for key in adj_keys.iter() {
-    let chunk = ChunkManager::new_chunk(key, config.depth, config.lod, config.noise);
-    local_res.chunk_manager.set_chunk(key, &chunk);
-
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &colors,
-        scale
-      );
+  let key = [0, 0, 0];
+  let chunks = bevy_voxel_res.load_adj_chunks(key);
+  for chunk in chunks.iter() {
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+    let pos = bevy_voxel_res.get_pos(chunk.key);
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    let mesh_handle = meshes.add(render_mesh);
-
-    let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
-    coord_f32[0] *= scale;
-    coord_f32[1] *= scale;
-    coord_f32[2] *= scale;
+    let mut color = Color::rgb(0.7, 0.7, 0.7);
+    if chunk.key[0] == key[0] && chunk.key[2] == key[0] {
+      color = Color::rgb(1.0, 0.0, 0.0);
+    }
     commands
       .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        // transform: Transform::from_xyz(0.0, 0.0, 0.0),
+        mesh: meshes.add(render_mesh),
+        material: materials.add(color.into()),
+        transform: Transform::from_translation(pos),
         ..default()
       })
-      .insert(ChunkGraphics {});
+      .insert(ChunkGraphics {}); 
   }
+
 }
 
 
-fn startup_voxel_preview(
+fn detect_voxel_preview_position(
+  mut cam: Query<(&Transform, &mut Preview), With<FlyCam>>,
+
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+  for (cam_trans, mut preview) in &mut cam {
+    let pos = bevy_voxel_res.get_hit_voxel_pos(cam_trans);
+
+    // println!("pos {:?}", pos);
+
+    if pos.is_none() && preview.voxel_pos.is_some() {
+      preview.voxel_pos = pos;
+    }
+
+    if pos.is_some() {
+      if preview.voxel_pos.is_some() {
+        let p = pos.unwrap();
+        let current = preview.voxel_pos.unwrap();
+        if current != p {
+          preview.voxel_pos = pos;
+        }
+      }
+      
+      if preview.voxel_pos.is_none() {
+        preview.voxel_pos = pos;
+      }
+    }
+  }
+}
+
+fn reposition_voxel_preview(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
+  local_res: Res<LocalResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+
+  previews: Query<&Preview, Changed<Preview>>,
+  preview_graphics: Query<Entity, With<PreviewGraphics>>,
 ) {
-  /*
-    Make it changeable later
-   */
-  let size = 1.5;
-  let pos = [0.0, 0.0, 0.0];
-  let color = Color::rgba(0.0, 1.0, 0.0, 1.0);
-  commands
-    .spawn(PbrBundle {
-      mesh: meshes.add(Mesh::from(shape::Box::new(0.5, 1.5, 0.5))),
-      material: materials.add(color.into()),
-      transform: Transform::from_xyz(pos[0], pos[1], pos[2]),
-      ..default()
-    });
 
-
-  commands.spawn(PbrBundle {
-    mesh: meshes.add(Mesh::from(shape::Cube { size: 1.1 })),
-    material: materials.add(Color::rgba(1.0, 0.0, 0.0, 0.5).into()),
-    transform: Transform::from_xyz(2.0, 0.0, 0.0),
-    ..default()
-  })
-  .insert(EditPreview {});
-}
-
-
-fn voxel_preview(
-  mut local_res: ResMut<LocalResource>,
-  mut preview: Query<&mut Transform, With<EditPreview>>,
-  cam: Query<&Transform, (With<FlyCam>, Without<EditPreview>)>,
-) {
-  let max_dist = 50.0;
-  let total_div = max_dist as i64 * 2;
-  let min_dist = 1.0;
-  
-  let mut pos_op = None;
-  for cam_trans in &cam {
-    'main: for i in 0..total_div {
-      let div_f32 = total_div as f32 - 1.0;
-      let dist = (max_dist / div_f32) * i as f32;
-      if dist < min_dist {
-        continue;
-      }
-
-
-      /*
-        Have to change by changing the scale
-        For now, use 0.5
-        RayUtils::get_normal_point()
-          Need to return divisible by scale, Ex: 0.0, 0.5, 1.0
-          Previously 0.0, 1.0
-       */
-      let p = utils::RayUtils::get_normal_point(&cam_trans, dist, 1);
-      let p_i64 = [p.x as i64, p.y as i64, p.z as i64];
-
-      let res = local_res.chunk_manager.get_voxel_safe(&p_i64);
-      if res.is_some() && res.unwrap() != 0 {
-        pos_op = Some(p);
-
-        local_res.voxel_pos = Some(p_i64);
-        break 'main;
-      }
+  for preview in &previews {
+    // println!("voxel_pos {:?}", preview.voxel_pos);
+    for entity in &preview_graphics {
+      commands.entity(entity).despawn_recursive();
     }
-  }
 
-  if pos_op.is_some() {
-    for mut trans in &mut preview {
-      trans.translation = pos_op.unwrap();
+    if preview.voxel_pos.is_none() {
+      continue;
     }
+
+    let p = preview.voxel_pos.unwrap();
+    let chunk = bevy_voxel_res.get_preview_chunk(p);
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
+    let pos = bevy_voxel_res.get_preview_pos(p);
+
+    let mut render = Mesh::new(PrimitiveTopology::TriangleList);
+    render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+    render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+    render.set_indices(Some(Indices::U32(data.indices.clone())));
+
+    // commands
+    //   .spawn(MaterialMeshBundle {
+    //     mesh: meshes.add(render),
+    //     material: materials.add(Color::rgba(1.0, 1.0, 1.0, 1.0).into()),
+    //     transform: Transform::from_translation(pos),
+    //     ..default()
+    //   })
+    //   .insert(PreviewGraphics { });
     
+    let scale = bevy_voxel_res.chunk_manager.voxel_scale;
+    let size = scale + (scale * 0.1);
+    commands.spawn(PbrBundle {
+      mesh: meshes.add(Mesh::from(shape::Cube { size: size})),
+      material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
+      transform: Transform::from_translation(p),
+      ..default()
+    })
+    .insert(PreviewGraphics { });
+
   }
 }
 
-fn voxel_edit(
-  mut local_res: ResMut<LocalResource>,
-  mouse: Res<Input<MouseButton>>,
 
+fn remove_voxel(
   mut commands: Commands,
-  graphics: Query<Entity, With<ChunkGraphics>>,
-
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
+  mouse: Res<Input<MouseButton>>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+
+  previews: Query<(Entity, &Preview)>,
+  chunk_graphics: Query<Entity, With<ChunkGraphics>>,
 ) {
   let mut voxel = None;
-
   if mouse.just_pressed(MouseButton::Left) {
     voxel = Some(0);
   }
-
-  if local_res.voxel_pos.is_none() || voxel.is_none() {
+  if voxel.is_none() {
     return;
   }
-  let pos = local_res.voxel_pos.unwrap();
 
+  for (_, preview) in &previews {
+    if preview.voxel_pos.is_none() {
+      continue;
+    }
+    for entity in &chunk_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
 
-  // println!("voxel {}", voxel.unwrap());
+    let pos = preview.voxel_pos.unwrap();
+    bevy_voxel_res.set_voxel(pos, voxel.unwrap());
+    
+    let key = [0, 0, 0];
+    let chunks = bevy_voxel_res.load_adj_chunks(key);
+    for chunk in chunks.iter() {
+      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      let pos = bevy_voxel_res.get_pos(chunk.key);
 
-  local_res.chunk_manager.set_voxel2(&pos, voxel.unwrap());
+      let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+      render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+      render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+      render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-  let scale = local_res.scale;
-  let colors = local_res.colors.clone();
-  let config = local_res.chunk_manager.config.clone();
-  let mut voxel_reuse = local_res.chunk_manager.voxel_reuse.clone();
-
-  for entity in &graphics {
-    commands.entity(entity).despawn_recursive();
+      let mut color = Color::rgb(0.7, 0.7, 0.7);
+      if chunk.key[0] == key[0] && chunk.key[2] == key[0] {
+        color = Color::rgb(1.0, 0.0, 0.0);
+      }
+      commands
+        .spawn(MaterialMeshBundle {
+          mesh: meshes.add(render_mesh),
+          material: materials.add(color.into()),
+          transform: Transform::from_translation(pos),
+          ..default()
+        })
+        .insert(ChunkGraphics {}); 
+    }
   }
-
-
-  let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
-  for key in adj_keys.iter() {
-    let chunk = local_res.chunk_manager.get_chunk(key).unwrap();
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &colors,
-        scale
-      );
-
-    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
-
-    let mesh_handle = meshes.add(render_mesh);
-
-    let mut coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
-    coord_f32[0] *= scale;
-    coord_f32[1] *= scale;
-    coord_f32[2] *= scale;
-    commands
-      .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        ..default()
-      })
-      .insert(ChunkGraphics {});
-  }
-
 }
+
+
+
 
 fn show_diagnostic_texts(
   cameras: Query<&Transform, With<FlyCam>>,
@@ -381,49 +344,68 @@ fn show_diagnostic_texts(
 #[derive(Resource)]
 struct LocalResource {
   chunk_manager: ChunkManager,
-  voxel_pos: Option<[i64; 3]>,
-
-  scale: f32,
-  colors: Vec<[f32; 3]>,
 }
 
 impl Default for LocalResource {
   fn default() -> Self {
+    let colors = vec![
+      [1.0, 0.0, 0.0], 
+      [0.0, 1.0, 0.0], 
+      [0.0, 0.0, 1.0], 
+      [0.0, 0.0, 0.0],
+
+      [0.2, 0.0, 0.0],
+      [0.4, 0.0, 0.0],
+      [0.6, 0.0, 0.0],
+      [0.8, 0.0, 0.0],
+
+      [0.0, 0.2, 0.0],
+      [0.0, 0.4, 0.0],
+    ];
+
     Self {
-      chunk_manager: ChunkManager::default(),
-      voxel_pos: None,
-      scale: 1.0,
-      colors: vec![
-        [1.0, 0.0, 0.0], 
-        [0.0, 1.0, 0.0], 
-        [0.0, 0.0, 1.0], 
-        [0.0, 0.0, 0.0],
-
-        [0.2, 0.0, 0.0],
-        [0.4, 0.0, 0.0],
-        [0.6, 0.0, 0.0],
-        [0.8, 0.0, 0.0],
-
-        [0.0, 0.2, 0.0],
-        [0.0, 0.4, 0.0],
-      ],
+      chunk_manager: ChunkManager::new(4, 1.0, 1, colors),
     }
   }
 }
 
 
 #[derive(Component, Clone)]
-struct EditPreview { }
+struct Preview {
+  voxel_pos: Option<Vec3>,
+}
+
+impl Default for Preview {
+  fn default() -> Self {
+    Self {
+      voxel_pos: None,
+    }
+  }
+}
+
+#[derive(Component, Clone)]
+struct PreviewGraphics { }
+
 
 #[derive(Component, Clone)]
 struct ChunkGraphics { }
 
 
-
-
-
 /*
-  Voxel to edit coordinates to edit
-  Working demo before deploying
+  Refactor ChunkManager
 
+  Implement chunk range
+  Implement voxel per chunk
+
+  Position of the preview
+    There are some conditions
+    Should be either be modified by state
+
+
+  Types of features
+    Dynamic switching: Only one state at a time
+      Can be called cartridge
+    Parallel: Can co-exists with other features
+    Compile time conditional: Minimum graphics vs Normal graphics for faster compilation
+    
 */

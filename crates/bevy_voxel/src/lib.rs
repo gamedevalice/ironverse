@@ -106,6 +106,19 @@ impl BevyVoxelResource {
         continue;
       }
 
+      let min = -1;
+      let max = 2;
+      for x in min..max {
+        for y in min..max {
+          for z in min..max {
+            let dist = Vec3::new(
+              t.x + (x as f32 * voxel_scale),
+              t.y + (y as f32 * voxel_scale),
+              t.z + (z as f32 * voxel_scale),
+            );
+          }
+        }
+      }
       let p = RayUtils::get_normal_point_with_scale(
         [t.x, t.y, t.z], [f.x, f.y, f.z], dist, voxel_scale
       );
@@ -124,6 +137,11 @@ impl BevyVoxelResource {
         break;
       }
     }
+
+    /*
+      Get nearest valid hit voxel
+
+     */
 
     pos
   }
@@ -203,3 +221,47 @@ fn load_chunk(resource: &mut BevyVoxelResource, key: [i64; 3]) -> Chunk {
   res.unwrap().clone()
 }
 
+
+fn get_near_positions(pos: Vec3, unit: f32) -> Vec<Vec3> {
+  let mut res = Vec::new();
+  let min = -1;
+  let max = 2;
+  for x in min..max {
+    println!();
+    for y in min..max {
+      for z in min..max {
+        res.push(Vec3::new(
+          pos[0] + (x as f32 * unit),
+          pos[1] + (y as f32 * unit),
+          pos[2] + (z as f32 * unit),
+        ));
+
+        // println!("{:?}", res);
+      }
+    }
+  }
+
+  res
+}
+
+
+#[cfg(test)]
+mod tests {
+  use bevy::prelude::Vec3;
+  use crate::get_near_positions;
+
+  #[test]
+  fn testing() -> Result<(), String> {
+    let scale = 0.5;
+    let pos = Vec3::new(0.0, 0.0, 0.0);
+
+    let res = get_near_positions(pos, scale);
+    
+    for p in res.iter() {
+      println!("{:?}", p);
+    }
+    
+    Ok(())
+  }
+
+}

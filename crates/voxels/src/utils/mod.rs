@@ -97,10 +97,11 @@ pub fn get_length(depth: u8) -> usize {
 
 
 
-pub fn get_chunk_coords(pos: &[i64; 3], _voxel: u8) -> Vec<ChunkCoordinate> {
-  let chunk_size = 16;
-  let seamless_size = chunk_size - 2;
-
+pub fn get_chunk_coords(
+  pos: &[i64; 3], 
+  chunk_size: u32, 
+  seamless_size: u32
+) -> Vec<ChunkCoordinate> {
   let mut coords = Vec::new();
 
   let keys = &potential_keys(pos, seamless_size);

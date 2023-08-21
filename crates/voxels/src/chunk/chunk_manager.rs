@@ -199,8 +199,10 @@ impl ChunkManager {
 
   pub fn set_voxel2(&mut self, pos: &[i64; 3], voxel: u8) -> Vec<([i64; 3], Chunk)> {
     let mut chunks = Vec::new();
+    let chunk_size = self.chunk_size;
+    let seamless_size = self.seamless_size();
 
-    let coords = get_chunk_coords(pos, voxel);
+    let coords = get_chunk_coords(pos, chunk_size, seamless_size);
     for coord in coords.iter() {
       let key = &coord.key;
       let local = &coord.local;

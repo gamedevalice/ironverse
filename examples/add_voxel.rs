@@ -21,9 +21,12 @@ fn main() {
       }),
       ..default()
     }))
+    .add_plugin(EguiPlugin)
+    .add_plugin(NoCameraAndGrabPlugin)
+    .add_plugin(BevyVoxelPlugin)
     .insert_resource(BevyVoxelResource::new(
       4, 
-      1.0, 
+      0.5, 
       1, 
       vec![
         [1.0, 0.0, 0.0], 
@@ -41,13 +44,11 @@ fn main() {
       ]
     ))
     .insert_resource(LocalResource::default())
-    .add_plugin(EguiPlugin)
-    .add_plugin(NoCameraAndGrabPlugin)
     .add_startup_system(setup_camera)
     .add_startup_system(setup_starting_chunks)
     .add_system(detect_voxel_preview_position)
     .add_system(reposition_voxel_preview)
-    .add_system(edit_voxel)
+    .add_system(add_voxel)
     .add_system(show_diagnostic_texts)
     .run();
 
@@ -55,7 +56,6 @@ fn main() {
 
 fn setup_camera(
   mut commands: Commands,
-  mut windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
   commands
     .spawn(Camera3dBundle {
@@ -87,20 +87,12 @@ fn setup_camera(
     transform: Transform::from_xyz(6.0, 15.0, 6.0),
     ..Default::default()
   });
-
-  let mut window = match windows.get_single_mut() {
-    Ok(w) => { w },
-    Err(_e) => return,
-  };
-
-  window.cursor.grab_mode = CursorGrabMode::Confined;
 }
 
 fn setup_starting_chunks(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
-  mut local_res: ResMut<LocalResource>,
 
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
@@ -225,7 +217,7 @@ fn reposition_voxel_preview(
 }
 
 
-fn edit_voxel(
+fn add_voxel(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
@@ -397,23 +389,3 @@ struct PreviewGraphics { }
 
 #[derive(Component, Clone)]
 struct ChunkGraphics { }
-
-
-/*
-  Refactor ChunkManager
-
-  Implement chunk range
-  Implement voxel per chunk
-
-  Position of the preview
-    There are some conditions
-    Should be either be modified by state
-
-
-  Types of features
-    Dynamic switching: Only one state at a time
-      Can be called cartridge
-    Parallel: Can co-exists with other features
-    Compile time conditional: Minimum graphics vs Normal graphics for faster compilation
-    
-*/
