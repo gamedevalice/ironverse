@@ -1,6 +1,7 @@
 use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PresentMode, PrimaryWindow, CursorGrabMode}};
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
+use bevy_voxel::BevyVoxelResource;
 use voxels::{chunk::{chunk_manager::ChunkManager, adjacent_keys}, utils::key_to_world_coord_f32, data::{voxel_octree::VoxelMode, surface_nets::VoxelReuse}};
 use bevy_flycam::NoCameraAndGrabPlugin;
 
@@ -23,10 +24,10 @@ fn main() {
     .add_plugin(NoCameraAndGrabPlugin)
     .add_startup_system(setup_camera)
     .add_startup_system(startup_upper_left)
-    .add_startup_system(startup_upper_right)
+    .add_startup_system(startup_upper_mid)
     .add_startup_system(startup_lower_left)
     .add_startup_system(startup_lower_right)
-    .add_startup_system(startup_right_1)
+    .add_startup_system(startup_upper_right)
     .add_system(show_diagnostic_texts)
     .run();
 
@@ -76,60 +77,38 @@ fn startup_upper_left(
   let depth = 4;
   let voxel_scale = 1.0;
   let range = 1;
-  let chunk_manager = ChunkManager::new(depth, voxel_scale, range);
 
-  let seamless_size = chunk_manager.seamless_size();
-  let mut voxel_reuse = VoxelReuse::new(depth as u32, 3);
+  let mut bevy_voxel_res = BevyVoxelResource::new(
+    depth, 
+    voxel_scale, 
+    range,
+    local_res.colors.clone(),
+  );
 
-  let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
-
-  let pos_adj = [30.0, 0.0, 0.0];
-  for key in adj_keys.iter() {
-    let chunk = chunk_manager.new_chunk3(key, depth as u8);
-
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &local_res.colors,
-        voxel_scale
-      );
+  let key = [0, 0, 0];
+  let pos_adj = Vec3::new(30.0, 0.0, 0.0);
+  let chunks = bevy_voxel_res.load_adj_chunks(key);
+  for chunk in chunks.iter() {
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+    let pos = bevy_voxel_res.get_pos(chunk.key);
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    let mesh_handle = meshes.add(render_mesh);
-
-    let mut coord_f32 = key_to_world_coord_f32(key, seamless_size);
-    coord_f32[0] *= voxel_scale;
-    coord_f32[1] *= voxel_scale;
-    coord_f32[2] *= voxel_scale;
-    
-    coord_f32[0] += pos_adj[0];
-    coord_f32[1] += pos_adj[1];
-    coord_f32[2] += pos_adj[2];
-
-    let mut color = Color::rgb(0.7, 0.7, 0.7);
-    if key[0] == 0 && key[2] == 0 {
-      color = Color::rgb(1.0, 0.0, 0.0);
-    }
-
     commands
       .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(color.into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        // transform: Transform::from_xyz(0.0, 0.0, 0.0),
+        mesh: meshes.add(render_mesh),
+        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+        transform: Transform::from_translation(pos + pos_adj),
         ..default()
       })
-      .insert(ChunkGraphics {});
+      .insert(ChunkGraphics {}); 
   }
 }
 
-fn startup_upper_right(
+fn startup_upper_mid(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
@@ -138,56 +117,87 @@ fn startup_upper_right(
   let depth = 4;
   let voxel_scale = 0.5;
   let range = 1;
-  let chunk_manager = ChunkManager::new(depth, voxel_scale, range);
 
-  let seamless_size = chunk_manager.seamless_size();
-  let mut voxel_reuse = VoxelReuse::new(depth as u32, 3);
+  let mut bevy_voxel_res = BevyVoxelResource::new(
+    depth, 
+    voxel_scale, 
+    range,
+    local_res.colors.clone(),
+  );
 
-  let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
-
-  let pos_adj = [0.0, 0.0, 0.0];
-  for key in adj_keys.iter() {
-    let chunk = chunk_manager.new_chunk3(key, depth as u8);
-
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &local_res.colors,
-        voxel_scale
-      );
+  let key = [0, 0, 0];
+  let pos_adj = Vec3::new(0.0, 0.0, 0.0);
+  let chunks = bevy_voxel_res.load_adj_chunks(key);
+  for chunk in chunks.iter() {
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+    let pos = bevy_voxel_res.get_pos(chunk.key);
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    let mesh_handle = meshes.add(render_mesh);
-
-    let mut coord_f32 = key_to_world_coord_f32(key, seamless_size);
-    coord_f32[0] *= voxel_scale;
-    coord_f32[1] *= voxel_scale;
-    coord_f32[2] *= voxel_scale;
-    
-    coord_f32[0] += pos_adj[0];
-    coord_f32[1] += pos_adj[1];
-    coord_f32[2] += pos_adj[2];
-
-    let mut color = Color::rgb(0.7, 0.7, 0.7);
-    if key[0] == 0 && key[2] == 0 {
-      color = Color::rgb(1.0, 0.0, 0.0);
-    }
-
     commands
       .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(color.into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+        mesh: meshes.add(render_mesh),
+        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+        transform: Transform::from_translation(pos + pos_adj),
         ..default()
       })
-      .insert(ChunkGraphics {});
+      .insert(ChunkGraphics {}); 
   }
+
+
+  // let chunk_manager = ChunkManager::new(depth, voxel_scale, range);
+
+  // let seamless_size = chunk_manager.seamless_size();
+  // let mut voxel_reuse = VoxelReuse::new(depth as u32, 3);
+
+  // let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
+
+  // let pos_adj = [0.0, 0.0, 0.0];
+  // for key in adj_keys.iter() {
+  //   let chunk = chunk_manager.new_chunk3(key, depth as u8);
+
+  //   let data = chunk
+  //     .octree
+  //     .compute_mesh(
+  //       VoxelMode::SurfaceNets, 
+  //       &mut voxel_reuse,
+  //       &local_res.colors,
+  //       voxel_scale
+  //     );
+
+  //   let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+  //   render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+  //   render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+  //   render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
+
+  //   let mesh_handle = meshes.add(render_mesh);
+
+  //   let mut coord_f32 = key_to_world_coord_f32(key, seamless_size);
+  //   coord_f32[0] *= voxel_scale;
+  //   coord_f32[1] *= voxel_scale;
+  //   coord_f32[2] *= voxel_scale;
+    
+  //   coord_f32[0] += pos_adj[0];
+  //   coord_f32[1] += pos_adj[1];
+  //   coord_f32[2] += pos_adj[2];
+
+  //   let mut color = Color::rgb(0.7, 0.7, 0.7);
+  //   if key[0] == 0 && key[2] == 0 {
+  //     color = Color::rgb(1.0, 0.0, 0.0);
+  //   }
+
+  //   commands
+  //     .spawn(MaterialMeshBundle {
+  //       mesh: mesh_handle,
+  //       material: materials.add(color.into()),
+  //       transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+  //       ..default()
+  //     })
+  //     .insert(ChunkGraphics {});
+  // }
 }
 
 fn startup_lower_left(
@@ -199,55 +209,34 @@ fn startup_lower_left(
   let depth = 4;
   let voxel_scale = 1.0;
   let range = 2;
-  let mut chunk_manager = ChunkManager::new(depth, voxel_scale, range);
 
-  let seamless_size = chunk_manager.seamless_size();
-  let mut voxel_reuse = VoxelReuse::new(depth as u32, 3);
+  let mut bevy_voxel_res = BevyVoxelResource::new(
+    depth, 
+    voxel_scale, 
+    range,
+    local_res.colors.clone(),
+  );
 
-  let chunks = chunk_manager.get_adj_chunks([0, 0, 0]);
-
-  let pos_adj = [45.0, 0.0, -60.0];
-  for chunk in chunks {
-
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &local_res.colors,
-        voxel_scale
-      );
+  let key = [0, 0, 0];
+  let pos_adj = Vec3::new(45.0, 0.0, -60.0);
+  let chunks = bevy_voxel_res.load_adj_chunks(key);
+  for chunk in chunks.iter() {
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+    let pos = bevy_voxel_res.get_pos(chunk.key);
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    let mesh_handle = meshes.add(render_mesh);
-
-    let mut coord_f32 = key_to_world_coord_f32(&chunk.key, seamless_size);
-    coord_f32[0] *= voxel_scale;
-    coord_f32[1] *= voxel_scale;
-    coord_f32[2] *= voxel_scale;
-    
-    coord_f32[0] += pos_adj[0];
-    coord_f32[1] += pos_adj[1];
-    coord_f32[2] += pos_adj[2];
-
-    let mut color = Color::rgb(0.7, 0.7, 0.7);
-    if chunk.key[0] == 0 && chunk.key[2] == 0 {
-      color = Color::rgb(1.0, 0.0, 0.0);
-    }
-
     commands
       .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(color.into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        // transform: Transform::from_xyz(0.0, 0.0, 0.0),
+        mesh: meshes.add(render_mesh),
+        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+        transform: Transform::from_translation(pos + pos_adj),
         ..default()
       })
-      .insert(ChunkGraphics {});
+      .insert(ChunkGraphics {}); 
   }
 }
 
@@ -260,59 +249,38 @@ fn startup_lower_right(
   let depth = 5;
   let voxel_scale = 1.0;
   let range = 1;
-  let mut chunk_manager = ChunkManager::new(depth, voxel_scale, range);
 
-  let seamless_size = chunk_manager.seamless_size();
-  let mut voxel_reuse = VoxelReuse::new(depth as u32, 3);
+  let mut bevy_voxel_res = BevyVoxelResource::new(
+    depth, 
+    voxel_scale, 
+    range,
+    local_res.colors.clone(),
+  );
 
-  let chunks = chunk_manager.get_adj_chunks([0, 0, 0]);
-
-  let pos_adj = [-45.0, 0.0, -80.0];
-  for chunk in chunks {
-
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &local_res.colors,
-        voxel_scale
-      );
+  let key = [0, 0, 0];
+  let pos_adj = Vec3::new(-45.0, 0.0, -80.0);
+  let chunks = bevy_voxel_res.load_adj_chunks(key);
+  for chunk in chunks.iter() {
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+    let pos = bevy_voxel_res.get_pos(chunk.key);
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    let mesh_handle = meshes.add(render_mesh);
-
-    let mut coord_f32 = key_to_world_coord_f32(&chunk.key, seamless_size);
-    coord_f32[0] *= voxel_scale;
-    coord_f32[1] *= voxel_scale;
-    coord_f32[2] *= voxel_scale;
-    
-    coord_f32[0] += pos_adj[0];
-    coord_f32[1] += pos_adj[1];
-    coord_f32[2] += pos_adj[2];
-
-    let mut color = Color::rgb(0.7, 0.7, 0.7);
-    if chunk.key[0] == 0 && chunk.key[2] == 0 {
-      color = Color::rgb(1.0, 0.0, 0.0);
-    }
-
     commands
       .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(color.into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        // transform: Transform::from_xyz(0.0, 0.0, 0.0),
+        mesh: meshes.add(render_mesh),
+        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+        transform: Transform::from_translation(pos + pos_adj),
         ..default()
       })
-      .insert(ChunkGraphics {});
+      .insert(ChunkGraphics {}); 
   }
 }
 
-fn startup_right_1(
+fn startup_upper_right(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
@@ -321,55 +289,34 @@ fn startup_right_1(
   let depth = 5;
   let voxel_scale = 0.25;
   let range = 3;
-  let mut chunk_manager = ChunkManager::new(depth, voxel_scale, range);
 
-  let seamless_size = chunk_manager.seamless_size();
-  let mut voxel_reuse = VoxelReuse::new(depth as u32, 3);
+  let mut bevy_voxel_res = BevyVoxelResource::new(
+    depth, 
+    voxel_scale, 
+    range,
+    local_res.colors.clone(),
+  );
 
-  let chunks = chunk_manager.get_adj_chunks([0, 0, 0]);
-
-  let pos_adj = [-60.0, 0.0, 0.0];
-  for chunk in chunks {
-
-    let data = chunk
-      .octree
-      .compute_mesh(
-        VoxelMode::SurfaceNets, 
-        &mut voxel_reuse,
-        &local_res.colors,
-        voxel_scale
-      );
+  let key = [0, 0, 0];
+  let pos_adj = Vec3::new(-60.0, 0.0, 5.0);
+  let chunks = bevy_voxel_res.load_adj_chunks(key);
+  for chunk in chunks.iter() {
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+    let pos = bevy_voxel_res.get_pos(chunk.key);
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    let mesh_handle = meshes.add(render_mesh);
-
-    let mut coord_f32 = key_to_world_coord_f32(&chunk.key, seamless_size);
-    coord_f32[0] *= voxel_scale;
-    coord_f32[1] *= voxel_scale;
-    coord_f32[2] *= voxel_scale;
-    
-    coord_f32[0] += pos_adj[0];
-    coord_f32[1] += pos_adj[1];
-    coord_f32[2] += pos_adj[2];
-
-    let mut color = Color::rgb(0.7, 0.7, 0.7);
-    if chunk.key[0] == 0 && chunk.key[2] == 0 {
-      color = Color::rgb(1.0, 0.0, 0.0);
-    }
-
     commands
       .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: materials.add(color.into()),
-        transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-        // transform: Transform::from_xyz(0.0, 0.0, 0.0),
+        mesh: meshes.add(render_mesh),
+        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+        transform: Transform::from_translation(pos + pos_adj),
         ..default()
       })
-      .insert(ChunkGraphics {});
+      .insert(ChunkGraphics {}); 
   }
 }
 

@@ -31,6 +31,22 @@ impl Default for BevyVoxelResource {
 
 impl BevyVoxelResource {
 
+  pub fn new(
+    depth: u32, 
+    voxel_scale: f32, 
+    range: u8,
+    colors: Vec<[f32; 3]>,  
+  ) -> Self {
+    Self {
+      chunk_manager: ChunkManager::new(
+        depth,
+        voxel_scale,
+        range,
+        colors,
+      )
+    }
+  }
+
   /// Get all chunks adjacent to the player based on
   /// Depth, range and voxel scale
   pub fn load_adj_chunks(&mut self, key: [i64; 3]) -> Vec<Chunk> {
