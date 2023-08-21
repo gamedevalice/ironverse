@@ -26,7 +26,7 @@ fn main() {
     .add_plugin(BevyVoxelPlugin)
     .insert_resource(BevyVoxelResource::new(
       4, 
-      1.0, 
+      0.5, 
       1, 
       vec![
         [1.0, 0.0, 0.0], 
