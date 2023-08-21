@@ -110,7 +110,12 @@ impl BevyVoxelResource {
         [t.x, t.y, t.z], [f.x, f.y, f.z], dist, voxel_scale
       );
 
-      let p_i64 = [p[0] as i64, p[1] as i64, p[2] as i64];
+      let mul = 1.0 / voxel_scale;
+      let p_i64 = [
+        (p[0] * mul) as i64, 
+        (p[1] * mul) as i64, 
+        (p[2] * mul) as i64, 
+      ];
       let res = self.chunk_manager.get_voxel_safe(&p_i64);
 
       if res.is_some() && res.unwrap() != 0 {
@@ -174,10 +179,11 @@ impl BevyVoxelResource {
 
 
   pub fn set_voxel(&mut self, pos: Vec3, voxel: u8) {
+    let mul = 1.0 / self.chunk_manager.voxel_scale;
     let p = [
-      pos.x as i64,
-      pos.y as i64,
-      pos.z as i64,
+      (pos.x * mul) as i64,
+      (pos.y * mul) as i64,
+      (pos.z * mul) as i64,
     ];
 
     self.chunk_manager.set_voxel2(&p, voxel);

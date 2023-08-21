@@ -43,7 +43,6 @@ fn main() {
     .insert_resource(LocalResource::default())
     .add_plugin(EguiPlugin)
     .add_plugin(NoCameraAndGrabPlugin)
-    .add_plugin(BevyVoxelPlugin)
     .add_startup_system(setup_camera)
     .add_startup_system(setup_starting_chunks)
     .add_system(detect_voxel_preview_position)
@@ -56,11 +55,12 @@ fn main() {
 
 fn setup_camera(
   mut commands: Commands,
+  mut windows: Query<&mut Window, With<PrimaryWindow>>,
 ) {
   commands
     .spawn(Camera3dBundle {
-      transform: Transform::from_xyz(14.30, 9.50, -25.82)
-        .looking_to(Vec3::new(0.09, -0.46, 0.88), Vec3::Y),
+      transform: Transform::from_xyz(0.91, 11.64, -8.82)
+        .looking_to(Vec3::new(0.03, -0.80, 0.59), Vec3::Y),
       ..Default::default()
     })
     .insert(FlyCam)
@@ -87,6 +87,13 @@ fn setup_camera(
     transform: Transform::from_xyz(6.0, 15.0, 6.0),
     ..Default::default()
   });
+
+  let mut window = match windows.get_single_mut() {
+    Ok(w) => { w },
+    Err(_e) => return,
+  };
+
+  window.cursor.grab_mode = CursorGrabMode::Confined;
 }
 
 fn setup_starting_chunks(
@@ -97,6 +104,14 @@ fn setup_starting_chunks(
 
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
+  let scale = bevy_voxel_res.chunk_manager.voxel_scale;
+  let size = scale + (scale * 0.1);
+  // println!("size {}", size);
+  commands.spawn(PbrBundle {
+    mesh: meshes.add(shape::Plane::from_size(size).into()),
+    material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+    ..default()
+  });
 
   let key = [0, 0, 0];
   let chunks = bevy_voxel_res.load_adj_chunks(key);
@@ -109,10 +124,14 @@ fn setup_starting_chunks(
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
+    let mut color = Color::rgb(0.7, 0.7, 0.7);
+    if chunk.key[0] == key[0] && chunk.key[2] == key[0] {
+      color = Color::rgb(1.0, 0.0, 0.0);
+    }
     commands
       .spawn(MaterialMeshBundle {
         mesh: meshes.add(render_mesh),
-        material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+        material: materials.add(color.into()),
         transform: Transform::from_translation(pos),
         ..default()
       })
@@ -191,9 +210,11 @@ fn reposition_voxel_preview(
     //     ..default()
     //   })
     //   .insert(PreviewGraphics { });
-
+    
+    let scale = bevy_voxel_res.chunk_manager.voxel_scale;
+    let size = scale + (scale * 0.1);
     commands.spawn(PbrBundle {
-      mesh: meshes.add(Mesh::from(shape::Cube { size: 1.1 })),
+      mesh: meshes.add(Mesh::from(shape::Cube { size: size})),
       material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
       transform: Transform::from_translation(p),
       ..default()
@@ -222,14 +243,14 @@ fn edit_voxel(
     return;
   }
 
-  for entity in &chunk_graphics {
-    commands.entity(entity).despawn_recursive();
-  }
-
   for (_, preview) in &previews {
     if preview.voxel_pos.is_none() {
       continue;
     }
+    for entity in &chunk_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
+
     let pos = preview.voxel_pos.unwrap();
 
     bevy_voxel_res.set_voxel(pos, voxel.unwrap());
@@ -245,10 +266,14 @@ fn edit_voxel(
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
       render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
+      let mut color = Color::rgb(0.7, 0.7, 0.7);
+      if chunk.key[0] == key[0] && chunk.key[2] == key[0] {
+        color = Color::rgb(1.0, 0.0, 0.0);
+      }
       commands
         .spawn(MaterialMeshBundle {
           mesh: meshes.add(render_mesh),
-          material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+          material: materials.add(color.into()),
           transform: Transform::from_translation(pos),
           ..default()
         })
