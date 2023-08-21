@@ -62,6 +62,7 @@ pub struct ChunkManager {
 
   pub voxel_scale: f32,
   pub range: u8,
+  pub colors: Vec<[f32; 3]>,
 }
 
 impl Default for ChunkManager {
@@ -85,13 +86,32 @@ impl Default for ChunkManager {
       frequency: 0.0125,
       voxel_scale: 1.0,
       range: 1,
+      colors: vec![
+        [1.0, 0.0, 0.0], 
+        [0.0, 1.0, 0.0], 
+        [0.0, 0.0, 1.0], 
+        [0.0, 0.0, 0.0],
+
+        [0.2, 0.0, 0.0],
+        [0.4, 0.0, 0.0],
+        [0.6, 0.0, 0.0],
+        [0.8, 0.0, 0.0],
+
+        [0.0, 0.2, 0.0],
+        [0.0, 0.4, 0.0],
+      ],
     }
   }
 }
 
 impl ChunkManager {
 
-  pub fn new(depth: u32, voxel_scale: f32, range: u8) -> Self {
+  pub fn new(
+    depth: u32, 
+    voxel_scale: f32, 
+    range: u8,
+    colors: Vec<[f32; 3]>,  
+  ) -> Self {
     let noise = OpenSimplex::new().set_seed(1234);
     let offset = 2;
     let chunk_size = 2_i32.pow(depth) as u32;
@@ -107,6 +127,7 @@ impl ChunkManager {
       frequency: 0.0125,
       voxel_scale: voxel_scale,
       range: range,
+      colors: colors,
     }
   }
 
