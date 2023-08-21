@@ -21,6 +21,25 @@ fn main() {
       }),
       ..default()
     }))
+    .insert_resource(BevyVoxelResource::new(
+      4, 
+      1.0, 
+      1, 
+      vec![
+        [1.0, 0.0, 0.0], 
+        [0.0, 1.0, 0.0], 
+        [0.0, 0.0, 1.0], 
+        [0.0, 0.0, 0.0],
+  
+        [0.2, 0.0, 0.0],
+        [0.4, 0.0, 0.0],
+        [0.6, 0.0, 0.0],
+        [0.8, 0.0, 0.0],
+  
+        [0.0, 0.2, 0.0],
+        [0.0, 0.4, 0.0],
+      ]
+    ))
     .insert_resource(LocalResource::default())
     .add_plugin(EguiPlugin)
     .add_plugin(NoCameraAndGrabPlugin)
@@ -104,47 +123,20 @@ fn setup_starting_chunks(
 
 
 fn detect_voxel_preview_position(
-  mut commands: Commands,
-  mut local_res: ResMut<LocalResource>,
   mut cam: Query<(&Transform, &mut Preview), With<FlyCam>>,
+
+  bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
-  let voxel_scale = local_res.chunk_manager.voxel_scale;
-
-  let max_dist = 100.0;
-  let total_div = max_dist as i64 * 2;
-  let min_dist = 1.0;
-  
-  let mut pos = None;
   for (cam_trans, mut preview) in &mut cam {
-    'main: for i in 0..total_div {
-      let div_f32 = total_div as f32 - 1.0;
-      let dist = (max_dist / div_f32) * i as f32;
-      if dist < min_dist {
-        continue;
-      }
+    let pos = bevy_voxel_res.get_hit_voxel_pos(cam_trans);
 
-      let t = cam_trans.translation;
-      let f = cam_trans.forward();
-      let p = RayUtils::get_normal_point_with_scale(
-        [t.x, t.y, t.z], [f.x, f.y, f.z], dist, voxel_scale
-      );
-
-      let p_i64 = [p[0] as i64, p[1] as i64, p[2] as i64];
-      let res = local_res.chunk_manager.get_voxel_safe(&p_i64);
-
-      if res.is_some() && res.unwrap() != 0 {
-        pos = Some(p);
-        // println!("p {:?}", pos);
-        break 'main;
-      }
-    }
+    // println!("pos {:?}", pos);
 
     if pos.is_none() && preview.voxel_pos.is_some() {
       preview.voxel_pos = pos;
     }
 
     if pos.is_some() {
-      
       if preview.voxel_pos.is_some() {
         let p = pos.unwrap();
         let current = preview.voxel_pos.unwrap();
@@ -165,85 +157,41 @@ fn reposition_voxel_preview(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
   local_res: Res<LocalResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 
   previews: Query<&Preview, Changed<Preview>>,
   preview_graphics: Query<Entity, With<PreviewGraphics>>,
 ) {
 
-  // let voxel_scale = local_res.chunk_manager.voxel_scale;
+  for preview in &previews {
+    println!("voxel_pos {:?}", preview.voxel_pos);
+    for entity in &preview_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
 
-  // for preview in &previews {
-  //   println!("voxel_pos {:?}", preview.voxel_pos);
+    if preview.voxel_pos.is_none() {
+      continue;
+    }
 
-  //   let mut tmp_chunk_manager = local_res.chunk_manager.clone();
+    let p = preview.voxel_pos.unwrap();
+    let chunk = bevy_voxel_res.get_preview_chunk(p);
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
+    let pos = bevy_voxel_res.get_preview_pos(p);
 
-  //   for entity in &preview_graphics {
-  //     commands.entity(entity).despawn_recursive();
-  //   }
+    let mut render = Mesh::new(PrimitiveTopology::TriangleList);
+    render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+    render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+    render.set_indices(Some(Indices::U32(data.indices.clone())));
 
-  //   if preview.voxel_pos.is_none() {
-  //     continue;
-  //   }
-  //   let pos = preview.voxel_pos.unwrap();
-  //   let voxel_pos = [
-  //     pos[0] as i64,
-  //     pos[1] as i64,
-  //     pos[2] as i64,
-  //   ];
-  //   tmp_chunk_manager.set_voxel2(&voxel_pos, 1);
-
-  //   let mut chunk = Chunk::default();
-  //   let mid_pos = (chunk.octree.get_size() / 2) as i64;
-
-  //   let preview_size = 3;
-  //   let min = -preview_size;
-  //   let max = preview_size;
-  //   for x in min..max {
-  //     for y in min..max {
-  //       for z in min..max {
-  //         let local_x = (mid_pos + x) as u32;
-  //         let local_y = (mid_pos + y) as u32;
-  //         let local_z = (mid_pos + z) as u32;
-
-  //         let voxel_pos = [
-  //           pos[0] as i64 + x,
-  //           pos[1] as i64 + y,
-  //           pos[2] as i64 + z,
-  //         ];
-  //         let voxel = tmp_chunk_manager.get_voxel(&voxel_pos);
-          
-  //         chunk.octree.set_voxel(local_x, local_y, local_z, voxel);
-  //       }
-  //     }
-  //   }
-
-  //   let data = chunk.octree.compute_mesh(
-  //     VoxelMode::SurfaceNets, 
-  //     &mut VoxelReuse::default(), 
-  //     &local_res.colors,
-  //     voxel_scale
-  //   );
-
-  //   let mut render = Mesh::new(PrimitiveTopology::TriangleList);
-  //   render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-  //   render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-  //   render.set_indices(Some(Indices::U32(data.indices.clone())));
-    
-  //   let v_pos = preview.voxel_pos.unwrap();
-  //   let mut pos = [
-  //     v_pos[0] + -(mid_pos) as f32,
-  //     v_pos[1] + -(mid_pos) as f32,
-  //     v_pos[2] + -(mid_pos) as f32,
-  //   ];
-
-  //   commands
-  //     .spawn(MaterialMeshBundle {
-  //       mesh: meshes.add(render),
-  //       material: materials.add(Color::rgba(1.0, 1.0, 1.0, 1.0).into()),
-  //       transform: Transform::from_xyz(pos[0], pos[1], pos[2]),
-  //       ..default()
-  //     })
-  //     .insert(PreviewGraphics { });
+    commands
+      .spawn(MaterialMeshBundle {
+        mesh: meshes.add(render),
+        material: materials.add(Color::rgba(1.0, 1.0, 1.0, 1.0).into()),
+        transform: Transform::from_translation(pos),
+        ..default()
+      })
+      .insert(PreviewGraphics { });
+  }
 
     // commands.spawn(PbrBundle {
     //   mesh: meshes.add(Mesh::from(shape::Cube { size: 1.1 })),
@@ -451,7 +399,7 @@ impl Default for LocalResource {
 
 #[derive(Component, Clone)]
 struct Preview {
-  voxel_pos: Option<[f32; 3]>,
+  voxel_pos: Option<Vec3>,
 }
 
 impl Default for Preview {
