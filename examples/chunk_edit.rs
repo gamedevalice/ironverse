@@ -164,7 +164,7 @@ fn reposition_voxel_preview(
 ) {
 
   for preview in &previews {
-    println!("voxel_pos {:?}", preview.voxel_pos);
+    // println!("voxel_pos {:?}", preview.voxel_pos);
     for entity in &preview_graphics {
       commands.entity(entity).despawn_recursive();
     }
@@ -183,30 +183,24 @@ fn reposition_voxel_preview(
     render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
     render.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    commands
-      .spawn(MaterialMeshBundle {
-        mesh: meshes.add(render),
-        material: materials.add(Color::rgba(1.0, 1.0, 1.0, 1.0).into()),
-        transform: Transform::from_translation(pos),
-        ..default()
-      })
-      .insert(PreviewGraphics { });
+    // commands
+    //   .spawn(MaterialMeshBundle {
+    //     mesh: meshes.add(render),
+    //     material: materials.add(Color::rgba(1.0, 1.0, 1.0, 1.0).into()),
+    //     transform: Transform::from_translation(pos),
+    //     ..default()
+    //   })
+    //   .insert(PreviewGraphics { });
+
+    commands.spawn(PbrBundle {
+      mesh: meshes.add(Mesh::from(shape::Cube { size: 1.1 })),
+      material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
+      transform: Transform::from_translation(p),
+      ..default()
+    })
+    .insert(PreviewGraphics { });
+
   }
-
-    // commands.spawn(PbrBundle {
-    //   mesh: meshes.add(Mesh::from(shape::Cube { size: 1.1 })),
-    //   material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-    //   transform: Transform::from_xyz(v_pos[0], v_pos[1], v_pos[2]),
-    //   ..default()
-    // })
-    // .insert(PreviewGraphics { });
-  // }
-
-  /*
-    Defer validation
-    Place a voxel here
-   */
-
 }
 
 
@@ -215,90 +209,52 @@ fn edit_voxel(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
   mouse: Res<Input<MouseButton>>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 
-  mut local_res: ResMut<LocalResource>,
   previews: Query<(Entity, &Preview)>,
   chunk_graphics: Query<Entity, With<ChunkGraphics>>,
 ) {
-  // let mut voxel = None;
-  // if mouse.just_pressed(MouseButton::Left) {
-  //   voxel = Some(1);
+  let mut voxel = None;
+  if mouse.just_pressed(MouseButton::Left) {
+    voxel = Some(0);
+  }
+  if voxel.is_none() {
+    return;
+  }
 
-  //   println!("voxel {:?}", voxel);
-  // }
-  // if voxel.is_none() {
-  //   return;
-  // }
+  for entity in &chunk_graphics {
+    commands.entity(entity).despawn_recursive();
+  }
 
-  // for entity in &chunk_graphics {
-  //   commands.entity(entity).despawn_recursive();
-  // }
+  for (_, preview) in &previews {
+    if preview.voxel_pos.is_none() {
+      continue;
+    }
+    let pos = preview.voxel_pos.unwrap();
 
-
-  // for (_, preview) in &previews {
-  //   println!("Edit1");
-  //   if preview.voxel_pos.is_none() {
-  //     continue;
-  //   }
-  //   let p = preview.voxel_pos.unwrap();
-  //   let pos = [p[0] as i64, p[1] as i64, p[2] as i64];
-  //   local_res.chunk_manager.set_voxel2(&pos, voxel.unwrap());
-
-
-  //   println!("Edit2");
-
-  //   let colors = local_res.colors.clone();
-
-  //   let chunk_manager = &mut local_res.chunk_manager;
-  //   let depth = chunk_manager.depth;
-  //   let voxel_scale = chunk_manager.voxel_scale;
-
-  //   let seamless_size = chunk_manager.seamless_size();
-  //   let mut voxel_reuse = VoxelReuse::new(depth as u32, 3);
+    bevy_voxel_res.set_voxel(pos, voxel.unwrap());
     
+    let key = [0, 0, 0];
+    let chunks = bevy_voxel_res.load_adj_chunks(key);
+    for chunk in chunks.iter() {
+      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      let pos = bevy_voxel_res.get_pos(chunk.key);
 
-  //   let adj_keys = adjacent_keys(&[0, 0, 0], 1, true);
+      let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+      render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+      render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+      render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-  //   for key in adj_keys.iter() {
-  //     let chunk = chunk_manager.get_chunk(key).unwrap();
-
-  //     let data = chunk
-  //       .octree
-  //       .compute_mesh(
-  //         VoxelMode::SurfaceNets, 
-  //         &mut voxel_reuse,
-  //         &colors,
-  //         voxel_scale
-  //       );
-
-  //     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-  //     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-  //     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-  //     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
-
-  //     let mesh_handle = meshes.add(render_mesh);
-
-  //     let mut coord_f32 = key_to_world_coord_f32(key, seamless_size);
-  //     coord_f32[0] *= voxel_scale;
-  //     coord_f32[1] *= voxel_scale;
-  //     coord_f32[2] *= voxel_scale;
-
-  //     let color = Color::rgb(0.7, 0.7, 0.7);
-  //     // if key[0] == 0 && key[2] == 0 {
-  //     //   color = Color::rgb(1.0, 0.0, 0.0);
-  //     // }
-
-  //     commands
-  //       .spawn(MaterialMeshBundle {
-  //         mesh: mesh_handle,
-  //         material: materials.add(color.into()),
-  //         transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
-  //         ..default()
-  //       })
-  //       .insert(ChunkGraphics {});
-  //   }
-  // }
-
+      commands
+        .spawn(MaterialMeshBundle {
+          mesh: meshes.add(render_mesh),
+          material: materials.add(Color::rgb(0.7, 0.7, 0.7).into()),
+          transform: Transform::from_translation(pos),
+          ..default()
+        })
+        .insert(ChunkGraphics {}); 
+    }
+  }
 }
 
 

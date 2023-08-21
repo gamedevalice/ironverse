@@ -173,6 +173,15 @@ impl BevyVoxelResource {
   }
 
 
+  pub fn set_voxel(&mut self, pos: Vec3, voxel: u8) {
+    let p = [
+      pos.x as i64,
+      pos.y as i64,
+      pos.z as i64,
+    ];
+
+    self.chunk_manager.set_voxel2(&p, voxel);
+  }
 
 }
 
