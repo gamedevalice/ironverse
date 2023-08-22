@@ -52,6 +52,7 @@ fn main() {
     .add_system(reposition_selected_voxel)
     .add_system(reposition_preview_voxel)
     .add_system(add_voxel)
+    .add_system(change_voxel_size)
     .add_system(show_diagnostic_texts)
     .run();
 
@@ -371,6 +372,29 @@ fn add_voxel(
   }
 }
 
+fn change_voxel_size(
+  key_input: Res<Input<KeyCode>>,
+  mut previews: Query<&mut Preview>,
+) {
+  if key_input.just_pressed(KeyCode::Equals) {
+    for mut params in previews.iter_mut() {
+      if params.level < 3 {
+        params.level += 1;
+        params.size = 2_u8.pow(params.level as u32);
+      }
+    }
+  }
+
+  if key_input.just_pressed(KeyCode::Minus) {
+    for mut params in previews.iter_mut() {
+      if params.level > 0 {
+        params.level -= 1;
+        params.size = 2_u8.pow(params.level as u32);
+      }
+    }
+  }
+}
+
 
 
 
@@ -483,12 +507,17 @@ impl Default for Selected {
 #[derive(Component, Clone)]
 struct Preview {
   pos: Option<Vec3>,
+  level: u8,
+  size: u8,
 }
 
 impl Default for Preview {
   fn default() -> Self {
+    let level = 1;
     Self {
       pos: None,
+      level: level,
+      size: 2_u32.pow(level as u32),
     }
   }
 }

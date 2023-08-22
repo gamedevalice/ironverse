@@ -192,8 +192,6 @@ impl BevyVoxelResource {
     pos
   }
 
-
-
   /// - calc_pos should be the calculated position based on edit mode
   /// - Add voxel mode(TODO): Probably be a separate function
   /// - Remove voxel mode(TODO): Probably be a separate function
@@ -266,7 +264,9 @@ impl BevyVoxelResource {
     )
   }
 
-
+  pub fn remove_collider(&mut self, handle: ColliderHandle) {
+    self.physics.remove_collider(handle);
+  }
 }
 
 

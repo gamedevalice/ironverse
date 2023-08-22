@@ -4,21 +4,25 @@ use crate::input::hotbar::HotbarResource;
 
 use super::player::Player;
 
-mod voxel_add;
-mod voxel_remove;
+// mod voxel_add;
+// mod voxel_remove;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_state::<EditState>()
-      .add_plugin(voxel_add::CustomPlugin)
-      .add_plugin(voxel_remove::CustomPlugin)
-      .add_system(add_to_player)
-      .add_system(update_edit_params)
-      .add_system(switch_state);
+      // .add_plugin(voxel_add::CustomPlugin)
+      // .add_plugin(voxel_remove::CustomPlugin)
+      // .add_system(add_to_player)
+      // .add_system(update_edit_params)
+      .add_system(switch_state)
+      ;
   }
 }
+
+
+
 
 fn add_to_player(
   mut commands: Commands,
