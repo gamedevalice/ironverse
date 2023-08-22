@@ -9,8 +9,8 @@ impl Plugin for CustomPlugin {
     app
       .add_systems(
         (remove_voxel, reposition_selected_voxel)
-          .in_set(OnUpdate(EditState::RemoveNormal))
-      );
+          .in_set(OnUpdate(EditState::RemoveNormal)))
+      .add_system(remove.in_schedule(OnExit(EditState::RemoveNormal)));
   }
 }
 
@@ -86,6 +86,15 @@ fn reposition_selected_voxel(
     .insert(SelectedGraphics)
     .insert(NotShadowCaster);
 
+  }
+}
+
+fn remove(
+  mut commands: Commands,
+  selected_graphics: Query<Entity, With<SelectedGraphics>>,
+) {
+  for entity in &selected_graphics {
+    commands.entity(entity).despawn_recursive();
   }
 }
 

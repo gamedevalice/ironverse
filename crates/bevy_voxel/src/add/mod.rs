@@ -9,7 +9,8 @@ impl Plugin for CustomPlugin {
     app
       .add_systems(
         (reposition_preview_voxel, add_voxel).in_set(OnUpdate(EditState::AddNormal))
-      );
+      )
+      .add_system(remove.in_schedule(OnExit(EditState::AddNormal)));
   }
 }
 
@@ -93,3 +94,13 @@ fn reposition_preview_voxel(
       .insert(NotShadowCaster);
   }
 }
+
+fn remove(
+  mut commands: Commands,
+  preview_graphics: Query<Entity, With<PreviewGraphics>>,
+) {
+  for entity in &preview_graphics {
+    commands.entity(entity).despawn_recursive();
+  }
+}
+
