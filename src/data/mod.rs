@@ -24,6 +24,7 @@ pub struct GameResource {
   pub export_obj: Option<String>,
 
   pub colors: Vec<[f32; 3]>,
+  pub voxel_scale: f32,
 }
 
 impl Default for GameResource {
@@ -50,6 +51,7 @@ impl Default for GameResource {
       modified_chunks: HashMap::new(),
       export_obj: None,
       colors: colors,
+      voxel_scale: 0.25,
     }
   }
 }

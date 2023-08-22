@@ -1,4 +1,5 @@
 use bevy::{prelude::*, input::{keyboard::KeyboardInput, ButtonState}};
+use bevy_voxel::Preview;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -12,6 +13,7 @@ impl Plugin for CustomPlugin {
 fn update(
   mut hotbar_res: ResMut<HotbarResource>,
   mut key_events: EventReader<KeyboardInput>,
+  mut previews: Query<&mut Preview>,
 ) {
   for event in key_events.iter() {
     if event.state == ButtonState::Pressed && event.key_code.is_some() {
@@ -19,8 +21,14 @@ fn update(
 
       for i in 0..hotbar_res.bars.len() {
         let bar = &hotbar_res.bars[i];
+
+        let voxel = bar.voxel;
         if bar.key_code == key_code {
           hotbar_res.selected_keycode = key_code;
+
+          for mut preview in &mut previews {
+            preview.voxel = voxel;
+          }
         }
       }
       
@@ -51,7 +59,7 @@ impl Default for HotbarResource {
         Bar::new(KeyCode::Key9, 9),
         Bar::new(KeyCode::Key0, 10),
       ],
-      selected_keycode: KeyCode::Key2,
+      selected_keycode: KeyCode::Key1,
     }
   }
 }

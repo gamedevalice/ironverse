@@ -20,7 +20,7 @@ fn startup(
 ) {
   commands.spawn(PointLightBundle {
     point_light: PointLight {
-      intensity: 3000.0,
+      intensity: 600.0,
       ..Default::default()
     },
     transform: Transform::from_xyz(0.0, 5.0, 0.0),
@@ -68,18 +68,7 @@ impl Default for GraphicsResource {
 
 
 #[derive(Component)]
-pub struct ChunkGraphics {
-  pub key: [i64; 3],
-}
-
-impl Default for ChunkGraphics {
-  fn default() -> Self {
-    Self {
-      key: [i64::MAX; 3],
-    }
-  }
-}
-
+pub struct ChunkGraphics;
 
 #[derive(Component, Clone)]
 pub struct ChunkPreviewGraphics {

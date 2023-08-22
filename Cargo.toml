@@ -26,6 +26,7 @@ serde = { version = "1", features = ["derive"], optional = true }
 toml = { version = "0.7.3", optional = true }
 
 bevy_flycam = { path = "crates/bevy_flycam", optional = true }
+bevy_voxel = { path = "crates/bevy_voxel", optional = true }
 voxels = { path = "crates/voxels", optional = true }
 utils = { path = "crates/utils", optional = true }
 
@@ -50,28 +51,28 @@ js-sys = "0.3"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4.19"
 
-# [features]
-# default = [
-#   "bevy_flycam",
-#   "voxels",
-#   "utils",
-#   "bevy_egui",
-# ]
-
 [features]
 default = [
   "core",
   "player",
   "chunk",
-  # "ui_prompt",
+  "utils",
+  # "graphics_low",
+  "graphics_normal",  # Either graphics_low or graphics_normal
   "ui",
-  "graphics_low",
-  # "graphics_normal",  # Either graphics_low or graphics_normal
+  # "ui_prompt",
 ]
 
 core = [
-  "bevy_flycam", "voxels", "ron", "obj-exporter",
-  "rapier3d", "serde", "toml", "array-bytes"
+  "bevy_flycam", 
+  "bevy_voxel", 
+  "voxels", 
+  "ron", 
+  "obj-exporter",
+  "rapier3d", 
+  "serde", 
+  "toml", 
+  "array-bytes"
 ]
 player = []
 chunk = []
@@ -93,5 +94,32 @@ test_raycast = []
 
 
 [[example]]
+name = "add_voxel"
+path = "examples/add_voxel.rs"
+
+[[example]]
 name = "remove_voxel"
 path = "examples/remove_voxel.rs"
+
+[[example]]
+name = "configurable_voxel_size"
+path = "examples/configurable_voxel_size.rs"
+
+[[example]]
+name = "config_voxel_size_generated_voxels"
+path = "examples/config_voxel_size_generated_voxels.rs"
+
+[[example]]
+name = "config_voxel_size_comparison"
+path = "examples/config_voxel_size_comparison.rs"
+
+[[example]]
+name = "chunk_depth_voxel_scale_range"
+path = "examples/chunk_depth_voxel_scale_range.rs"
+
+[[example]]
+name = "size_comparison"
+path = "examples/size_comparison.rs"
+
+
+

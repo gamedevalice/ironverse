@@ -8,7 +8,7 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugin(chunks::CustomPlugin)
-      .add_plugin(chunk_preview::CustomPlugin)
+      // .add_plugin(chunk_preview::CustomPlugin)
       ;
   }
 }

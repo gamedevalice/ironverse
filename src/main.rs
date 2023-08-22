@@ -1,4 +1,5 @@
 use bevy::{prelude::*, window::PresentMode};
+use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource};
 use cfg_if::cfg_if;
 
 mod utils;
@@ -86,14 +87,30 @@ fn main() {
   cfg_if! {
     if #[cfg(feature = "core")] {
       app
+        .add_plugin(BevyVoxelPlugin)
+        .insert_resource(BevyVoxelResource::new(
+          4, 
+          0.2, 
+          1, 
+          vec![
+            [1.0, 0.0, 0.0], 
+            [0.0, 1.0, 0.0], 
+            [0.0, 0.0, 1.0], 
+            [0.0, 0.0, 0.0],
+      
+            [0.2, 0.0, 0.0],
+            [0.4, 0.0, 0.0],
+            [0.6, 0.0, 0.0],
+            [0.8, 0.0, 0.0],
+      
+            [0.0, 0.2, 0.0],
+            [0.0, 0.4, 0.0],
+          ]
+        ))
         .add_plugin(data::CustomPlugin)
-        .add_plugin(physics::CustomPlugin)
+        // .add_plugin(physics::CustomPlugin)
         .add_plugin(input::CustomPlugin)
         .add_plugin(components::CustomPlugin)
-        // .add_plugin(components::raycast::CustomPlugin)
-        // .add_plugin(components::range::CustomPlugin)
-        // .add_plugin(components::chunk_edit::CustomPlugin)
-        // .add_plugin(components::chunk_preview::CustomPlugin)
         .add_plugin(graphics::CustomPlugin)
         .add_plugin(states::CustomPlugin)
         .add_plugin(obj::CustomPlugin);
