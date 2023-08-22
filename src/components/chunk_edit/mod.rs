@@ -17,7 +17,7 @@ impl Plugin for CustomPlugin {
       // .add_plugin(voxel_remove::CustomPlugin)
       .add_system(add_to_player)
       // .add_system(update_edit_params)
-      .add_system(switch_state);;
+      .add_system(switch_state);
   }
 }
 

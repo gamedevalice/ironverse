@@ -24,7 +24,6 @@ fn add(
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 ) {
   for (_, chunks) in &chunk_query {
-    println!("Changed");
     for (entity, graphics) in &chunk_graphics {
       commands.entity(entity).despawn_recursive();
     }

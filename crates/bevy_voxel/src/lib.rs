@@ -169,6 +169,7 @@ pub struct Preview {
   pub pos: Option<Vec3>,
   pub level: u8,
   pub size: u8,
+  pub voxel: u8,
 }
 
 impl Default for Preview {
@@ -178,6 +179,7 @@ impl Default for Preview {
       pos: None,
       level: level,
       size: 2_u8.pow(level as u32),
+      voxel: 1,
     }
   }
 }
@@ -402,7 +404,7 @@ impl BevyVoxelResource {
   /// - calc_pos should be the calculated position based on edit mode
   /// - Add voxel mode(TODO): Probably be a separate function
   /// - Remove voxel mode(TODO): Probably be a separate function
-  pub fn get_preview_chunk(&self, calc_pos: Vec3) -> Chunk {
+  pub fn get_preview_chunk(&self, calc_pos: Vec3, voxel: u8) -> Chunk {
     let mul = (1.0 / self.chunk_manager.voxel_scale);
     let p = [
       calc_pos.x * mul,
@@ -411,7 +413,7 @@ impl BevyVoxelResource {
     ];
 
     let mut tmp_manager = self.chunk_manager.clone();
-    set_voxel(&mut tmp_manager, calc_pos, 1);
+    set_voxel(&mut tmp_manager, calc_pos, voxel);
 
     let mut chunk = Chunk::default();
     let mid_pos = (chunk.octree.get_size() / 2) as i64;
@@ -431,8 +433,8 @@ impl BevyVoxelResource {
             p[1] as i64 + y,
             p[2] as i64 + z,
           ];
-          let voxel = tmp_manager.get_voxel(&tmp_pos);
-          chunk.octree.set_voxel(local_x, local_y, local_z, voxel);
+          let v = tmp_manager.get_voxel(&tmp_pos);
+          chunk.octree.set_voxel(local_x, local_y, local_z, v);
         }
       }
     }

@@ -30,7 +30,7 @@ fn update(
       continue;
     }
     let p = preview.pos.unwrap();
-    let chunk = bevy_voxel_res.get_preview_chunk(p);
+    let chunk = bevy_voxel_res.get_preview_chunk(p, preview.voxel);
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
     
     let pos = bevy_voxel_res.get_preview_pos(p);

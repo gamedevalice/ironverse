@@ -1,26 +1,20 @@
 use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
-use bevy_voxel::{BevyVoxelResource, Preview, PreviewGraphics};
+use bevy_voxel::{BevyVoxelResource, Preview, PreviewGraphics, EditState};
 use voxels::data::voxel_octree::VoxelMode;
-use crate::components::chunk_edit::ChunkEdit;
-use crate::graphics::ChunkPreviewGraphics;
-use crate::data::GameResource;
 
 use super::chunks::{CustomMaterial, VOXEL_COLOR};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
-    // app
-    //   .add_system(update_add.run_if(add_state))
-    //   .add_system(update_remove.run_if(remove_state));
     app
-      .add_system(update_add);
+      .add_system(update.in_set(OnUpdate(EditState::AddNormal)));
   }
 }
 
-fn update_add(
+fn update(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
@@ -41,7 +35,7 @@ fn update_add(
     }
 
     let p = preview.pos.unwrap();
-    let chunk = bevy_voxel_res.get_preview_chunk(p);
+    let chunk = bevy_voxel_res.get_preview_chunk(p, preview.voxel);
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
 
     if data.indices.len() > 0 {
