@@ -1,10 +1,10 @@
 use bevy::{prelude::*, input::mouse::MouseWheel};
-use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics};
+use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics, Center, Chunks};
 use rapier3d::prelude::ColliderHandle;
 use voxels::{chunk::chunk_manager::Chunk, data::voxel_octree::VoxelMode};
 use crate::{input::hotbar::HotbarResource, graphics::ChunkGraphics};
 
-use super::{player::Player, chunk::{Chunks, ChunkData}};
+use super::player::Player;
 
 // mod voxel_add;
 // mod voxel_remove;
@@ -18,9 +18,8 @@ impl Plugin for CustomPlugin {
       // .add_plugin(voxel_remove::CustomPlugin)
       .add_system(add_to_player)
       // .add_system(update_edit_params)
-      .add_system(switch_state)
-      // .add_system(add_voxel)
-      .add_system(remove_voxel);
+      .add_system(switch_state);
+      // .add_system(add_voxel);
   }
 }
 
@@ -37,6 +36,7 @@ fn add_to_player(
       .insert(ChunkEdit::default())
       .insert(ChunkEditParams::default())
       .insert(Selected::default())
+      .insert(Chunks::default())
       // .insert(Preview::default())
       ;
 
@@ -138,101 +138,6 @@ fn switch_state(
     }
   }
 }
-
-
-fn add_voxel(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  mouse: Res<Input<MouseButton>>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-
-  mut chunks: Query<(&Preview, &Player, &mut Chunks)>,
-) {
-  let mut voxel = None;
-  if mouse.just_pressed(MouseButton::Left) {
-    voxel = Some(1);
-  }
-  if voxel.is_none() {
-    return;
-  }
-
-  for (preview, player, mut chunks) in &mut chunks {
-    chunks.data.clear();
-    if preview.pos.is_none() {
-      continue;
-    }
-    
-    let p = preview.pos.unwrap();
-    let pos = bevy_voxel_res.get_nearest_voxel_air(p).unwrap();
-
-    bevy_voxel_res.set_voxel(pos, voxel.unwrap());
-
-    let all_chunks = bevy_voxel_res.load_adj_chunks(player.key);
-    for chunk in all_chunks.iter() {
-      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-      if data.positions.len() == 0 {
-        continue;
-      }
-
-      let pos = bevy_voxel_res.get_pos(chunk.key);
-      let handle = bevy_voxel_res.add_collider(pos, &data);
-      
-      chunks.data.push(ChunkData {
-        data: data.clone(),
-        key: chunk.key,
-      });
-    }
-  }
-}
-
-fn remove_voxel(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  mouse: Res<Input<MouseButton>>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-
-  mut chunks: Query<(&Selected, &Player, &mut Chunks)>,
-) {
-  let mut voxel = None;
-  if mouse.just_pressed(MouseButton::Right) {
-    voxel = Some(0);
-  }
-  if voxel.is_none() {
-    return;
-  }
-
-  for (selected, player, mut chunks) in &mut chunks {
-    if selected.pos.is_none() {
-      continue;
-    }
-    chunks.data.clear();
-    
-    let p = selected.pos.unwrap();
-    bevy_voxel_res.set_voxel(p, voxel.unwrap());
-
-    let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(player.key);
-    for chunk in all_chunks.iter() {
-      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-      if data.positions.len() == 0 {
-        continue;
-      }
-      
-      chunks.data.push(ChunkData {
-        data: data.clone(),
-        key: chunk.key,
-      });
-    }
-  }
-}
-
-
-
-
-
-
-
 
 
 /* Helper functions */

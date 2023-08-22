@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}};
-use bevy_voxel::BevyVoxelResource;
+use bevy_voxel::{BevyVoxelResource, Chunks};
 use voxels::{utils::key_to_world_coord_f32, chunk::{adjacent_keys, adj_keys_by_scale}};
-use crate::{data::{GameResource}, components::{chunk::Chunks, player::Player}, graphics::{ChunkGraphics}};
+use crate::{data::{GameResource}, graphics::{ChunkGraphics}};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {

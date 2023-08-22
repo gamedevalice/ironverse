@@ -19,7 +19,9 @@ impl Plugin for BevyVoxelPlugin {
       .add_system(detect_selected_voxel_position)
       .add_system(detect_preview_voxel_position)
       .add_system(reposition_selected_voxel)
-      .add_system(reposition_preview_voxel);
+      .add_system(reposition_preview_voxel)
+      .add_system(added_chunks)
+      .add_system(center_changed);
   }
 }
 
@@ -114,6 +116,9 @@ fn reposition_selected_voxel(
     if selected.pos.is_none() {
       continue;
     }
+    println!("reposition_selected_voxel() {:?}", selected.pos);
+
+
     let p = selected.pos.unwrap();
     let scale = bevy_voxel_res.chunk_manager.voxel_scale;
     let size = scale + (scale * 0.1);
@@ -174,10 +179,53 @@ fn reposition_preview_voxel(
   }
 }
 
+fn added_chunks(
+  mut res: ResMut<BevyVoxelResource>,
+  mut chunks: Query<(&Center, &mut Chunks), Added<Chunks>>
+) {
+  for (center, mut chunks) in &mut chunks {
+    let all_chunks = res.load_adj_chunks_with_collider(center.key);
+    for chunk in all_chunks.iter() {
+      let data = res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+      
+      chunks.data.push(ChunkData {
+        data: data.clone(),
+        key: chunk.key,
+      });
+    }
+  }
+}
+
+fn center_changed(
+  mut res: ResMut<BevyVoxelResource>,
+  mut centers: Query<(&Center, &mut Chunks), Changed<Center>>
+) {
+  for (center, mut chunks) in &mut centers {
+    let all_chunks = res.load_adj_chunks_with_collider(center.key);
+    chunks.data.clear();
+
+    for chunk in all_chunks.iter() {
+      let data = res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+      
+      chunks.data.push(ChunkData {
+        data: data.clone(),
+        key: chunk.key,
+      });
+    }
+  }
+}
+
 
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum EditState {
+  
   AddNormal,
   AddSnap,
   #[default]
@@ -224,6 +272,38 @@ pub struct SelectedGraphics;
 pub struct PreviewGraphics;
 
 
+
+#[derive(Component, Debug, Clone)]
+pub struct ChunkData {
+  pub key: [i64; 3],
+  pub data: MeshData,
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct Chunks {
+  pub data: Vec<ChunkData>,
+}
+
+impl Default for Chunks {
+  fn default() -> Self {
+    Self {
+      data: Vec::new(),
+    }
+  }
+}
+
+#[derive(Component)]
+pub struct Center {
+  pub key: [i64; 3],
+}
+
+impl Default for Center {
+  fn default() -> Self {
+    Self {
+      key: [0; 3],
+    }
+  }
+}
 
 
 #[derive(Resource)]
@@ -503,8 +583,7 @@ impl BevyVoxelResource {
     for _ in 0..self.colliders_cache.len() {
       let h = self.colliders_cache.pop().unwrap();
       self.remove_collider(h);
-    }
-    
+    }    
 
     self.colliders_cache.clear();
 
@@ -536,6 +615,8 @@ impl BevyVoxelResource {
   pub fn remove_collider(&mut self, handle: ColliderHandle) {
     self.physics.remove_collider(handle);
   }
+
+
 
 
 

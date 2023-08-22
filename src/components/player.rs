@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_voxel::BevyVoxelResource;
+use bevy_voxel::{BevyVoxelResource, Center};
 use rapier3d::{na::Vector3, prelude::{RigidBodyHandle, ColliderHandle}};
 use voxels::utils::posf32_to_world_key;
 use crate::{physics::Physics, data::{GameResource, GameState}};
@@ -10,7 +10,7 @@ impl Plugin for CustomPlugin {
     app
       .add_system(start.in_schedule(OnEnter(GameState::Start)))
       .add_system(init.in_schedule(OnEnter(GameState::Init)))
-      // .add_system(update)
+      .add_system(update)
       ;
   }
 }
@@ -29,7 +29,8 @@ fn start(
   commands
     .spawn(
       (Player::new(body, collider, k),
-    ));
+      Center {key: k } )
+    );
 }
 
 fn init(
@@ -46,26 +47,28 @@ fn init(
   commands
     .spawn(
       (Player::new(body, collider, k),
-    ));
+      Center {key: k } )
+    );
 
   // info!("player init() {:?}", pos);
 }
 
 fn update(
-  mut query: Query<(&Transform, &mut Player)>,
+  mut query: Query<(&Transform, &mut Center, &mut Player)>,
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
-  for (trans, mut player) in &mut query {
+  for (trans, mut center, mut player) in &mut query {
     let p = trans.translation;
     let rigid_body = &mut bevy_voxel_res.physics.rigid_body_set[player.body];
     rigid_body.set_position(Vector3::new(p.x, p.y, p.z).into(), false);
 
     let k = bevy_voxel_res.get_key(p);
     if player.key != k {
-      println!("move player.key {:?}", player.key);
+      // println!("move player.key {:?}", player.key);
 
       player.prev_key = player.key.clone();
       player.key = k;
+      center.key = k;
     }
   }
 }

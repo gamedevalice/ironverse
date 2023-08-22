@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use crate::{BevyVoxelResource, EditState};
+use voxels::data::voxel_octree::VoxelMode;
+use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Selected};
 
 
 pub struct CustomPlugin;
@@ -15,9 +16,10 @@ fn remove_voxel(
   mouse: Res<Input<MouseButton>>,
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 
-  // mut chunks: Query<(&Selected, &Player, &mut Chunks)>,
+  mut chunks: Query<(&Selected, &Center, &mut Chunks)>,
 ) {
   let mut voxel = None;
+  
   if mouse.just_pressed(MouseButton::Right) {
     voxel = Some(0);
   }
@@ -25,34 +27,31 @@ fn remove_voxel(
     return;
   }
 
-  // for (selected, player, mut chunks) in &mut chunks {
-  //   if selected.pos.is_none() {
-  //     continue;
-  //   }
-  //   for data in chunks.data.iter() {
-  //     bevy_voxel_res.remove_collider(data.handle);
-  //   }
+  for (selected, center, mut chunks) in &mut chunks {
+    println!("Remove voxel {:?}", selected.pos);
+    if selected.pos.is_none() {
+      continue;
+    }
 
-  //   let p = selected.pos.unwrap();
-  //   bevy_voxel_res.set_voxel(p, voxel.unwrap());
+    
+    chunks.data.clear();
+    
+    let p = selected.pos.unwrap();
+    bevy_voxel_res.set_voxel(p, voxel.unwrap());
 
-  //   let all_chunks = bevy_voxel_res.load_adj_chunks(player.key);
-  //   for chunk in all_chunks.iter() {
-  //     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-  //     if data.positions.len() == 0 {
-  //       continue;
-  //     }
-
-  //     let pos = bevy_voxel_res.get_pos(chunk.key);
+    let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
+    for chunk in all_chunks.iter() {
+      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
       
-  //     chunks.data.push(super::chunk::Mesh {
-  //       key: chunk.key.clone(),
-  //       data: data.clone(),
-  //       chunk: chunk.clone(),
-  //       handle: bevy_voxel_res.add_collider(pos, &data),
-  //     });
-  //   }
-  // }
+      chunks.data.push(ChunkData {
+        data: data.clone(),
+        key: chunk.key,
+      });
+    }
+  }
 }
 
 

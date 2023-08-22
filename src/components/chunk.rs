@@ -13,8 +13,9 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(on_player_add)
-      .add_system(on_player_move);
+      // .add_system(on_player_add)
+      // .add_system(on_player_move)
+      ;
   }
 }
 
