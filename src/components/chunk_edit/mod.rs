@@ -18,8 +18,7 @@ impl Plugin for CustomPlugin {
       // .add_plugin(voxel_remove::CustomPlugin)
       .add_system(add_to_player)
       // .add_system(update_edit_params)
-      .add_system(switch_state);
-      // .add_system(add_voxel);
+      .add_system(switch_state);;
   }
 }
 
@@ -37,12 +36,12 @@ fn add_to_player(
       .insert(ChunkEditParams::default())
       .insert(Selected::default())
       .insert(Chunks::default())
-      // .insert(Preview::default())
+      .insert(Preview::default())
       ;
 
     commands
       .spawn(SelectedGraphics)
-      // .insert(PreviewGraphics)
+      .insert(PreviewGraphics)
       ;
   }
 }

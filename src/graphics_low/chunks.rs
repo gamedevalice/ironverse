@@ -39,7 +39,7 @@ fn add(
       let mesh_handle = meshes.add(render_mesh);
       let mut pos = bevy_voxel_res.get_pos(mesh.key);
 
-      let mat = materials.add(Color::rgb(0.8, 0.7, 0.6).into());
+      let mat = materials.add(Color::rgb(0.7, 0.7, 0.7).into());
       commands
         .spawn(MaterialMeshBundle {
           mesh: mesh_handle,

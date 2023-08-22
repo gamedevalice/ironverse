@@ -1,5 +1,6 @@
 mod physics;
 mod remove;
+mod add;
 
 use bevy::{prelude::*, pbr::NotShadowCaster, render::{render_resource::PrimitiveTopology, mesh::Indices}};
 use physics::Physics;
@@ -14,12 +15,11 @@ impl Plugin for BevyVoxelPlugin {
       .add_state::<EditState>()
       .insert_resource(BevyVoxelResource::default())
       .add_plugin(remove::CustomPlugin)
+      .add_plugin(add::CustomPlugin)
       .add_startup_system(startup)
       .add_system(update)
       .add_system(detect_selected_voxel_position)
       .add_system(detect_preview_voxel_position)
-      .add_system(reposition_selected_voxel)
-      .add_system(reposition_preview_voxel)
       .add_system(added_chunks)
       .add_system(center_changed);
   }
@@ -95,89 +95,7 @@ fn detect_preview_voxel_position(
   }
 }
 
-fn reposition_selected_voxel(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
 
-  selecteds: Query<&Selected, Changed<Selected>>,
-  selected_graphics: Query<Entity, With<SelectedGraphics>>,
-) {
-  for selected in &selecteds {
-    if selected_graphics.iter().len() == 0 {
-      continue;
-    }
-
-    for entity in &selected_graphics {
-      commands.entity(entity).despawn_recursive();
-    }
-
-    if selected.pos.is_none() {
-      continue;
-    }
-    println!("reposition_selected_voxel() {:?}", selected.pos);
-
-
-    let p = selected.pos.unwrap();
-    let scale = bevy_voxel_res.chunk_manager.voxel_scale;
-    let size = scale + (scale * 0.1);
-    commands.spawn(PbrBundle {
-      mesh: meshes.add(Mesh::from(shape::Cube { size: size})),
-      material: materials.add(Color::rgba(0.0, 0.0, 1.0, 0.5).into()),
-      transform: Transform::from_translation(p),
-      ..default()
-    })
-    .insert(SelectedGraphics)
-    .insert(NotShadowCaster);
-
-  }
-}
-
-fn reposition_preview_voxel(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
-
-  previews: Query<&Preview, Changed<Preview>>,
-  preview_graphics: Query<Entity, With<PreviewGraphics>>,
-) {
-  for preview in &previews {
-    if preview_graphics.iter().len() == 0 {
-      continue;
-    }
-
-    for entity in &preview_graphics {
-      commands.entity(entity).despawn_recursive();
-    }
-
-    if preview.pos.is_none() {
-      continue;
-    }
-    let p = preview.pos.unwrap();
-    // println!("preview {:?}", p);
-    let chunk = bevy_voxel_res.get_preview_chunk(p);
-    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
-    
-    let pos = bevy_voxel_res.get_preview_pos(p);
-
-    let mut render = Mesh::new(PrimitiveTopology::TriangleList);
-    render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    render.set_indices(Some(Indices::U32(data.indices.clone())));
-
-    commands
-      .spawn(MaterialMeshBundle {
-        mesh: meshes.add(render),
-        material: materials.add(Color::rgba(0.7, 0.7, 0.7, 0.8).into()),
-        transform: Transform::from_translation(pos),
-        ..default()
-      })
-      .insert(PreviewGraphics)
-      .insert(NotShadowCaster);
-  }
-}
 
 fn added_chunks(
   mut res: ResMut<BevyVoxelResource>,
@@ -225,7 +143,6 @@ fn center_changed(
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum EditState {
-  
   AddNormal,
   AddSnap,
   #[default]

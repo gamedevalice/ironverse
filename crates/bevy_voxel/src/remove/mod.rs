@@ -1,13 +1,16 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, pbr::NotShadowCaster};
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Selected};
+use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Selected, SelectedGraphics};
 
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(remove_voxel.in_set(OnUpdate(EditState::RemoveNormal)));
+      .add_systems(
+        (remove_voxel, reposition_selected_voxel)
+          .in_set(OnUpdate(EditState::RemoveNormal))
+      );
   }
 }
 
@@ -20,7 +23,7 @@ fn remove_voxel(
 ) {
   let mut voxel = None;
   
-  if mouse.just_pressed(MouseButton::Right) {
+  if mouse.just_pressed(MouseButton::Left) {
     voxel = Some(0);
   }
   if voxel.is_none() {
@@ -28,7 +31,6 @@ fn remove_voxel(
   }
 
   for (selected, center, mut chunks) in &mut chunks {
-    println!("Remove voxel {:?}", selected.pos);
     if selected.pos.is_none() {
       continue;
     }
@@ -54,10 +56,36 @@ fn remove_voxel(
   }
 }
 
+fn reposition_selected_voxel(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
 
-/*
-  Manage all the data only
-  Create cache later on if needed to
-*/
+  selecteds: Query<&Selected, Changed<Selected>>,
+  selected_graphics: Query<Entity, With<SelectedGraphics>>,
+) {
+  for selected in &selecteds {
+    for entity in &selected_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
 
+    if selected.pos.is_none() {
+      continue;
+    }
+
+    let p = selected.pos.unwrap();
+    let scale = bevy_voxel_res.chunk_manager.voxel_scale;
+    let size = scale + (scale * 0.1);
+    commands.spawn(PbrBundle {
+      mesh: meshes.add(Mesh::from(shape::Cube { size: size})),
+      material: materials.add(Color::rgba(0.0, 0.0, 1.0, 0.5).into()),
+      transform: Transform::from_translation(p),
+      ..default()
+    })
+    .insert(SelectedGraphics)
+    .insert(NotShadowCaster);
+
+  }
+}
 
