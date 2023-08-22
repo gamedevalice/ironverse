@@ -1,8 +1,9 @@
 use bevy::{prelude::*, input::mouse::MouseWheel};
-use voxels::chunk::chunk_manager::Chunk;
+use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics};
+use voxels::{chunk::chunk_manager::Chunk, data::voxel_octree::VoxelMode};
 use crate::input::hotbar::HotbarResource;
 
-use super::player::Player;
+use super::{player::Player, chunk::{Chunks}};
 
 // mod voxel_add;
 // mod voxel_remove;
@@ -14,10 +15,10 @@ impl Plugin for CustomPlugin {
       .add_state::<EditState>()
       // .add_plugin(voxel_add::CustomPlugin)
       // .add_plugin(voxel_remove::CustomPlugin)
-      // .add_system(add_to_player)
+      .add_system(add_to_player)
       // .add_system(update_edit_params)
       .add_system(switch_state)
-      ;
+      .add_system(add_voxel);
   }
 }
 
@@ -32,7 +33,13 @@ fn add_to_player(
     commands
       .entity(entity)
       .insert(ChunkEdit::default())
-      .insert(ChunkEditParams::default());
+      .insert(ChunkEditParams::default())
+      .insert(Selected::default())
+      .insert(Preview::default());
+
+    commands
+      .spawn(SelectedGraphics)
+      .insert(PreviewGraphics);
   }
 }
 
@@ -127,6 +134,60 @@ fn switch_state(
     }
   }
 }
+
+
+fn add_voxel(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  mouse: Res<Input<MouseButton>>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+
+  mut chunks: Query<(&Preview, &Player, &mut Chunks)>,
+) {
+  let mut voxel = None;
+  if mouse.just_pressed(MouseButton::Left) {
+    voxel = Some(1);
+  }
+  if voxel.is_none() {
+    return;
+  }
+
+  for (preview, player, mut chunks) in &mut chunks {
+    if preview.pos.is_none() {
+      continue;
+    }
+    let p = preview.pos.unwrap();
+    let pos = bevy_voxel_res.get_nearest_voxel_air(p).unwrap();
+
+    bevy_voxel_res.set_voxel(pos, voxel.unwrap());
+
+    let all_chunks = bevy_voxel_res.load_adj_chunks(player.key);
+    for chunk in all_chunks.iter() {
+      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+
+      let pos = bevy_voxel_res.get_pos(chunk.key);
+      let handle = bevy_voxel_res.add_collider(pos, &data);
+      
+      chunks.data.push(super::chunk::Mesh {
+        key: chunk.key.clone(),
+        data: data.clone(),
+        chunk: chunk.clone(),
+        handle: handle,
+      });
+    }
+  }
+}
+
+
+
+
+
+
+
 
 
 /* Helper functions */

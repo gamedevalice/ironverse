@@ -231,26 +231,6 @@ fn reposition_selected_voxel(
       continue;
     }
     let p = selected.pos.unwrap();
-    // println!("selected {:?}", p);
-    let chunk = bevy_voxel_res.get_preview_chunk(p);
-    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
-    
-
-    // let pos = bevy_voxel_res.get_preview_pos(p);
-
-    let mut render = Mesh::new(PrimitiveTopology::TriangleList);
-    render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    render.set_indices(Some(Indices::U32(data.indices.clone())));
-
-    // commands
-    //   .spawn(MaterialMeshBundle {
-    //     mesh: meshes.add(render),
-    //     material: materials.add(Color::rgba(1.0, 1.0, 1.0, 1.0).into()),
-    //     transform: Transform::from_translation(pos),
-    //     ..default()
-    //   })
-    //   .insert(PreviewGraphics { });
     
     let scale = bevy_voxel_res.chunk_manager.voxel_scale;
     let size = scale + (scale * 0.1);
@@ -517,7 +497,7 @@ impl Default for Preview {
     Self {
       pos: None,
       level: level,
-      size: 2_u32.pow(level as u32),
+      size: 2_u8.pow(level as u32),
     }
   }
 }

@@ -44,11 +44,6 @@ fn round(num: f32, nearest: f32) -> f32 {
       res += nearest
     }
   }
-
-  // println!(
-  //   "num {}, div {}, half {} base_div {}, base_val {}, modulus {}", 
-  //   num, div, half, base_div, base_val, modulus
-  // );
   res
 }
 

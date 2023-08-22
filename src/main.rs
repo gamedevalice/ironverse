@@ -1,5 +1,5 @@
 use bevy::{prelude::*, window::PresentMode};
-use bevy_voxel::BevyVoxelPlugin;
+use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource};
 use cfg_if::cfg_if;
 
 mod utils;
@@ -88,7 +88,7 @@ fn main() {
     if #[cfg(feature = "core")] {
       app
         .add_plugin(BevyVoxelPlugin)
-/*         .insert_resource(BevyVoxelResource::new(
+        .insert_resource(BevyVoxelResource::new(
           4, 
           1.0, 
           1, 
@@ -106,7 +106,7 @@ fn main() {
             [0.0, 0.2, 0.0],
             [0.0, 0.4, 0.0],
           ]
-        )) */
+        ))
         .add_plugin(data::CustomPlugin)
         .add_plugin(physics::CustomPlugin)
         .add_plugin(input::CustomPlugin)

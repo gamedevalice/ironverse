@@ -20,10 +20,10 @@ fn start(
   bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
   // // let pos = [0.0, 5.0, 0.0];
-  let pos = [0.0, 0.4, 0.0];
+  let pos = Vec3::new(0.0, 0.4, 0.0);
 
-  let (body, collider) = physics.spawn_character(1.0, 0.5, Vec3::new(pos[0], pos[1], pos[2]));
-  let k = posf32_to_world_key(&pos, bevy_voxel_res.chunk_manager.seamless_size());
+  let (body, collider) = physics.spawn_character(1.0, 0.5, pos);
+  let k = bevy_voxel_res.get_key(pos);
   commands
     .spawn(
       (Player::new(body, collider, k),
@@ -36,13 +36,12 @@ fn init(
   bevy_voxel_res: Res<BevyVoxelResource>,
   game_res: Res<GameResource>,
 ) {
-  let pos = game_res.data.status.position;
+  let p = game_res.data.status.position;
+  let pos = Vec3::new(p[0], p[1], p[2]);
   let (body, collider) = physics.spawn_character(
-    1.0, 0.5, Vec3::new(pos[0], pos[1], pos[2])
+    1.0, 0.5, pos
   );
-  let k = posf32_to_world_key(
-    &pos, bevy_voxel_res.chunk_manager.seamless_size()
-  );
+  let k = bevy_voxel_res.get_key(pos);
   commands
     .spawn(
       (Player::new(body, collider, k),
@@ -61,10 +60,10 @@ fn update(
     let rigid_body = &mut physics.rigid_body_set[player.body];
     rigid_body.set_position(Vector3::new(p.x, p.y, p.z).into(), false);
 
-    let k = posf32_to_world_key(
-      &[p.x, p.y, p.z], bevy_voxel_res.chunk_manager.seamless_size()
-    );
+    let k = bevy_voxel_res.get_key(p);
     if player.key != k {
+      println!("player.key {:?}", player.key);
+
       player.prev_key = player.key.clone();
       player.key = k;
     }

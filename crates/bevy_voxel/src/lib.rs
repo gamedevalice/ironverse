@@ -1,9 +1,9 @@
 mod physics;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, pbr::NotShadowCaster, render::{render_resource::PrimitiveTopology, mesh::Indices}};
 use physics::Physics;
 use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
-use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}, utils::key_to_world_coord_f32};
+use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys, voxel_pos_to_key}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}, utils::key_to_world_coord_f32};
 use utils::RayUtils;
 
 pub struct BevyVoxelPlugin;
@@ -12,7 +12,11 @@ impl Plugin for BevyVoxelPlugin {
     app
       .insert_resource(BevyVoxelResource::default())
       .add_startup_system(startup)
-      .add_system(update);
+      .add_system(update)
+      .add_system(detect_selected_voxel_position)
+      .add_system(detect_preview_voxel_position)
+      .add_system(reposition_selected_voxel)
+      .add_system(reposition_preview_voxel);
   }
 }
 
@@ -23,6 +27,192 @@ fn startup() {
 fn update(mut res: ResMut<BevyVoxelResource>) {
   res.physics.step();
 }
+
+fn detect_selected_voxel_position(
+  mut cam: Query<(&Transform, &mut Selected), With<Selected>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+  for (cam_trans, mut selected) in &mut cam {
+    let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
+    if hit.is_none() {
+      continue;
+    }
+
+    let pos = bevy_voxel_res.get_hit_voxel_pos(hit.unwrap());
+    if pos.is_none() && selected.pos.is_some() {
+      selected.pos = pos;
+    }
+
+    if pos.is_some() {
+      if selected.pos.is_some() {
+        let p = pos.unwrap();
+        let current = selected.pos.unwrap();
+        if current != p {
+          selected.pos = pos;
+        }
+      }
+      
+      if selected.pos.is_none() {
+        selected.pos = pos;
+      }
+    }
+  }
+}
+
+fn detect_preview_voxel_position(
+  mut cam: Query<(&Transform, &mut Preview), With<Preview>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+  for (cam_trans, mut preview) in &mut cam {
+    let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
+    if hit.is_none() {
+      continue;
+    }
+    let point = hit.unwrap();
+    let pos = bevy_voxel_res.get_nearest_voxel_air(point);
+    if pos.is_none() && preview.pos.is_some() {
+      preview.pos = pos;
+    }
+
+    if pos.is_some() {
+      if preview.pos.is_some() {
+        let p = pos.unwrap();
+        let current = preview.pos.unwrap();
+        if current != p {
+          preview.pos = pos;
+        }
+      }
+      
+      if preview.pos.is_none() {
+        preview.pos = pos;
+      }
+    }
+  }
+}
+
+
+fn reposition_selected_voxel(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+
+  selecteds: Query<&Selected, Changed<Selected>>,
+  selected_graphics: Query<Entity, With<SelectedGraphics>>,
+) {
+  for selected in &selecteds {
+    if selected_graphics.iter().len() == 0 {
+      continue;
+    }
+
+    for entity in &selected_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
+
+    if selected.pos.is_none() {
+      continue;
+    }
+    let p = selected.pos.unwrap();
+    let scale = bevy_voxel_res.chunk_manager.voxel_scale;
+    let size = scale + (scale * 0.1);
+    commands.spawn(PbrBundle {
+      mesh: meshes.add(Mesh::from(shape::Cube { size: size})),
+      material: materials.add(Color::rgba(0.0, 0.0, 1.0, 0.5).into()),
+      transform: Transform::from_translation(p),
+      ..default()
+    })
+    .insert(SelectedGraphics)
+    .insert(NotShadowCaster);
+
+  }
+}
+
+fn reposition_preview_voxel(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+
+  previews: Query<&Preview, Changed<Preview>>,
+  preview_graphics: Query<Entity, With<PreviewGraphics>>,
+) {
+  for preview in &previews {
+    if preview_graphics.iter().len() == 0 {
+      continue;
+    }
+
+    for entity in &preview_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
+
+    if preview.pos.is_none() {
+      continue;
+    }
+    let p = preview.pos.unwrap();
+    // println!("preview {:?}", p);
+    let chunk = bevy_voxel_res.get_preview_chunk(p);
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
+    
+    let pos = bevy_voxel_res.get_preview_pos(p);
+
+    let mut render = Mesh::new(PrimitiveTopology::TriangleList);
+    render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+    render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+    render.set_indices(Some(Indices::U32(data.indices.clone())));
+
+    commands
+      .spawn(MaterialMeshBundle {
+        mesh: meshes.add(render),
+        material: materials.add(Color::rgba(0.7, 0.7, 0.7, 0.8).into()),
+        transform: Transform::from_translation(pos),
+        ..default()
+      })
+      .insert(PreviewGraphics)
+      .insert(NotShadowCaster);
+  }
+}
+
+
+
+
+
+#[derive(Component, Clone)]
+pub struct Selected {
+  pub pos: Option<Vec3>,
+}
+
+impl Default for Selected {
+  fn default() -> Self {
+    Self {
+      pos: None,
+    }
+  }
+}
+
+#[derive(Component, Clone)]
+pub struct Preview {
+  pub pos: Option<Vec3>,
+  pub level: u8,
+  pub size: u8,
+}
+
+impl Default for Preview {
+  fn default() -> Self {
+    let level = 1;
+    Self {
+      pos: None,
+      level: level,
+      size: 2_u8.pow(level as u32),
+    }
+  }
+}
+#[derive(Component, Clone)]
+pub struct SelectedGraphics;
+
+#[derive(Component, Clone)]
+pub struct PreviewGraphics;
+
+
 
 
 #[derive(Resource)]
@@ -59,12 +249,51 @@ impl BevyVoxelResource {
     }
   }
 
+  pub fn get_key(&self, pos: Vec3) -> [i64; 3] {
+    /*
+      TODO: Voxel scale other than 1.0 is not working properly
+     */
+    let scale = self.chunk_manager.voxel_scale;
+
+    let div = (1.0 / scale) as u32;
+
+    let seamless_size = self.chunk_manager.seamless_size() / div;
+    let mul = (1.0 / 1.0) as i64;
+    let p = [
+      pos.x as i64 * mul,
+      pos.y as i64 * mul,
+      pos.z as i64 * mul,
+    ];
+
+    voxel_pos_to_key(&p, seamless_size)
+
+
+
+
+    /*
+      Scale = 0.5
+      Seamless size = 12
+        0.0  -> 0
+        0.49 -> 0
+        0.5  -> 1.0
+     */
+  }
+
   /// Get all chunks adjacent to the player based on
   /// Depth, range and voxel scale
   pub fn load_adj_chunks(&mut self, key: [i64; 3]) -> Vec<Chunk> {
     let mut chunks = Vec::new();
 
-    let keys = adjacent_keys(&key, self.chunk_manager.range as i64, true);
+    let scale = self.chunk_manager.voxel_scale;
+    let mul = (1.0 / scale) as i64;
+
+    let adj_key = [
+      key[0] * mul,
+      key[1] * mul,
+      key[2] * mul,
+    ];
+
+    let keys = adjacent_keys(&adj_key, self.chunk_manager.range as i64, true);
     for key in keys.iter() {
       chunks.push(load_chunk(self, *key));
       
@@ -300,7 +529,6 @@ fn get_near_positions(pos: Vec3, unit: f32) -> Vec<Vec3> {
 
   res
 }
-
 
 #[cfg(test)]
 mod tests {
