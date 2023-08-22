@@ -27,7 +27,7 @@ fn on_player_add(
 ) {
   for (entity, player) in &mut player_query {
     println!("player add");
-    let all_chunks = bevy_voxel_res.load_adj_chunks(player.key);
+    let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(player.key);
     let mut chunks = Chunks { data: Vec::new() };
 
     for chunk in all_chunks.iter() {
@@ -37,13 +37,9 @@ fn on_player_add(
       }
 
       let pos = bevy_voxel_res.get_pos(chunk.key);
-      let handle = bevy_voxel_res.add_collider(pos, &data);
-      
-      chunks.data.push(Mesh {
-        key: chunk.key.clone(),
+      chunks.data.push(ChunkData {
         data: data.clone(),
-        chunk: chunk.clone(),
-        handle: handle,
+        key: chunk.key,
       });
     }
 
@@ -63,10 +59,6 @@ fn on_player_move(
     if player.key == player.prev_key {
       continue;
     }
-    for i in 0..chunks.data.len() {
-      bevy_voxel_res.remove_collider(chunks.data[i].handle);
-    }
-    chunks.data.clear();
 
     let all_chunks = bevy_voxel_res.load_adj_chunks(player.key);
     for chunk in all_chunks.iter() {
@@ -78,11 +70,9 @@ fn on_player_move(
       let pos = bevy_voxel_res.get_pos(chunk.key);
       let handle = bevy_voxel_res.add_collider(pos, &data);
       
-      chunks.data.push(Mesh {
-        key: chunk.key.clone(),
+      chunks.data.push(ChunkData {
         data: data.clone(),
-        chunk: chunk.clone(),
-        handle: handle,
+        key: chunk.key,
       });
     }
   }
@@ -173,22 +163,20 @@ fn on_player_move(
 
 #[derive(Component)]
 pub struct Chunks {
-  pub data: Vec<Mesh>,
+  pub data: Vec<ChunkData>,
 }
 
 
 #[derive(Component, Debug, Clone)]
-pub struct Mesh {
+pub struct ChunkData {
   pub key: [i64; 3],
-  pub chunk: Chunk,
   pub data: MeshData,
-  pub handle: ColliderHandle,
 }
 
 impl Default for Chunks {
   fn default() -> Self {
     Self {
-      data: Vec::new()
+      data: Vec::new(),
     }
   }
 }

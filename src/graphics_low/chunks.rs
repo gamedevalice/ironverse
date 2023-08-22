@@ -7,9 +7,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(add)
-      // .add_system(remove)
-      ;
+      .add_system(add);
   }
 }
 
@@ -22,14 +20,12 @@ fn add(
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 
   chunk_query: Query<(Entity, &Chunks), Changed<Chunks>>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
 
   for (_, chunks) in &chunk_query {
-    println!("Remove");
     for (entity, graphics) in &chunk_graphics {
       commands.entity(entity).despawn_recursive();
-      bevy_voxel_res.remove_collider(graphics.handle);
     }
 
     for mesh in &chunks.data {
@@ -43,7 +39,6 @@ fn add(
       let mesh_handle = meshes.add(render_mesh);
       let mut pos = bevy_voxel_res.get_pos(mesh.key);
 
-
       let mat = materials.add(Color::rgb(0.8, 0.7, 0.6).into());
       commands
         .spawn(MaterialMeshBundle {
@@ -52,30 +47,7 @@ fn add(
           transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics { 
-          key: mesh.key.clone(),
-          // handle: bevy_voxel_res.add_collider(pos, &data)
-          handle: mesh.handle,
-        });
+        .insert(ChunkGraphics);
     }
   }
 }
-
-fn remove(
-  mut commands: Commands,
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-  chunk_query: Query<(Entity, &Chunks, &Player), Changed<Chunks>>,
-  game_res: Res<GameResource>,
-) {
-  for (_, _chunks, player) in &chunk_query {
-    let scale = game_res.voxel_scale;
-    let keys = adj_keys_by_scale(player.key, 1, scale);
-
-    for (entity, graphics) in &chunk_graphics {
-      if !keys.contains(&graphics.key) {
-        commands.entity(entity).despawn_recursive();
-      }
-    }
-  }
-}
-

@@ -1,4 +1,5 @@
 mod physics;
+mod remove;
 
 use bevy::{prelude::*, pbr::NotShadowCaster, render::{render_resource::PrimitiveTopology, mesh::Indices}};
 use physics::Physics;
@@ -10,14 +11,15 @@ pub struct BevyVoxelPlugin;
 impl Plugin for BevyVoxelPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_state::<EditState>()
       .insert_resource(BevyVoxelResource::default())
+      .add_plugin(remove::CustomPlugin)
       .add_startup_system(startup)
       .add_system(update)
       .add_system(detect_selected_voxel_position)
-      // .add_system(detect_preview_voxel_position)
+      .add_system(detect_preview_voxel_position)
       .add_system(reposition_selected_voxel)
-      // .add_system(reposition_preview_voxel)
-      ;
+      .add_system(reposition_preview_voxel);
   }
 }
 
@@ -38,8 +40,6 @@ fn detect_selected_voxel_position(
     if hit.is_none() {
       continue;
     }
-
-    // println!("hit {:?}", hit.unwrap());
 
     let pos = bevy_voxel_res.get_hit_voxel_pos(hit.unwrap());
     if pos.is_none() && selected.pos.is_some() {
@@ -92,7 +92,6 @@ fn detect_preview_voxel_position(
     }
   }
 }
-
 
 fn reposition_selected_voxel(
   mut commands: Commands,
@@ -177,6 +176,15 @@ fn reposition_preview_voxel(
 
 
 
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
+pub enum EditState {
+  AddNormal,
+  AddSnap,
+  #[default]
+  RemoveNormal,
+  RemoveSnap,
+}
+
 
 
 #[derive(Component, Clone)]
@@ -222,6 +230,8 @@ pub struct PreviewGraphics;
 pub struct BevyVoxelResource {
   pub chunk_manager: ChunkManager,
   pub physics: Physics,
+
+  colliders_cache: Vec<ColliderHandle>,
 }
 
 impl Default for BevyVoxelResource {
@@ -229,6 +239,7 @@ impl Default for BevyVoxelResource {
     Self {
       chunk_manager: ChunkManager::default(),
       physics: Physics::default(),
+      colliders_cache: Vec::new(),
     }
   }
 }
@@ -249,6 +260,7 @@ impl BevyVoxelResource {
         colors,
       ),
       physics: Physics::default(),
+      colliders_cache: Vec::new(),
     }
   }
 
@@ -485,6 +497,31 @@ impl BevyVoxelResource {
   }
 
 
+  pub fn load_adj_chunks_with_collider(&mut self, key: [i64; 3]) -> Vec<Chunk> {
+    let chunks = self.load_adj_chunks(key);
+
+    for _ in 0..self.colliders_cache.len() {
+      let h = self.colliders_cache.pop().unwrap();
+      self.remove_collider(h);
+    }
+    
+
+    self.colliders_cache.clear();
+
+    for chunk in chunks.iter() {
+      let data = self.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+
+      let pos = self.get_pos(chunk.key);
+      let c = self.add_collider(pos, &data);
+      self.colliders_cache.push(c);
+    }
+
+    chunks
+  }
+
 
   pub fn add_collider(
     &mut self, 
@@ -499,6 +536,9 @@ impl BevyVoxelResource {
   pub fn remove_collider(&mut self, handle: ColliderHandle) {
     self.physics.remove_collider(handle);
   }
+
+
+
 }
 
 

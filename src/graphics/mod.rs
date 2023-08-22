@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use rapier3d::prelude::ColliderHandle;
 
 pub mod chunk_preview;
 mod player;
@@ -69,20 +68,7 @@ impl Default for GraphicsResource {
 
 
 #[derive(Component)]
-pub struct ChunkGraphics {
-  pub key: [i64; 3],
-  pub handle: ColliderHandle,
-}
-
-impl Default for ChunkGraphics {
-  fn default() -> Self {
-    Self {
-      key: [i64::MAX; 3],
-      handle: ColliderHandle::invalid(),
-    }
-  }
-}
-
+pub struct ChunkGraphics;
 
 #[derive(Component, Clone)]
 pub struct ChunkPreviewGraphics {
