@@ -35,13 +35,11 @@ fn add_to_player(
       .insert(ChunkEditParams::default())
       .insert(Selected::default())
       .insert(Chunks::default())
-      .insert(Preview::default())
-      ;
+      .insert(Preview::default());
 
     commands
       .spawn(SelectedGraphics)
-      .insert(PreviewGraphics)
-      ;
+      .insert(PreviewGraphics);
   }
 }
 

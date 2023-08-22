@@ -1,46 +1,19 @@
 use bevy::{prelude::*, render::{mesh::{MeshVertexAttribute, MeshVertexBufferLayout, Indices}, render_resource::{VertexFormat, AsBindGroup, ShaderRef, SpecializedMeshPipelineError, RenderPipelineDescriptor, PrimitiveTopology, ShaderType, AsBindGroupShaderType, TextureFormat}, render_asset::RenderAssets}, reflect::TypeUuid, pbr::{MaterialPipeline, MaterialPipelineKey, StandardMaterialFlags}, asset::LoadState};
-use voxels::{utils::{key_to_world_coord_f32}, data::voxel_octree::{VoxelMode, MeshData}, chunk::adjacent_keys};
+use bevy_voxel::{BevyVoxelResource, Chunks};
 
-use crate::{graphics::ChunkGraphics, components::{chunk::Chunks, player::Player}, data::GameResource};
+use crate::graphics::ChunkGraphics;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .insert_resource(LocalResource::default())
       .add_plugin(MaterialPlugin::<CustomMaterial>::default())
-      .add_startup_system(startup)
-      .add_system(add)
-      .add_system(remove);
+      .add_system(add);
   }
 }
 
-
-fn startup(
-  mut commands: Commands, 
-  asset_server: Res<AssetServer>,
-) {
-  // commands.spawn(PointLightBundle {
-  //   point_light: PointLight {
-  //     intensity: 3000.0,
-  //     ..Default::default()
-  //   },
-  //   transform: Transform::from_xyz(-3.0, 2.0, -1.0),
-  //   ..Default::default()
-  // });
-  commands.spawn(PointLightBundle {
-    point_light: PointLight {
-      intensity: 3000.0,
-      ..Default::default()
-    },
-    transform: Transform::from_xyz(0.0, 5.0, 0.0),
-    ..Default::default()
-  });
-}
-
 fn add(
-  mut game_res: ResMut<GameResource>,
-  mut local_res: ResMut<LocalResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
 
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
@@ -50,24 +23,19 @@ fn add(
   chunk_query: Query<(Entity, &Chunks), Changed<Chunks>>,
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 ) {
-  let config = game_res.chunk_manager.config.clone();
   for (_, chunks) in &chunk_query {
-    for mesh in &chunks.data {
-      'inner: for (entity, graphics) in &chunk_graphics {
-        if mesh.key == graphics.key {
-          commands.entity(entity).despawn_recursive();
-          break 'inner;
-        }
-      }
+    println!("Changed");
+    for (entity, graphics) in &chunk_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
 
+    for mesh in &chunks.data {
       let data = &mesh.data;
-      let key = &mesh.key;
 
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
       render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
-
       render_mesh.insert_attribute(VOXEL_COLOR, data.colors.clone());
 
       let mesh_handle = meshes.add(render_mesh);
@@ -75,48 +43,15 @@ fn add(
         base_color: Color::rgb(1.0, 1.0, 1.0),
       });
 
-      let coord_f32 = key_to_world_coord_f32(key, config.seamless_size);
+      let mut pos = bevy_voxel_res.get_pos(mesh.key);
       commands
         .spawn(MaterialMeshBundle {
           mesh: mesh_handle,
           material: material_handle,
-          transform: Transform::from_xyz(coord_f32[0], coord_f32[1], coord_f32[2]),
+          transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics { key: *key });
-    }
-  }
-}
-
-
-
-fn remove(
-  mut commands: Commands,
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-
-  chunk_query: Query<(Entity, &Chunks, &Player), Changed<Chunks>>,
-) {
-  for (_, _chunks, player) in &chunk_query {
-    let adj_keys = adjacent_keys(&player.key, 1, true);
-    for (entity, graphics) in &chunk_graphics {
-      if !adj_keys.contains(&graphics.key) {
-        commands.entity(entity).despawn_recursive();
-      }
-    }
-  
-    
-  }
-}
-
-#[derive(Resource)]
-struct LocalResource {
-  queued_chunks: Vec<([i64; 3], MeshData)>,
-}
-
-impl Default for LocalResource {
-  fn default() -> Self {
-    Self {
-      queued_chunks: Vec::new(),
+        .insert(ChunkGraphics);
     }
   }
 }

@@ -142,9 +142,9 @@ fn center_changed(
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum EditState {
+  #[default]
   AddNormal,
   AddSnap,
-  #[default]
   RemoveNormal,
   RemoveSnap,
 }
@@ -415,7 +415,7 @@ impl BevyVoxelResource {
 
     let mut chunk = Chunk::default();
     let mid_pos = (chunk.octree.get_size() / 2) as i64;
-    
+
     let preview_size = 3;
     let min = -preview_size;
     let max = preview_size;
