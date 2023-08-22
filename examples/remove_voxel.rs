@@ -146,7 +146,12 @@ fn detect_voxel_preview_position(
   bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
   for (cam_trans, mut preview) in &mut cam {
-    let pos = bevy_voxel_res.get_hit_voxel_pos(cam_trans);
+    let point = bevy_voxel_res.get_raycast_hit(cam_trans);
+    if point.is_none() {
+      continue;
+    }
+    let p = point.unwrap();
+    let pos = bevy_voxel_res.get_hit_voxel_pos(p);
 
     // println!("pos {:?}", pos);
 

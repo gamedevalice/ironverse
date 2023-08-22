@@ -22,12 +22,14 @@ fn add(
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 
   chunk_query: Query<(Entity, &Chunks), Changed<Chunks>>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
 
   for (_, chunks) in &chunk_query {
+    println!("Remove");
     for (entity, graphics) in &chunk_graphics {
       commands.entity(entity).despawn_recursive();
+      bevy_voxel_res.physics.remove_collider(graphics.handle);
     }
 
     for mesh in &chunks.data {
@@ -39,7 +41,7 @@ fn add(
       render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
       let mesh_handle = meshes.add(render_mesh);
-      let mut pos_f32 = bevy_voxel_res.get_pos(mesh.key);
+      let mut pos = bevy_voxel_res.get_pos(mesh.key);
 
 
       let mat = materials.add(Color::rgb(0.8, 0.7, 0.6).into());
@@ -47,10 +49,13 @@ fn add(
         .spawn(MaterialMeshBundle {
           mesh: mesh_handle,
           material: mat,
-          transform: Transform::from_xyz(pos_f32[0], pos_f32[1], pos_f32[2]),
+          transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics { key: mesh.key.clone() });
+        .insert(ChunkGraphics { 
+          key: mesh.key.clone(),
+          handle: bevy_voxel_res.add_collider(pos, &data)
+        });
     }
   }
 }

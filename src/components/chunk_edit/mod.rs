@@ -18,7 +18,8 @@ impl Plugin for CustomPlugin {
       .add_system(add_to_player)
       // .add_system(update_edit_params)
       .add_system(switch_state)
-      .add_system(add_voxel);
+      // .add_system(add_voxel)
+      .add_system(remove_voxel);
   }
 }
 
@@ -39,7 +40,8 @@ fn add_to_player(
 
     commands
       .spawn(SelectedGraphics)
-      .insert(PreviewGraphics);
+      // .insert(PreviewGraphics)
+      ;
   }
 }
 
@@ -154,13 +156,63 @@ fn add_voxel(
   }
 
   for (preview, player, mut chunks) in &mut chunks {
+    chunks.data.clear();
     if preview.pos.is_none() {
       continue;
     }
+    
     let p = preview.pos.unwrap();
     let pos = bevy_voxel_res.get_nearest_voxel_air(p).unwrap();
 
     bevy_voxel_res.set_voxel(pos, voxel.unwrap());
+
+    let all_chunks = bevy_voxel_res.load_adj_chunks(player.key);
+    for chunk in all_chunks.iter() {
+      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+
+      let pos = bevy_voxel_res.get_pos(chunk.key);
+      let handle = bevy_voxel_res.add_collider(pos, &data);
+      
+      chunks.data.push(super::chunk::Mesh {
+        key: chunk.key.clone(),
+        data: data.clone(),
+        chunk: chunk.clone(),
+        handle: handle,
+      });
+    }
+  }
+}
+
+fn remove_voxel(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  mouse: Res<Input<MouseButton>>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+
+  mut chunks: Query<(&Selected, &Player, &mut Chunks)>,
+) {
+  let mut voxel = None;
+  if mouse.just_pressed(MouseButton::Right) {
+    voxel = Some(0);
+  }
+  if voxel.is_none() {
+    return;
+  }
+
+  for (selected, player, mut chunks) in &mut chunks {
+    if selected.pos.is_none() {
+      continue;
+    }
+    chunks.data.clear();
+
+    let p = selected.pos.unwrap();
+    bevy_voxel_res.set_voxel(p, voxel.unwrap());
+
+    println!("player_key {:?}", player.key);
 
     let all_chunks = bevy_voxel_res.load_adj_chunks(player.key);
     for chunk in all_chunks.iter() {
