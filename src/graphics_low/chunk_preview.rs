@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use voxels::data::voxel_octree::VoxelMode;
-use crate::components::chunk_edit::{ChunkEdit, EditState};
+use crate::components::chunk_edit::ChunkEdit;
 use crate::graphics::ChunkPreviewGraphics;
 use crate::data::GameResource;
 
@@ -21,7 +21,7 @@ fn update(
   edits: Query<(Entity, &ChunkEdit), Changed<ChunkEdit>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 
-  edit_state: Res<State<EditState>>,
+  // edit_state: Res<State<EditState>>,
   graphics: Query<(Entity, &ChunkPreviewGraphics)>,
 ) {
   // for (entity, edit) in &edits {

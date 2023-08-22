@@ -1,5 +1,5 @@
 use bevy::{prelude::*, input::mouse::MouseWheel};
-use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics, Center, Chunks};
+use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics, Center, Chunks, EditState};
 use rapier3d::prelude::ColliderHandle;
 use voxels::{chunk::chunk_manager::Chunk, data::voxel_octree::VoxelMode};
 use crate::{input::hotbar::HotbarResource, graphics::ChunkGraphics};
@@ -13,7 +13,6 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_state::<EditState>()
       // .add_plugin(voxel_add::CustomPlugin)
       // .add_plugin(voxel_remove::CustomPlugin)
       .add_system(add_to_player)
@@ -116,25 +115,29 @@ fn switch_state(
 ) {
 
   if key_input.just_pressed(KeyCode::M) {
-    match state.0 {
-      EditState::AddNormal => {
-        next_state.set(EditState::AddSnap);
-      },
-      EditState::AddSnap | _ => {
-        next_state.set(EditState::AddNormal);
-      }
-    }
+    next_state.set(EditState::AddNormal);
+    println!("EditState::AddNormal");
+    // match state.0 {
+    //   EditState::AddNormal => {
+    //     next_state.set(EditState::AddSnap);
+    //   },
+    //   EditState::AddSnap | _ => {
+    //     next_state.set(EditState::AddNormal);
+    //   }
+    // }
   }
 
   if key_input.just_pressed(KeyCode::N) {
-    match state.0 {
-      EditState::RemoveNormal => {
-        next_state.set(EditState::RemoveSnap);
-      },
-      EditState::RemoveSnap | _ => {
-        next_state.set(EditState::RemoveNormal);
-      }
-    }
+    next_state.set(EditState::RemoveNormal);
+    println!("EditState::RemoveNormal");
+    // match state.0 {
+    //   EditState::RemoveNormal => {
+    //     next_state.set(EditState::RemoveSnap);
+    //   },
+    //   EditState::RemoveSnap | _ => {
+    //     next_state.set(EditState::RemoveNormal);
+    //   }
+    // }
   }
 }
 
@@ -229,11 +232,3 @@ impl Default for ChunkEditParams {
 }
 
 
-#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
-pub enum EditState {
-  #[default]
-  AddNormal,
-  AddSnap,
-  RemoveNormal,
-  RemoveSnap,
-}

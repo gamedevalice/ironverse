@@ -403,14 +403,19 @@ impl BevyVoxelResource {
   /// - Add voxel mode(TODO): Probably be a separate function
   /// - Remove voxel mode(TODO): Probably be a separate function
   pub fn get_preview_chunk(&self, calc_pos: Vec3) -> Chunk {
-    let voxel_pos = [calc_pos.x as i64, calc_pos.y as i64, calc_pos.z as i64];
+    let mul = (1.0 / self.chunk_manager.voxel_scale);
+    let p = [
+      calc_pos.x * mul,
+      calc_pos.y * mul,
+      calc_pos.z * mul,
+    ];
 
     let mut tmp_manager = self.chunk_manager.clone();
-    tmp_manager.set_voxel2(&voxel_pos, 1);
+    set_voxel(&mut tmp_manager, calc_pos, 1);
 
     let mut chunk = Chunk::default();
     let mid_pos = (chunk.octree.get_size() / 2) as i64;
-
+    
     let preview_size = 3;
     let min = -preview_size;
     let max = preview_size;
@@ -422,9 +427,9 @@ impl BevyVoxelResource {
           let local_z = (mid_pos + z) as u32;
 
           let tmp_pos = [
-            voxel_pos[0] as i64 + x,
-            voxel_pos[1] as i64 + y,
-            voxel_pos[2] as i64 + z,
+            p[0] as i64 + x,
+            p[1] as i64 + y,
+            p[2] as i64 + z,
           ];
           let voxel = tmp_manager.get_voxel(&tmp_pos);
           chunk.octree.set_voxel(local_x, local_y, local_z, voxel);
@@ -500,9 +505,22 @@ impl BevyVoxelResource {
   }
 
 
+}
 
+fn set_voxel(
+  chunk_manager: &mut ChunkManager,
+  pos: Vec3,
+  voxel: u8,
+) {
+  let mul = 1.0 / chunk_manager.voxel_scale;
+  // let mul = 1.0;
+  let p = [
+    (pos.x * mul) as i64,
+    (pos.y * mul) as i64,
+    (pos.z * mul) as i64,
+  ];
 
-
+  chunk_manager.set_voxel2(&p, voxel);
 }
 
 
@@ -547,19 +565,9 @@ fn get_key(pos: Vec3, voxel_scale: f32, seamless_size: u32) -> [i64; 3] {
 
   let div = (1.0 / voxel_scale) as u32;
   let s = seamless_size / div;
-  // let s = seamless_size;
 
   let s1 = (seamless_size as f32) / (1.0 / voxel_scale);
-  // println!("p {:?}, div {}, s {} seamless_size {}", p, div, s, seamless_size);
   pos_to_key(pos, s1)
-
-  /*
-  Scale = 0.5
-  Seamless size = 12
-    0.0  -> 0
-    0.49 -> 0
-    0.5  -> 1.0
-  */
 }
 
 

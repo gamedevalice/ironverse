@@ -20,7 +20,7 @@ fn startup(
 ) {
   commands.spawn(PointLightBundle {
     point_light: PointLight {
-      intensity: 3000.0,
+      intensity: 600.0,
       ..Default::default()
     },
     transform: Transform::from_xyz(0.0, 5.0, 0.0),
