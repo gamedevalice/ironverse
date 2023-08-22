@@ -5,7 +5,7 @@ use rapier3d::prelude::ColliderHandle;
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::{voxel_octree::VoxelMode, surface_nets::VoxelReuse}};
 use bevy_flycam::NoCameraAndGrabPlugin;
-use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource};
+use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource, Selected, SelectedGraphics};
 
 fn main() {
   let mut app = App::new();
@@ -64,7 +64,14 @@ fn setup_camera(
       ..Default::default()
     })
     .insert(FlyCam)
-    .insert(Preview::default());
+    .insert(Preview::default())
+    .insert(Selected::default())
+    ;
+
+  commands
+    .spawn(SelectedGraphics)
+    // .insert(PreviewGraphics)
+    ;
 
   // Sun
   commands.spawn(DirectionalLightBundle {
@@ -138,97 +145,6 @@ fn setup_starting_chunks(
   }
 
 }
-
-
-fn detect_voxel_preview_position(
-  mut cam: Query<(&Transform, &mut Preview), With<FlyCam>>,
-
-  bevy_voxel_res: Res<BevyVoxelResource>,
-) {
-  for (cam_trans, mut preview) in &mut cam {
-    let point = bevy_voxel_res.get_raycast_hit(cam_trans);
-    if point.is_none() {
-      continue;
-    }
-    let p = point.unwrap();
-    let pos = bevy_voxel_res.get_hit_voxel_pos(p);
-
-    // println!("pos {:?}", pos);
-
-    if pos.is_none() && preview.voxel_pos.is_some() {
-      preview.voxel_pos = pos;
-    }
-
-    if pos.is_some() {
-      if preview.voxel_pos.is_some() {
-        let p = pos.unwrap();
-        let current = preview.voxel_pos.unwrap();
-        if current != p {
-          preview.voxel_pos = pos;
-        }
-      }
-      
-      if preview.voxel_pos.is_none() {
-        preview.voxel_pos = pos;
-      }
-    }
-  }
-}
-
-fn reposition_voxel_preview(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  local_res: Res<LocalResource>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-
-  previews: Query<&Preview, Changed<Preview>>,
-  preview_graphics: Query<Entity, With<PreviewGraphics>>,
-) {
-
-  for preview in &previews {
-    for entity in &preview_graphics {
-      commands.entity(entity).despawn_recursive();
-    }
-
-    if preview.voxel_pos.is_none() {
-      continue;
-    }
-
-    println!("voxel_pos {:?}", preview.voxel_pos);
-
-    let p = preview.voxel_pos.unwrap();
-    let chunk = bevy_voxel_res.get_preview_chunk(p);
-    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
-    let pos = bevy_voxel_res.get_preview_pos(p);
-
-    let mut render = Mesh::new(PrimitiveTopology::TriangleList);
-    render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    render.set_indices(Some(Indices::U32(data.indices.clone())));
-
-    // commands
-    //   .spawn(MaterialMeshBundle {
-    //     mesh: meshes.add(render),
-    //     material: materials.add(Color::rgba(1.0, 1.0, 1.0, 1.0).into()),
-    //     transform: Transform::from_translation(pos),
-    //     ..default()
-    //   })
-    //   .insert(PreviewGraphics { });
-    
-    let scale = bevy_voxel_res.chunk_manager.voxel_scale;
-    let size = scale + (scale * 0.1);
-    commands.spawn(PbrBundle {
-      mesh: meshes.add(Mesh::from(shape::Cube { size: size})),
-      material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-      transform: Transform::from_translation(p),
-      ..default()
-    })
-    .insert(PreviewGraphics { });
-
-  }
-}
-
 
 fn remove_voxel(
   mut commands: Commands,

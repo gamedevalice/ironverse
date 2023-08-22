@@ -1,7 +1,8 @@
 use bevy::{prelude::*, input::mouse::MouseWheel};
 use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics};
+use rapier3d::prelude::ColliderHandle;
 use voxels::{chunk::chunk_manager::Chunk, data::voxel_octree::VoxelMode};
-use crate::input::hotbar::HotbarResource;
+use crate::{input::hotbar::HotbarResource, graphics::ChunkGraphics};
 
 use super::{player::Player, chunk::{Chunks}};
 
@@ -36,7 +37,8 @@ fn add_to_player(
       .insert(ChunkEdit::default())
       .insert(ChunkEditParams::default())
       .insert(Selected::default())
-      .insert(Preview::default());
+      // .insert(Preview::default())
+      ;
 
     commands
       .spawn(SelectedGraphics)
@@ -212,8 +214,6 @@ fn remove_voxel(
     let p = selected.pos.unwrap();
     bevy_voxel_res.set_voxel(p, voxel.unwrap());
 
-    println!("player_key {:?}", player.key);
-
     let all_chunks = bevy_voxel_res.load_adj_chunks(player.key);
     for chunk in all_chunks.iter() {
       let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
@@ -222,13 +222,13 @@ fn remove_voxel(
       }
 
       let pos = bevy_voxel_res.get_pos(chunk.key);
-      let handle = bevy_voxel_res.add_collider(pos, &data);
       
       chunks.data.push(super::chunk::Mesh {
         key: chunk.key.clone(),
         data: data.clone(),
         chunk: chunk.clone(),
-        handle: handle,
+        handle: bevy_voxel_res.add_collider(pos, &data),
+        // handle: ColliderHandle::invalid(),
       });
     }
   }

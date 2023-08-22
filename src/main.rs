@@ -108,7 +108,7 @@ fn main() {
           ]
         ))
         .add_plugin(data::CustomPlugin)
-        .add_plugin(physics::CustomPlugin)
+        // .add_plugin(physics::CustomPlugin)
         .add_plugin(input::CustomPlugin)
         .add_plugin(components::CustomPlugin)
         .add_plugin(graphics::CustomPlugin)

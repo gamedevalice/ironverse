@@ -14,9 +14,10 @@ impl Plugin for BevyVoxelPlugin {
       .add_startup_system(startup)
       .add_system(update)
       .add_system(detect_selected_voxel_position)
-      .add_system(detect_preview_voxel_position)
+      // .add_system(detect_preview_voxel_position)
       .add_system(reposition_selected_voxel)
-      .add_system(reposition_preview_voxel);
+      // .add_system(reposition_preview_voxel)
+      ;
   }
 }
 
@@ -37,6 +38,8 @@ fn detect_selected_voxel_position(
     if hit.is_none() {
       continue;
     }
+
+    // println!("hit {:?}", hit.unwrap());
 
     let pos = bevy_voxel_res.get_hit_voxel_pos(hit.unwrap());
     if pos.is_none() && selected.pos.is_some() {

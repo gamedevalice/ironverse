@@ -7,7 +7,6 @@ use voxels::chunk::chunk_manager::Chunk;
 use voxels::data::voxel_octree::MeshData;
 use voxels::{chunk::{chunk_manager::ChunkManager, adjacent_keys}, data::voxel_octree::VoxelMode, utils::key_to_world_coord_f32};
 use crate::data::GameResource;
-use crate::physics::Physics;
 use super::player::Player;
 
 pub struct CustomPlugin;
@@ -22,7 +21,6 @@ impl Plugin for CustomPlugin {
 fn on_player_add(
   mut commands: Commands,
   mut game_res: ResMut<GameResource>,
-  mut physics: ResMut<Physics>,
 
   mut player_query: Query<(Entity, &Player), Added<Player>>,
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,

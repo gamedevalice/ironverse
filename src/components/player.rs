@@ -10,20 +10,22 @@ impl Plugin for CustomPlugin {
     app
       .add_system(start.in_schedule(OnEnter(GameState::Start)))
       .add_system(init.in_schedule(OnEnter(GameState::Init)))
-      .add_system(update);
+      // .add_system(update)
+      ;
   }
 }
 
 fn start(
   mut commands: Commands,
-  mut physics: ResMut<Physics>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
   // // let pos = [0.0, 5.0, 0.0];
   let pos = Vec3::new(0.0, 0.4, 0.0);
 
-  let (body, collider) = physics.spawn_character(1.0, 0.5, pos);
+  let (body, collider) = bevy_voxel_res.physics.spawn_character(1.0, 0.5, pos);
   let k = bevy_voxel_res.get_key(pos);
+
+  println!("start player key {:?}", k);
   commands
     .spawn(
       (Player::new(body, collider, k),
@@ -32,13 +34,12 @@ fn start(
 
 fn init(
   mut commands: Commands,
-  mut physics: ResMut<Physics>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
   game_res: Res<GameResource>,
 ) {
   let p = game_res.data.status.position;
   let pos = Vec3::new(p[0], p[1], p[2]);
-  let (body, collider) = physics.spawn_character(
+  let (body, collider) = bevy_voxel_res.physics.spawn_character(
     1.0, 0.5, pos
   );
   let k = bevy_voxel_res.get_key(pos);
@@ -52,17 +53,16 @@ fn init(
 
 fn update(
   mut query: Query<(&Transform, &mut Player)>,
-  mut physics: ResMut<Physics>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
   for (trans, mut player) in &mut query {
     let p = trans.translation;
-    let rigid_body = &mut physics.rigid_body_set[player.body];
+    let rigid_body = &mut bevy_voxel_res.physics.rigid_body_set[player.body];
     rigid_body.set_position(Vector3::new(p.x, p.y, p.z).into(), false);
 
     let k = bevy_voxel_res.get_key(p);
     if player.key != k {
-      println!("player.key {:?}", player.key);
+      println!("move player.key {:?}", player.key);
 
       player.prev_key = player.key.clone();
       player.key = k;

@@ -29,7 +29,7 @@ fn add(
     println!("Remove");
     for (entity, graphics) in &chunk_graphics {
       commands.entity(entity).despawn_recursive();
-      bevy_voxel_res.physics.remove_collider(graphics.handle);
+      bevy_voxel_res.remove_collider(graphics.handle);
     }
 
     for mesh in &chunks.data {
@@ -54,7 +54,8 @@ fn add(
         })
         .insert(ChunkGraphics { 
           key: mesh.key.clone(),
-          handle: bevy_voxel_res.add_collider(pos, &data)
+          // handle: bevy_voxel_res.add_collider(pos, &data)
+          handle: mesh.handle,
         });
     }
   }
