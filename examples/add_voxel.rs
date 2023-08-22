@@ -27,7 +27,7 @@ fn main() {
     .add_plugin(BevyVoxelPlugin)
     .insert_resource(BevyVoxelResource::new(
       4, 
-      0.5, 
+      1.0, 
       1, 
       vec![
         [1.0, 0.0, 0.0], 
@@ -48,7 +48,7 @@ fn main() {
     .add_startup_system(setup_camera)
     .add_startup_system(setup_starting_chunks)
     .add_system(detect_voxel_preview_position)
-    .add_system(reposition_voxel_preview)
+    .add_system(reposition_selected_voxel)
     .add_system(add_voxel)
     .add_system(show_diagnostic_texts)
     .run();
@@ -65,7 +65,7 @@ fn setup_camera(
       ..Default::default()
     })
     .insert(FlyCam)
-    .insert(Preview::default());
+    .insert(Selected::default());
 
   // Sun
   commands.spawn(DirectionalLightBundle {
@@ -140,60 +140,63 @@ fn setup_starting_chunks(
 
 
 fn detect_voxel_preview_position(
-  mut cam: Query<(&Transform, &mut Preview), With<FlyCam>>,
+  mut cam: Query<(&Transform, &mut Selected), With<FlyCam>>,
 
   bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
-  for (cam_trans, mut preview) in &mut cam {
-    let pos = bevy_voxel_res.get_hit_voxel_pos(cam_trans);
+  for (cam_trans, mut selected) in &mut cam {
+    let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
+    if hit.is_none() {
+      continue;
+    }
 
+    let pos = bevy_voxel_res.get_hit_voxel_pos(hit.unwrap());
     // println!("pos {:?}", pos);
 
-    if pos.is_none() && preview.voxel_pos.is_some() {
-      preview.voxel_pos = pos;
+    if pos.is_none() && selected.pos.is_some() {
+      selected.pos = pos;
     }
 
     if pos.is_some() {
-      if preview.voxel_pos.is_some() {
+      if selected.pos.is_some() {
         let p = pos.unwrap();
-        let current = preview.voxel_pos.unwrap();
+        let current = selected.pos.unwrap();
         if current != p {
-          preview.voxel_pos = pos;
+          selected.pos = pos;
         }
       }
       
-      if preview.voxel_pos.is_none() {
-        preview.voxel_pos = pos;
+      if selected.pos.is_none() {
+        selected.pos = pos;
       }
     }
   }
 }
 
-fn reposition_voxel_preview(
+fn reposition_selected_voxel(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
-  local_res: Res<LocalResource>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
 
-  previews: Query<&Preview, Changed<Preview>>,
+  selecteds: Query<&Selected, Changed<Selected>>,
   preview_graphics: Query<Entity, With<PreviewGraphics>>,
 ) {
-
-  for preview in &previews {
-    // println!("voxel_pos {:?}", preview.voxel_pos);
+  for selected in &selecteds {
     for entity in &preview_graphics {
       commands.entity(entity).despawn_recursive();
     }
 
-    if preview.voxel_pos.is_none() {
+    if selected.pos.is_none() {
       continue;
     }
-
-    let p = preview.voxel_pos.unwrap();
+    let p = selected.pos.unwrap();
+    println!("p {:?}", p);
     let chunk = bevy_voxel_res.get_preview_chunk(p);
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
-    let pos = bevy_voxel_res.get_preview_pos(p);
+    
+
+    // let pos = bevy_voxel_res.get_preview_pos(p);
 
     let mut render = Mesh::new(PrimitiveTopology::TriangleList);
     render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
@@ -233,57 +236,58 @@ fn add_voxel(
   previews: Query<(Entity, &Preview)>,
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 ) {
-  let mut voxel = None;
-  if mouse.just_pressed(MouseButton::Left) {
-    voxel = Some(1);
-  }
-  if voxel.is_none() {
-    return;
-  }
+  // let mut voxel = None;
+  // if mouse.just_pressed(MouseButton::Left) {
+  //   voxel = Some(1);
+  // }
+  // if voxel.is_none() {
+  //   return;
+  // }
 
-  for (_, preview) in &previews {
-    if preview.voxel_pos.is_none() {
-      continue;
-    }
-    for (entity, graphics) in &chunk_graphics {
-      commands.entity(entity).despawn_recursive();
-      bevy_voxel_res.physics.remove_collider(graphics.handle);
-    }
+  // for (_, preview) in &previews {
+  //   if preview.voxel_pos.is_none() {
+  //     continue;
+  //   }
+  //   for (entity, graphics) in &chunk_graphics {
+  //     commands.entity(entity).despawn_recursive();
+  //     bevy_voxel_res.physics.remove_collider(graphics.handle);
+  //   }
 
-    let pos = preview.voxel_pos.unwrap();
+  //   let p = preview.voxel_pos.unwrap();
+  //   let pos = bevy_voxel_res.get_nearest_voxel_air(p);
 
-    bevy_voxel_res.set_voxel(pos, voxel.unwrap());
+  //   bevy_voxel_res.set_voxel(pos, voxel.unwrap());
     
-    let key = [0, 0, 0];
-    let chunks = bevy_voxel_res.load_adj_chunks(key);
-    for chunk in chunks.iter() {
-      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-      if data.positions.len() == 0 {
-        continue;
-      }
-      let pos = bevy_voxel_res.get_pos(chunk.key);
+  //   let key = [0, 0, 0];
+  //   let chunks = bevy_voxel_res.load_adj_chunks(key);
+  //   for chunk in chunks.iter() {
+  //     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+  //     if data.positions.len() == 0 {
+  //       continue;
+  //     }
+  //     let pos = bevy_voxel_res.get_pos(chunk.key);
 
-      let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-      render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-      render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-      render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
+  //     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+  //     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+  //     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+  //     render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-      let mut color = Color::rgb(0.7, 0.7, 0.7);
-      if chunk.key[0] == key[0] && chunk.key[2] == key[0] {
-        color = Color::rgb(1.0, 0.0, 0.0);
-      }
-      commands
-        .spawn(MaterialMeshBundle {
-          mesh: meshes.add(render_mesh),
-          material: materials.add(color.into()),
-          transform: Transform::from_translation(pos),
-          ..default()
-        })
-        .insert(ChunkGraphics {
-          handle: bevy_voxel_res.add_collider(pos, &data)
-        }); 
-    }
-  }
+  //     let mut color = Color::rgb(0.7, 0.7, 0.7);
+  //     if chunk.key[0] == key[0] && chunk.key[2] == key[0] {
+  //       color = Color::rgb(1.0, 0.0, 0.0);
+  //     }
+  //     commands
+  //       .spawn(MaterialMeshBundle {
+  //         mesh: meshes.add(render_mesh),
+  //         material: materials.add(color.into()),
+  //         transform: Transform::from_translation(pos),
+  //         ..default()
+  //       })
+  //       .insert(ChunkGraphics {
+  //         handle: bevy_voxel_res.add_collider(pos, &data)
+  //       }); 
+  //   }
+  // }
 }
 
 
@@ -383,17 +387,32 @@ impl Default for LocalResource {
 
 
 #[derive(Component, Clone)]
+struct Selected {
+  pos: Option<Vec3>,
+}
+
+impl Default for Selected {
+  fn default() -> Self {
+    Self {
+      pos: None,
+    }
+  }
+}
+
+#[derive(Component, Clone)]
 struct Preview {
-  voxel_pos: Option<Vec3>,
+  pos: Option<Vec3>,
 }
 
 impl Default for Preview {
   fn default() -> Self {
     Self {
-      voxel_pos: None,
+      pos: None,
     }
   }
 }
+
+
 
 #[derive(Component, Clone)]
 struct PreviewGraphics { }

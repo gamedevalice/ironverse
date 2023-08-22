@@ -99,9 +99,7 @@ impl BevyVoxelResource {
   }
 
 
-  pub fn get_hit_voxel_pos(&self, trans: &Transform) -> Option<Vec3> {
-    let voxel_scale = self.chunk_manager.voxel_scale;
-
+  pub fn get_raycast_hit(&self, trans: &Transform) -> Option<Vec3> {
     let start_pos = trans.translation;
     let dir = trans.forward();
     let ray = Ray::new(
@@ -122,46 +120,80 @@ impl BevyVoxelResource {
       filter
     ) {
       let hit = ray.point_at(toi);
-
       point = Some(Vec3::new(hit[0], hit[1], hit[2]));
-      // if raycast.point != point {
-      //   raycast.point = point;
-      // }
     }
+    point
+  }
 
+  pub fn get_hit_voxel_pos(&self, point: Vec3) -> Option<Vec3> {
+    let voxel_scale = self.chunk_manager.voxel_scale;
     let mul = 1.0 / voxel_scale;
     let mut nearest_dist = f32::MAX;
 
     let mut pos = None;
-    if point.is_some() {
-      let p = point.unwrap();
-      let n_c = RayUtils::get_nearest_coord(
-        [p.x, p.y, p.z], voxel_scale
-      );
+    let n_c = RayUtils::get_nearest_coord(
+      [point.x, point.y, point.z], voxel_scale
+    );
 
-      let tmp_point = Vec3::new(n_c[0], n_c[1], n_c[2]);
-      let near_pos = get_near_positions(tmp_point, voxel_scale);
-      
-      for n in near_pos.iter() {
-        let dist = p.distance(*n);
-        let tmp_pos = [
-          (n[0] * mul) as i64, 
-          (n[1] * mul) as i64, 
-          (n[2] * mul) as i64, 
-        ];
+    let tmp_point = Vec3::new(n_c[0], n_c[1], n_c[2]);
+    let near_pos = get_near_positions(tmp_point, voxel_scale);
+    for n in near_pos.iter() {
+      let dist = point.distance(*n);
+      let tmp_pos = [
+        (n[0] * mul) as i64, 
+        (n[1] * mul) as i64, 
+        (n[2] * mul) as i64, 
+      ];
 
-        let res = self.chunk_manager.get_voxel_safe(&tmp_pos);
-        if res.is_some() && res.unwrap() != 0 {
-          if dist < nearest_dist {
-            nearest_dist = dist;
-            pos = Some(*n);
-          }
+      let res = self.chunk_manager.get_voxel_safe(&tmp_pos);
+      if res.is_some() && res.unwrap() != 0 {
+        if dist < nearest_dist {
+          nearest_dist = dist;
+          pos = Some(*n);
         }
       }
     }
 
     pos
   }
+
+  pub fn get_nearest_voxel_air(&self, point: Vec3) -> Vec3 {
+    let voxel_scale = self.chunk_manager.voxel_scale;
+
+    let mul = 1.0 / voxel_scale;
+    let mut nearest_dist = f32::MAX;
+
+    let mut pos = Vec3::ZERO;
+    let n_c = RayUtils::get_nearest_coord(
+      [point.x, point.y, point.z], voxel_scale
+    );
+
+    
+
+    let tmp_point = Vec3::new(n_c[0], n_c[1], n_c[2]);
+    let near_pos = get_near_positions(tmp_point, voxel_scale);
+    
+    for n in near_pos.iter() {
+      let dist = point.distance(*n);
+      let tmp_pos = [
+        (n[0] * mul) as i64, 
+        (n[1] * mul) as i64, 
+        (n[2] * mul) as i64, 
+      ];
+
+      let res = self.chunk_manager.get_voxel_safe(&tmp_pos);
+      if res.is_some() && res.unwrap() == 0 {
+        if dist < nearest_dist {
+          nearest_dist = dist;
+          pos = *n;
+        }
+      }
+    }
+
+    // println!("point {:?} : {:?}", point, pos);
+    pos
+  }
+
 
 
   /// - calc_pos should be the calculated position based on edit mode
@@ -363,7 +395,16 @@ mod tests {
     Ok(())
   }
 
-
-
-
 }
+
+
+/*
+  Add voxel
+    Nearest voxel, using one voxel
+  Remove voxel
+    By distance
+  
+  Component based
+    Create basic functions to do the tasks
+    Improve, deprecate or create a new functions to accomodate features
+*/
