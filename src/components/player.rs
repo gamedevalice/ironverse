@@ -64,8 +64,6 @@ fn update(
 
     let k = bevy_voxel_res.get_key(p);
     if player.key != k {
-      // println!("move player.key {:?}", player.key);
-
       player.prev_key = player.key.clone();
       player.key = k;
       center.key = k;

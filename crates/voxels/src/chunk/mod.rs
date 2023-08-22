@@ -576,12 +576,6 @@ pub fn region_pos_to_world_key(pos: &[u32; 3], seamless_size: u32) -> [i64; 3] {
 }
 
 pub fn voxel_pos_to_key(pos: &[i64; 3], seamless_size: u32) -> [i64; 3] {
-  /*
-    TODO:
-      Return a key from a pos
-      Ex:
-
-  */
   let seamless_size_i64 = seamless_size as i64;
 
   let mut x = pos[0];

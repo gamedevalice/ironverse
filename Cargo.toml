@@ -117,5 +117,9 @@ path = "examples/config_voxel_size_comparison.rs"
 name = "chunk_depth_voxel_scale_range"
 path = "examples/chunk_depth_voxel_scale_range.rs"
 
+[[example]]
+name = "size_comparison"
+path = "examples/size_comparison.rs"
+
 
 
