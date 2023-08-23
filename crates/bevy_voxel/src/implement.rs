@@ -72,7 +72,6 @@ impl BevyVoxelResource {
     Vec3::new(pos[0], pos[1], pos[2])
   }
 
-
   pub fn get_raycast_hit(&self, trans: &Transform) -> Option<Vec3> {
     let start_pos = trans.translation;
     let dir = trans.forward();
@@ -232,6 +231,29 @@ impl BevyVoxelResource {
     }
   }
 
+  pub fn set_voxel_sphere(&mut self, pos: Vec3, preview: &Preview) {
+    let scale = self.chunk_manager.voxel_scale;
+    let mul = 1.0 / scale;
+    let p = [
+      pos.x * mul,
+      pos.y * mul,
+      pos.z * mul,
+    ];
+
+    let size = preview.sphere_size;
+    let coords = get_sphere_coords(size);
+    for c in coords.iter() {
+      let tmp = [
+        p[0] as i64 + c[0],
+        p[1] as i64 + c[1],
+        p[2] as i64 + c[2],
+      ];
+      
+      self.set_voxel_default(tmp, preview.voxel);
+    }
+  }
+
+
 
   pub fn load_adj_chunks_with_collider(&mut self, key: [i64; 3]) -> Vec<Chunk> {
     let chunks = self.load_adj_chunks(key);
@@ -354,7 +376,6 @@ impl BevyVoxelResource {
 
     let mut tmp_manager = self.chunk_manager.clone();
     let size = preview.sphere_size;
-    // println!("size {}", size);
     let coords = get_sphere_coords(size);
     for c in coords.iter() {
       let tmp = [

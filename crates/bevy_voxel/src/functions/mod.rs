@@ -15,7 +15,6 @@ impl Plugin for CustomPlugin {
       .add_startup_system(startup)
       .add_system(update)
       .add_system(detect_selected_voxel_position)
-      .add_system(detect_preview_voxel_position)
       .add_system(added_chunks)
       .add_system(center_changed)
       .add_system(shape_state_changed);
@@ -60,37 +59,6 @@ fn detect_selected_voxel_position(
       
       if selected.pos.is_none() {
         selected.pos = pos;
-      }
-    }
-  }
-}
-
-fn detect_preview_voxel_position(
-  mut cam: Query<(&Transform, &mut Preview), With<Preview>>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
-) {
-  for (cam_trans, mut preview) in &mut cam {
-    let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
-    if hit.is_none() {
-      continue;
-    }
-    let point = hit.unwrap();
-    let pos = bevy_voxel_res.get_nearest_voxel_air(point);
-    if pos.is_none() && preview.pos.is_some() {
-      preview.pos = pos;
-    }
-
-    if pos.is_some() {
-      if preview.pos.is_some() {
-        let p = pos.unwrap();
-        let current = preview.pos.unwrap();
-        if current != p {
-          preview.pos = pos;
-        }
-      }
-      
-      if preview.pos.is_none() {
-        preview.pos = pos;
       }
     }
   }

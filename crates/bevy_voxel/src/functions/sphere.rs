@@ -19,6 +19,8 @@ fn modify_preview(
     for mut preview in previews.iter_mut() {
       if preview.sphere_size < 8.0 {
         preview.sphere_size += time.delta_seconds() * speed;
+
+        println!("sphere_size {}", preview.sphere_size);
       }
     }
   }
@@ -27,6 +29,8 @@ fn modify_preview(
     for mut preview in previews.iter_mut() {
       if preview.sphere_size > 1.0 {
         preview.sphere_size -= time.delta_seconds() * speed;
+
+        println!("sphere_size {}", preview.sphere_size);
       }
     }
   }

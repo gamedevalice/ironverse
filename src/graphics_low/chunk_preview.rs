@@ -8,7 +8,8 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(update.in_set(OnUpdate(EditState::AddNormal)));
+      .add_system(update.in_set(OnUpdate(EditState::AddNormal)))
+      .add_system(update.in_set(OnUpdate(EditState::AddDist)));
   }
 }
 
@@ -25,7 +26,7 @@ fn update(
     for entity in &preview_graphics {
       commands.entity(entity).despawn_recursive();
     }
-
+    
     if preview.pos.is_none() {
       continue;
     }
