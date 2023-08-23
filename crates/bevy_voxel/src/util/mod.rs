@@ -88,3 +88,187 @@ pub fn pos_to_key(pos: Vec3, seamless_size: f32) -> [i64; 3] {
     (z / seamless_size) as i64,
   ]
 }
+
+
+#[cfg(test)]
+mod tests {
+  use bevy::prelude::Vec3;
+  use voxels::chunk::chunk_manager::ChunkManager;
+  use crate::util::get_key;
+  use super::get_near_positions;
+
+  #[test]
+  fn test_near_positions_1_0() -> Result<(), String> {
+    let scale = 1.0;
+    let pos = Vec3::new(0.0, 0.0, 0.0);
+    let res = get_near_positions(pos, scale);
+    let expected = vec![
+      Vec3::new(-1.0, -1.0, -1.0),
+      Vec3::new(-1.0, -1.0, 0.0),
+      Vec3::new(-1.0, -1.0, 1.0),
+      Vec3::new(-1.0, 0.0, -1.0),
+      Vec3::new(-1.0, 0.0, 0.0),
+      Vec3::new(-1.0, 0.0, 1.0),
+      Vec3::new(-1.0, 1.0, -1.0),
+      Vec3::new(-1.0, 1.0, 0.0),
+      Vec3::new(-1.0, 1.0, 1.0),
+      Vec3::new(0.0, -1.0, -1.0),
+      Vec3::new(0.0, -1.0, 0.0),
+      Vec3::new(0.0, -1.0, 1.0),
+      Vec3::new(0.0, 0.0, -1.0),
+      Vec3::new(0.0, 0.0, 0.0),
+      Vec3::new(0.0, 0.0, 1.0),
+      Vec3::new(0.0, 1.0, -1.0),
+      Vec3::new(0.0, 1.0, 0.0),
+      Vec3::new(0.0, 1.0, 1.0),
+      Vec3::new(1.0, -1.0, -1.0),
+      Vec3::new(1.0, -1.0, 0.0),
+      Vec3::new(1.0, -1.0, 1.0),
+      Vec3::new(1.0, 0.0, -1.0),
+      Vec3::new(1.0, 0.0, 0.0),
+      Vec3::new(1.0, 0.0, 1.0),
+      Vec3::new(1.0, 1.0, -1.0),
+      Vec3::new(1.0, 1.0, 0.0),
+      Vec3::new(1.0, 1.0, 1.0),
+    ];
+    
+    for p in res.iter() {
+      assert!(expected.contains(p));
+    }
+    Ok(())
+  }
+
+
+  #[test]
+  fn test_near_positions_0_5() -> Result<(), String> {
+    let scale = 0.5;
+    let pos = Vec3::new(0.0, 0.0, 0.0);
+
+    let res = get_near_positions(pos, scale);
+
+    let expected = vec![
+      Vec3::new(-0.5, -0.5, -0.5),
+      Vec3::new(-0.5, -0.5, 0.0),
+      Vec3::new(-0.5, -0.5, 0.5),
+      Vec3::new(-0.5, 0.0, -0.5),
+      Vec3::new(-0.5, 0.0, 0.0),
+      Vec3::new(-0.5, 0.0, 0.5),
+      Vec3::new(-0.5, 0.5, -0.5),
+      Vec3::new(-0.5, 0.5, 0.0),
+      Vec3::new(-0.5, 0.5, 0.5),
+      Vec3::new(0.0, -0.5, -0.5),
+      Vec3::new(0.0, -0.5, 0.0),
+      Vec3::new(0.0, -0.5, 0.5),
+      Vec3::new(0.0, 0.0, -0.5),
+      Vec3::new(0.0, 0.0, 0.0),
+      Vec3::new(0.0, 0.0, 0.5),
+      Vec3::new(0.0, 0.5, -0.5),
+      Vec3::new(0.0, 0.5, 0.0),
+      Vec3::new(0.0, 0.5, 0.5),
+      Vec3::new(0.5, -0.5, -0.5),
+      Vec3::new(0.5, -0.5, 0.0),
+      Vec3::new(0.5, -0.5, 0.5),
+      Vec3::new(0.5, 0.0, -0.5),
+      Vec3::new(0.5, 0.0, 0.0),
+      Vec3::new(0.5, 0.0, 0.5),
+      Vec3::new(0.5, 0.5, -0.5),
+      Vec3::new(0.5, 0.5, 0.0),
+      Vec3::new(0.5, 0.5, 0.5),
+    ];
+    
+    for p in res.iter() {
+      assert!(expected.contains(p));
+    }
+    
+    Ok(())
+  }
+
+
+  #[test]
+  fn test_get_key_1_0() -> Result<(), String> {
+    let depth = 4;
+    let voxel_scale = 1.0;
+    let range = 1;
+    let manager = ChunkManager::new(depth, voxel_scale, range, Vec::new());
+    
+    let pos = vec![
+      Vec3::new(-27.9, -27.9, -27.9),
+      Vec3::new(-13.9, -13.9, -13.9),
+      Vec3::new(  0.0,   0.0,   0.0),
+      Vec3::new( 14.0,  14.0,  14.0),
+      Vec3::new( 28.0,  28.0,  28.0),
+    ];
+    
+    let expected = vec![
+      [-2,-2,-2],
+      [-1,-1,-1],
+      [ 0, 0, 0],
+      [ 1, 1, 1],
+      [ 2, 2, 2],
+    ];
+    for (i, p) in pos.iter().enumerate() {
+      let key = get_key(*p, voxel_scale, manager.seamless_size());
+      assert_eq!(key, expected[i]);
+    }
+    Ok(())
+  }
+
+  #[test]
+  fn test_get_key_0_5() -> Result<(), String> {
+    let depth = 4;
+    let voxel_scale = 0.5;
+    let range = 1;
+    let manager = ChunkManager::new(depth, voxel_scale, range, Vec::new());
+    
+    let pos = vec![
+      Vec3::new(-13.9, -13.9, -13.9),
+      Vec3::new(-6.9,   -6.9,  -6.9),
+      Vec3::new( 0.0,    0.0,   0.0),
+      Vec3::new( 7.0,    7.0,   7.0),
+      Vec3::new( 14.0,  14.0,  14.0),
+    ];
+    
+    let expected = vec![
+      [-2,-2,-2],
+      [-1,-1,-1],
+      [ 0, 0, 0],
+      [ 1, 1, 1],
+      [ 2, 2, 2],
+    ];
+    for (i, p) in pos.iter().enumerate() {
+      let key = get_key(*p, voxel_scale, manager.seamless_size());
+      assert_eq!(key, expected[i]);
+    }
+    Ok(())
+  }
+
+  #[test]
+  fn test_get_key_0_25() -> Result<(), String> {
+    let depth = 4;
+    let voxel_scale = 0.25;
+    let range = 1;
+    let manager = ChunkManager::new(depth, voxel_scale, range, Vec::new());
+    
+    let pos = vec![
+      Vec3::new(-6.9, -6.9, -6.9),
+      Vec3::new(-3.4, -3.4, -3.4),
+      Vec3::new( 0.0,  0.0,  0.0),
+      Vec3::new( 3.5,  3.5,  3.5),
+      Vec3::new( 7.0,  7.0,  7.0),
+    ];
+    
+    let expected = vec![
+      [-2,-2,-2],
+      [-1,-1,-1],
+      [ 0, 0, 0],
+      [ 1, 1, 1],
+      [ 2, 2, 2],
+    ];
+    for (i, p) in pos.iter().enumerate() {
+      let key = get_key(*p, voxel_scale, manager.seamless_size());
+      assert_eq!(key, expected[i]);
+    }
+    Ok(())
+  }
+
+}

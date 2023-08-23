@@ -35,7 +35,9 @@ fn update(
     }
 
     let p = preview.pos.unwrap();
-    let chunk = bevy_voxel_res.get_preview_chunk(p, preview.voxel);
+    let chunk = bevy_voxel_res.get_preview_chunk(
+      p, preview.voxel, preview.size
+    );
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
 
     if data.indices.len() > 0 {

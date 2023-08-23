@@ -168,8 +168,11 @@ impl BevyVoxelResource {
   /// - calc_pos should be the calculated position based on edit mode
   /// - Add voxel mode(TODO): Probably be a separate function
   /// - Remove voxel mode(TODO): Probably be a separate function
-  pub fn get_preview_chunk(&self, calc_pos: Vec3, voxel: u8) -> Chunk {
-    let mul = (1.0 / self.chunk_manager.voxel_scale);
+  pub fn get_preview_chunk(
+    &self, calc_pos: Vec3, voxel: u8, size: u8,
+  ) -> Chunk {
+    let scale = self.chunk_manager.voxel_scale;
+    let mul = 1.0 / scale;
     let p = [
       calc_pos.x * mul,
       calc_pos.y * mul,
@@ -177,12 +180,34 @@ impl BevyVoxelResource {
     ];
 
     let mut tmp_manager = self.chunk_manager.clone();
-    set_voxel(&mut tmp_manager, calc_pos, voxel);
+
+    let s = size as i64;
+    let max = (s / 2) + 1;
+    let min = max - s;
+    
+    // println!("size {} min {} max {}", size, min, max);
+    for x in min..max {
+      println!("{}", x);
+      for y in min..max {
+        for z in min..max {
+
+          let tmp = Vec3::new(
+            calc_pos.x + (x as f32 * scale),
+            calc_pos.y + (y as f32 * scale),
+            calc_pos.z + (z as f32 * scale),
+          );
+
+          set_voxel(&mut tmp_manager, tmp, voxel);
+        }
+      }
+    }
+
+    // set_voxel(&mut tmp_manager, calc_pos, voxel);
 
     let mut chunk = Chunk::default();
     let mid_pos = (chunk.octree.get_size() / 2) as i64;
 
-    let preview_size = 3;
+    let preview_size = s + 2;
     let min = -preview_size;
     let max = preview_size;
     for x in min..max {

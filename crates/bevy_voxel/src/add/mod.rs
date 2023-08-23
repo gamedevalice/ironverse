@@ -1,6 +1,6 @@
-use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, pbr::NotShadowCaster};
+use bevy::prelude::*;
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Selected, Preview, PreviewGraphics};
+use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Preview, PreviewGraphics};
 
 
 pub struct CustomPlugin;

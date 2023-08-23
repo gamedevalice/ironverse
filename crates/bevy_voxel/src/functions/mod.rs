@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, input::mouse::MouseWheel};
 use voxels::data::voxel_octree::VoxelMode;
 use crate::{EditState, BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData};
 
@@ -13,7 +13,8 @@ impl Plugin for CustomPlugin {
       .add_system(detect_selected_voxel_position)
       .add_system(detect_preview_voxel_position)
       .add_system(added_chunks)
-      .add_system(center_changed);
+      .add_system(center_changed)
+      .add_system(preview_params);
   }
 }
 
@@ -127,3 +128,53 @@ fn center_changed(
     }
   }
 }
+
+
+fn preview_params(
+  mut mouse_wheels: EventReader<MouseWheel>,
+  key_input: Res<Input<KeyCode>>,
+  time: Res<Time>,
+  mut previews: Query<&mut Preview>,
+) {
+  for event in mouse_wheels.iter() {
+    // for mut params in previews.iter_mut() {
+    //   // Need to clamp as event.y is returning -120.0 to 120.0 (Bevy bug)
+    //   let seamless_size = 12 as f32;
+    //   let adj = 12.0;
+    //   let limit = seamless_size + adj;
+    //   if params.dist <= limit {
+    //     params.dist += event.y.clamp(-1.0, 1.0) * time.delta_seconds() * 50.0;
+    //   }
+      
+    //   if params.dist > limit {
+    //     params.dist = limit;
+    //   }
+
+    //   let size = 2_u32.pow(params.level as u32);
+    //   let min_val = size as f32;
+    //   if params.dist < min_val {
+    //     params.dist = min_val;
+    //   }
+    // }
+  }
+
+  if key_input.just_pressed(KeyCode::Equals) {
+    for mut preview in previews.iter_mut() {
+      if preview.level < 3 {
+        preview.level += 1;
+        preview.size = 2_u8.pow(preview.level as u32);
+      }
+    }
+  }
+
+  if key_input.just_pressed(KeyCode::Minus) {
+    for mut preview in previews.iter_mut() {
+      if preview.level > 0 {
+        preview.level -= 1;
+        preview.size = 2_u8.pow(preview.level as u32);
+      }
+    }
+  }
+    
+}
+

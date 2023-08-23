@@ -57,8 +57,8 @@ default = [
   "player",
   "chunk",
   "utils",
-  # "graphics_low",
-  "graphics_normal",  # Either graphics_low or graphics_normal
+  "graphics_low",
+  # "graphics_normal",  # Either graphics_low or graphics_normal
   "ui",
   # "ui_prompt",
 ]
