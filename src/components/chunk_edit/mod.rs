@@ -1,5 +1,5 @@
 use bevy::{prelude::*, input::mouse::MouseWheel};
-use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics, Center, Chunks, EditState};
+use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics, Center, Chunks, EditState, ShapeState};
 use rapier3d::prelude::ColliderHandle;
 use voxels::{chunk::chunk_manager::Chunk, data::voxel_octree::VoxelMode};
 use crate::{input::hotbar::HotbarResource, graphics::ChunkGraphics};
@@ -47,6 +47,11 @@ fn switch_state(
   key_input: Res<Input<KeyCode>>,
   mut next_state: ResMut<NextState<EditState>>,
   state: Res<State<EditState>>,
+
+  mut next_shape: ResMut<NextState<ShapeState>>,
+  shape_state: Res<State<ShapeState>>,
+
+  mut local: Local<usize>,
 ) {
 
   if key_input.just_pressed(KeyCode::M) {
@@ -73,6 +78,21 @@ fn switch_state(
     //     next_state.set(EditState::RemoveNormal);
     //   }
     // }
+  }
+
+  if key_input.just_pressed(KeyCode::Up) {
+    let len = ShapeState::variants().len();
+    *local += 1;
+    *local = *local % len;
+
+    for (i, state) in ShapeState::variants().enumerate() {
+      if *local == i {
+        next_shape.set(state);
+
+        println!("ShapeState {:?}", state);
+        break;
+      }
+    }
   }
 }
 

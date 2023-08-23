@@ -325,4 +325,66 @@ impl BevyVoxelResource {
   }
 
 
+
+  pub fn get_preview_chunk_sphere(
+    &self, pos: Vec3, preview: &Preview
+  ) -> Chunk {
+    let scale = self.chunk_manager.voxel_scale;
+    let mul = 1.0 / scale;
+    let p = [
+      pos.x * mul,
+      pos.y * mul,
+      pos.z * mul,
+    ];
+
+    let mut tmp_manager = self.chunk_manager.clone();
+    let size = preview.sphere_size;
+    println!("size {}", size);
+    let coords = get_sphere_coords(size);
+    for c in coords.iter() {
+      let tmp = [
+        p[0] as i64 + c[0],
+        p[1] as i64 + c[1],
+        p[2] as i64 + c[2],
+      ];
+      
+      set_voxel_default(&mut tmp_manager, tmp, preview.voxel);
+    }
+
+    let mut chunk = Chunk::default();
+    let mid_pos = (chunk.octree.get_size() / 2) as i64;
+
+    let preview_size = (size as i64) + 2;
+    let min = -preview_size;
+    let max = preview_size;
+    for x in min..max {
+      for y in min..max {
+        for z in min..max {
+          let local_x = (mid_pos + x) as u32;
+          let local_y = (mid_pos + y) as u32;
+          let local_z = (mid_pos + z) as u32;
+
+          let tmp_pos = [
+            p[0] as i64 + x,
+            p[1] as i64 + y,
+            p[2] as i64 + z,
+          ];
+          let v = tmp_manager.get_voxel(&tmp_pos);
+          chunk.octree.set_voxel(local_x, local_y, local_z, v);
+        }
+      }
+    }
+    
+    chunk
+  }
+
+  /*
+    Editable sphere
+      Mid position set by distance/raycast
+
+   */
+
+
+
+
 }

@@ -14,6 +14,8 @@ pub struct BevyVoxelPlugin;
 impl Plugin for BevyVoxelPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_state::<EditState>()
+      .add_state::<ShapeState>()
       .add_plugin(functions::CustomPlugin)
       .add_plugin(remove::CustomPlugin)
       .add_plugin(add::CustomPlugin);
@@ -47,6 +49,13 @@ pub enum EditState {
   RemoveSnap,
 }
 
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
+pub enum ShapeState {
+  #[default]
+  Sphere,
+  Cube,
+}
+
 #[derive(Component, Clone)]
 pub struct Selected {
   pub pos: Option<Vec3>,
@@ -66,6 +75,8 @@ pub struct Preview {
   pub level: u8,
   pub size: u8,
   pub voxel: u8,
+
+  pub sphere_size: f32,
 }
 
 impl Default for Preview {
@@ -76,6 +87,8 @@ impl Default for Preview {
       level: level,
       size: 2_u8.pow(level as u32),
       voxel: 1,
+
+      sphere_size: 1.0,
     }
   }
 }

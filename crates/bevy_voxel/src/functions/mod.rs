@@ -1,12 +1,14 @@
+mod sphere;
+
 use bevy::{prelude::*, input::mouse::MouseWheel};
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{EditState, BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData};
+use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_state::<EditState>()
+      .add_plugin(sphere::CustomPlugin)
       .insert_resource(BevyVoxelResource::default())
       .add_startup_system(startup)
       .add_system(update)
@@ -14,7 +16,8 @@ impl Plugin for CustomPlugin {
       .add_system(detect_preview_voxel_position)
       .add_system(added_chunks)
       .add_system(center_changed)
-      .add_system(preview_params);
+      // .add_system(preview_params)
+      ;
   }
 }
 
@@ -158,20 +161,37 @@ fn preview_params(
     // }
   }
 
-  if key_input.just_pressed(KeyCode::Equals) {
+  // if key_input.just_pressed(KeyCode::Equals) {
+  //   for mut preview in previews.iter_mut() {
+  //     if preview.level < 3 {
+  //       preview.level += 1;
+  //       preview.size = 2_u8.pow(preview.level as u32);
+  //     }
+  //   }
+  // }
+
+  // if key_input.just_pressed(KeyCode::Minus) {
+  //   for mut preview in previews.iter_mut() {
+  //     if preview.level > 0 {
+  //       preview.level -= 1;
+  //       preview.size = 2_u8.pow(preview.level as u32);
+  //     }
+  //   }
+  // }
+
+  let speed = 5.0;
+  if key_input.pressed(KeyCode::Equals) {
     for mut preview in previews.iter_mut() {
-      if preview.level < 3 {
-        preview.level += 1;
-        preview.size = 2_u8.pow(preview.level as u32);
+      if preview.sphere_size < 8.0 {
+        preview.sphere_size += time.delta_seconds() * speed;
       }
     }
   }
 
-  if key_input.just_pressed(KeyCode::Minus) {
+  if key_input.pressed(KeyCode::Minus) {
     for mut preview in previews.iter_mut() {
-      if preview.level > 0 {
-        preview.level -= 1;
-        preview.size = 2_u8.pow(preview.level as u32);
+      if preview.sphere_size > 1.0 {
+        preview.sphere_size -= time.delta_seconds() * speed;
       }
     }
   }

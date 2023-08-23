@@ -98,12 +98,41 @@ pub fn pos_to_key(pos: Vec3, seamless_size: f32) -> [i64; 3] {
 }
 
 
+pub fn get_sphere_coords(size: f32) -> Vec<[i64; 3]> {
+  let s = size as i8;
+  let min = -s;
+  let max = s + 1;
+
+  let max_dist = size * size;
+
+  let mut coords = Vec::new();
+  let start = Vec3::ZERO;
+
+  // println!("min {} max {}", min, max);
+  for x in min..max {
+    // println!("{}", x);
+    for y in min..max {
+      for z in min..max {
+        let c = Vec3::new(x as f32, y as f32, z as f32);
+
+        if start.distance_squared(c) <= max_dist {
+          coords.push([x as i64, y as i64, z as i64]);
+        }
+      }
+    }
+  }
+
+  coords
+}
+
+
+
 #[cfg(test)]
 mod tests {
   use bevy::prelude::Vec3;
   use voxels::chunk::chunk_manager::ChunkManager;
   use crate::util::get_key;
-  use super::get_near_positions;
+  use super::{get_near_positions, get_sphere_coords};
 
   #[test]
   fn test_near_positions_1_0() -> Result<(), String> {
@@ -278,5 +307,17 @@ mod tests {
     }
     Ok(())
   }
+
+  #[test]
+  fn test_sphere_coords() -> Result<(), String> {
+    let coords = get_sphere_coords(4);
+
+    for c in coords.iter() {
+      println!("{:?}", c);
+    }
+
+    Ok(())
+  }
+
 
 }
