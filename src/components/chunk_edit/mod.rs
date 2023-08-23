@@ -45,40 +45,56 @@ fn add_to_player(
 
 fn switch_state(
   key_input: Res<Input<KeyCode>>,
-  mut next_state: ResMut<NextState<EditState>>,
+  mut next_edit: ResMut<NextState<EditState>>,
   state: Res<State<EditState>>,
 
   mut next_shape: ResMut<NextState<ShapeState>>,
   shape_state: Res<State<ShapeState>>,
 
   mut local: Local<usize>,
+  mut local1: Local<usize>,
 ) {
 
-  if key_input.just_pressed(KeyCode::M) {
-    next_state.set(EditState::AddNormal);
-    println!("EditState::AddNormal");
-    // match state.0 {
-    //   EditState::AddNormal => {
-    //     next_state.set(EditState::AddSnap);
-    //   },
-    //   EditState::AddSnap | _ => {
-    //     next_state.set(EditState::AddNormal);
-    //   }
-    // }
+  if key_input.just_pressed(KeyCode::Down) {
+    let len = EditState::variants().len();
+    *local1 += 1;
+    *local1 = *local1 % len;
+
+    for (i, state) in EditState::variants().enumerate() {
+      if *local1 == i {
+        next_edit.set(state);
+
+        println!("EditState {:?}", state);
+        break;
+      }
+    }
   }
 
-  if key_input.just_pressed(KeyCode::N) {
-    next_state.set(EditState::RemoveNormal);
-    println!("EditState::RemoveNormal");
-    // match state.0 {
-    //   EditState::RemoveNormal => {
-    //     next_state.set(EditState::RemoveSnap);
-    //   },
-    //   EditState::RemoveSnap | _ => {
-    //     next_state.set(EditState::RemoveNormal);
-    //   }
-    // }
-  }
+  // if key_input.just_pressed(KeyCode::M) {
+  //   next_state.set(EditState::AddNormal);
+  //   println!("EditState::AddNormal");
+  //   // match state.0 {
+  //   //   EditState::AddNormal => {
+  //   //     next_state.set(EditState::AddSnap);
+  //   //   },
+  //   //   EditState::AddSnap | _ => {
+  //   //     next_state.set(EditState::AddNormal);
+  //   //   }
+  //   // }
+  // }
+
+  // if key_input.just_pressed(KeyCode::N) {
+  //   next_state.set(EditState::RemoveNormal);
+  //   println!("EditState::RemoveNormal");
+  //   // match state.0 {
+  //   //   EditState::RemoveNormal => {
+  //   //     next_state.set(EditState::RemoveSnap);
+  //   //   },
+  //   //   EditState::RemoveSnap | _ => {
+  //   //     next_state.set(EditState::RemoveNormal);
+  //   //   }
+  //   // }
+  // }
 
   if key_input.just_pressed(KeyCode::Up) {
     let len = ShapeState::variants().len();
@@ -95,72 +111,6 @@ fn switch_state(
     }
   }
 }
-
-
-
-/* fn update_edit_params(
-  mut mouse_wheels: EventReader<MouseWheel>,
-  key_input: Res<Input<KeyCode>>,
-  time: Res<Time>,
-  mut chunk_edit_params: Query<&mut ChunkEditParams>,
-
-  hotbar_res: Res<HotbarResource>,
-) {
-  for event in mouse_wheels.iter() {
-    for mut params in chunk_edit_params.iter_mut() {
-      // Need to clamp as event.y is returning -120.0 to 120.0 (Bevy bug)
-      let seamless_size = 12 as f32;
-      let adj = 12.0;
-      let limit = seamless_size + adj;
-      if params.dist <= limit {
-        params.dist += event.y.clamp(-1.0, 1.0) * time.delta_seconds() * 50.0;
-      }
-      
-      if params.dist > limit {
-        params.dist = limit;
-      }
-
-      let size = 2_u32.pow(params.level as u32);
-      let min_val = size as f32;
-      if params.dist < min_val {
-        params.dist = min_val;
-      }
-    }
-  }
-
-  if key_input.just_pressed(KeyCode::Equals) {
-    for mut params in chunk_edit_params.iter_mut() {
-      if params.level < 3 {
-        params.level += 1;
-        params.size = 2_u32.pow(params.level as u32);
-      }
-    }
-  }
-
-  if key_input.just_pressed(KeyCode::Minus) {
-    for mut params in chunk_edit_params.iter_mut() {
-      if params.level > 0 {
-        params.level -= 1;
-        params.size = 2_u32.pow(params.level as u32);
-      }
-    }
-  }
-
-  for i in 0..hotbar_res.bars.len() {
-    let bar = &hotbar_res.bars[i];
-    let voxel = bar.voxel;
-
-    if bar.key_code == hotbar_res.selected_keycode {
-      for mut params in chunk_edit_params.iter_mut() {
-        if params.voxel != voxel {
-          params.voxel = voxel;
-        }
-      }
-    }
-  }
-    
-}
- */
 
 
 #[derive(Default, Component)]

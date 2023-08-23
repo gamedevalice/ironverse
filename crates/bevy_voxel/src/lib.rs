@@ -46,6 +46,7 @@ impl Default for BevyVoxelResource {
 pub enum EditState {
   #[default]
   AddNormal,
+  AddDist,
   AddSnap,
   RemoveNormal,
   RemoveSnap,
@@ -79,6 +80,7 @@ pub struct Preview {
   pub voxel: u8,
 
   pub sphere_size: f32,
+  pub dist: f32,
 }
 
 impl Default for Preview {
@@ -91,6 +93,7 @@ impl Default for Preview {
       voxel: 1,
 
       sphere_size: 1.0,
+      dist: 1.0,
     }
   }
 }

@@ -354,7 +354,7 @@ impl BevyVoxelResource {
 
     let mut tmp_manager = self.chunk_manager.clone();
     let size = preview.sphere_size;
-    println!("size {}", size);
+    // println!("size {}", size);
     let coords = get_sphere_coords(size);
     for c in coords.iter() {
       let tmp = [
