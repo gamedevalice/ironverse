@@ -1,14 +1,16 @@
 mod sphere;
+mod cube;
 
 use bevy::{prelude::*, input::mouse::MouseWheel};
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData};
+use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugin(sphere::CustomPlugin)
+      .add_plugin(cube::CustomPlugin)
       .insert_resource(BevyVoxelResource::default())
       .add_startup_system(startup)
       .add_system(update)
@@ -16,6 +18,7 @@ impl Plugin for CustomPlugin {
       .add_system(detect_preview_voxel_position)
       .add_system(added_chunks)
       .add_system(center_changed)
+      .add_system(shape_state_changed)
       // .add_system(preview_params)
       ;
   }
@@ -25,8 +28,12 @@ fn startup() {
   println!("startup BevyVoxel");
 }
 
-fn update(mut res: ResMut<BevyVoxelResource>) {
+fn update(
+  mut res: ResMut<BevyVoxelResource>,
+  shape_state: Res<State<ShapeState>>,
+) {
   res.physics.step();
+  res.shape_state = shape_state.0;
 }
 
 fn detect_selected_voxel_position(
@@ -132,6 +139,20 @@ fn center_changed(
   }
 }
 
+
+fn shape_state_changed(
+  shape_state: Res<State<ShapeState>>,
+  mut local: Local<ShapeState>,
+  mut previews: Query<&mut Preview>,
+) {
+  if *local != shape_state.0 {
+    *local = shape_state.0;
+    for mut preview in &mut previews {
+      preview.size = preview.size;
+    }
+  }
+  
+}
 
 fn preview_params(
   mut mouse_wheels: EventReader<MouseWheel>,

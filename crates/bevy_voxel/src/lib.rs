@@ -28,6 +28,7 @@ pub struct BevyVoxelResource {
   pub physics: Physics,
 
   colliders_cache: Vec<ColliderHandle>,
+  shape_state: ShapeState,
 }
 
 impl Default for BevyVoxelResource {
@@ -36,6 +37,7 @@ impl Default for BevyVoxelResource {
       chunk_manager: ChunkManager::default(),
       physics: Physics::default(),
       colliders_cache: Vec::new(),
+      shape_state: ShapeState::Cube,
     }
   }
 }

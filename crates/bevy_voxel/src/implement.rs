@@ -3,7 +3,7 @@ use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use voxels::utils::key_to_world_coord_f32;
-use crate::{BevyVoxelResource, physics::Physics, Preview};
+use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState};
 use crate::util::*;
 
 impl BevyVoxelResource {
@@ -23,6 +23,7 @@ impl BevyVoxelResource {
       ),
       physics: Physics::default(),
       colliders_cache: Vec::new(),
+      shape_state: ShapeState::Cube,
     }
   }
 
@@ -165,68 +166,15 @@ impl BevyVoxelResource {
     pos
   }
 
-  /// - calc_pos should be the calculated position based on edit mode
-  /// - Add voxel mode(TODO): Probably be a separate function
-  /// - Remove voxel mode(TODO): Probably be a separate function
-  pub fn get_preview_chunk(
-    &self, calc_pos: Vec3, voxel: u8, size: u8,
-  ) -> Chunk {
-    let scale = self.chunk_manager.voxel_scale;
-    let mul = 1.0 / scale;
-    let p = [
-      calc_pos.x * mul,
-      calc_pos.y * mul,
-      calc_pos.z * mul,
-    ];
 
-    let mut tmp_manager = self.chunk_manager.clone();
-
-    let s = size as i64;
-    let max = (s / 2) + 1;
-    let min = max - s;
-
-    for x in min..max {
-      for y in min..max {
-        for z in min..max {
-
-          let tmp = [
-            p[0] as i64 + x,
-            p[1] as i64 + y,
-            p[2] as i64 + z
-          ];
-          
-          set_voxel_default(&mut tmp_manager, tmp, voxel);
-        }
-      }
+  pub fn get_preview(&self, pos: Vec3, preview: &Preview) -> Chunk {
+    match self.shape_state {
+      ShapeState::Cube => { return self.get_preview_cube(pos, preview); },
+      ShapeState::Sphere => { return self.get_preview_sphere(pos, preview); }
     }
-
-    let mut chunk = Chunk::default();
-    let mid_pos = (chunk.octree.get_size() / 2) as i64;
-
-    let preview_size = s + 2;
-    let min = -preview_size;
-    let max = preview_size;
-    for x in min..max {
-      for y in min..max {
-        for z in min..max {
-          let local_x = (mid_pos + x) as u32;
-          let local_y = (mid_pos + y) as u32;
-          let local_z = (mid_pos + z) as u32;
-
-          let tmp_pos = [
-            p[0] as i64 + x,
-            p[1] as i64 + y,
-            p[2] as i64 + z,
-          ];
-          let v = tmp_manager.get_voxel(&tmp_pos);
-          chunk.octree.set_voxel(local_x, local_y, local_z, v);
-        }
-      }
-    }
-    
-    chunk
   }
 
+  
   /// Get preview chunk pos converted to world pos considering the size of chunk
   /// and positioned visually correct
   pub fn get_preview_pos(&self, calc_pos: Vec3) -> Vec3 {
@@ -326,7 +274,74 @@ impl BevyVoxelResource {
 
 
 
-  pub fn get_preview_chunk_sphere(
+
+  /// - calc_pos should be the calculated position based on edit mode
+  /// - Add voxel mode(TODO): Probably be a separate function
+  /// - Remove voxel mode(TODO): Probably be a separate function
+  pub fn get_preview_cube(
+    &self, calc_pos: Vec3, preview: &Preview,
+  ) -> Chunk {
+    let voxel = preview.voxel;
+    let size = preview.size;
+
+    let scale = self.chunk_manager.voxel_scale;
+    let mul = 1.0 / scale;
+    let p = [
+      calc_pos.x * mul,
+      calc_pos.y * mul,
+      calc_pos.z * mul,
+    ];
+
+    let mut tmp_manager = self.chunk_manager.clone();
+
+    let s = size as i64;
+    let max = (s / 2) + 1;
+    let min = max - s;
+
+    for x in min..max {
+      for y in min..max {
+        for z in min..max {
+
+          let tmp = [
+            p[0] as i64 + x,
+            p[1] as i64 + y,
+            p[2] as i64 + z
+          ];
+          
+          set_voxel_default(&mut tmp_manager, tmp, voxel);
+        }
+      }
+    }
+
+    let mut chunk = Chunk::default();
+    let mid_pos = (chunk.octree.get_size() / 2) as i64;
+
+    let preview_size = s + 2;
+    let min = -preview_size;
+    let max = preview_size;
+    for x in min..max {
+      for y in min..max {
+        for z in min..max {
+          let local_x = (mid_pos + x) as u32;
+          let local_y = (mid_pos + y) as u32;
+          let local_z = (mid_pos + z) as u32;
+
+          let tmp_pos = [
+            p[0] as i64 + x,
+            p[1] as i64 + y,
+            p[2] as i64 + z,
+          ];
+          let v = tmp_manager.get_voxel(&tmp_pos);
+          chunk.octree.set_voxel(local_x, local_y, local_z, v);
+        }
+      }
+    }
+    
+    chunk
+  }
+
+
+  pub fn get_preview_sphere(
     &self, pos: Vec3, preview: &Preview
   ) -> Chunk {
     let scale = self.chunk_manager.voxel_scale;
