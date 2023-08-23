@@ -20,12 +20,13 @@ fn add(
 
     // let rigid_body = &mut physics.rigid_body_set[player.body];
     // let pos = rigid_body.position().translation;
-    let pos = Vec3::new(0.0, 0.0, 0.0);
+    let pos = Vec3::new(0.0, 1.59, 0.0);
+    let forward = Vec3::new(0.59, -0.50, 0.62);
     commands
       .entity(entity)
       .insert((
         Camera3dBundle {
-          transform: Transform::from_translation(pos).looking_to(Vec3::Z, Vec3::Y),
+          transform: Transform::from_translation(pos).looking_to(forward, Vec3::Y),
           ..Default::default()
         },
         FlyCam,

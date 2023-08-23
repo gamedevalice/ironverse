@@ -1,6 +1,6 @@
-use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, pbr::NotShadowCaster};
+use bevy::prelude::*;
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Selected, Preview, PreviewGraphics};
+use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Preview, PreviewGraphics};
 
 
 pub struct CustomPlugin;
@@ -34,7 +34,8 @@ fn add_voxel(
 
     chunks.data.clear();
     let p = preview.pos.unwrap();
-    bevy_voxel_res.set_voxel(p, preview.voxel);
+    // bevy_voxel_res.set_voxel(p, preview.voxel);
+    bevy_voxel_res.set_voxel_by_preview(p, preview);
 
     let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
     for chunk in all_chunks.iter() {
