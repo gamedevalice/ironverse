@@ -3,7 +3,7 @@ use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use voxels::utils::key_to_world_coord_f32;
-use crate::{BevyVoxelResource, physics::Physics};
+use crate::{BevyVoxelResource, physics::Physics, Preview};
 use crate::util::*;
 
 impl BevyVoxelResource {
@@ -187,7 +187,6 @@ impl BevyVoxelResource {
     
     // println!("size {} min {} max {}", size, min, max);
     for x in min..max {
-      println!("{}", x);
       for y in min..max {
         for z in min..max {
 
@@ -201,8 +200,6 @@ impl BevyVoxelResource {
         }
       }
     }
-
-    // set_voxel(&mut tmp_manager, calc_pos, voxel);
 
     let mut chunk = Chunk::default();
     let mid_pos = (chunk.octree.get_size() / 2) as i64;
@@ -253,6 +250,31 @@ impl BevyVoxelResource {
     ];
 
     self.chunk_manager.set_voxel2(&p, voxel);
+  }
+
+  pub fn set_voxel_by_preview(&mut self, pos: Vec3, preview: &Preview) {
+    let scale = self.chunk_manager.voxel_scale;
+
+    let s = preview.size as i64;
+    let max = (s / 2) + 1;
+    let min = max - s;
+    
+    // println!("size {} min {} max {}", size, min, max);
+    for x in min..max {
+      println!("{}", x);
+      for y in min..max {
+        for z in min..max {
+
+          let tmp = Vec3::new(
+            pos.x + (x as f32 * scale),
+            pos.y + (y as f32 * scale),
+            pos.z + (z as f32 * scale),
+          );
+
+          self.set_voxel(tmp, preview.voxel);
+        }
+      }
+    }
   }
 
 

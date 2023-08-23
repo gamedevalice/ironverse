@@ -8,7 +8,6 @@ pub fn set_voxel(
   voxel: u8,
 ) {
   let mul = 1.0 / chunk_manager.voxel_scale;
-  // let mul = 1.0;
   let p = [
     (pos.x * mul) as i64,
     (pos.y * mul) as i64,
