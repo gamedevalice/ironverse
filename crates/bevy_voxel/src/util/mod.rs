@@ -17,6 +17,15 @@ pub fn set_voxel(
   chunk_manager.set_voxel2(&p, voxel);
 }
 
+pub fn set_voxel_default(
+  chunk_manager: &mut ChunkManager,
+  coord: [i64; 3],
+  voxel: u8,
+) {
+
+  chunk_manager.set_voxel2(&coord, voxel);
+}
+
 
 pub fn load_chunk(resource: &mut BevyVoxelResource, key: [i64; 3]) -> Chunk {
   let res = resource.chunk_manager.get_chunk(&key);

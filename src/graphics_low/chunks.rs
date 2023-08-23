@@ -28,6 +28,10 @@ fn add(
     for mesh in &chunks.data {
       let data = &mesh.data;
 
+      if !(mesh.key[0] == 0 && mesh.key[2] == 0) {
+        // continue;
+      }
+
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());

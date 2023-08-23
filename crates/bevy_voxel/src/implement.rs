@@ -184,19 +184,18 @@ impl BevyVoxelResource {
     let s = size as i64;
     let max = (s / 2) + 1;
     let min = max - s;
-    
-    // println!("size {} min {} max {}", size, min, max);
+
     for x in min..max {
       for y in min..max {
         for z in min..max {
 
-          let tmp = Vec3::new(
-            calc_pos.x + (x as f32 * scale),
-            calc_pos.y + (y as f32 * scale),
-            calc_pos.z + (z as f32 * scale),
-          );
-
-          set_voxel(&mut tmp_manager, tmp, voxel);
+          let tmp = [
+            p[0] as i64 + x,
+            p[1] as i64 + y,
+            p[2] as i64 + z
+          ];
+          
+          set_voxel_default(&mut tmp_manager, tmp, voxel);
         }
       }
     }
@@ -252,6 +251,10 @@ impl BevyVoxelResource {
     self.chunk_manager.set_voxel2(&p, voxel);
   }
 
+  pub fn set_voxel_default(&mut self, coord: [i64; 3], voxel: u8) {
+    self.chunk_manager.set_voxel2(&coord, voxel);
+  }
+
   pub fn set_voxel_by_preview(&mut self, pos: Vec3, preview: &Preview) {
     let scale = self.chunk_manager.voxel_scale;
 
@@ -259,19 +262,23 @@ impl BevyVoxelResource {
     let max = (s / 2) + 1;
     let min = max - s;
     
-    // println!("size {} min {} max {}", size, min, max);
+    let mul = 1.0 / scale;
+    let p = [
+      pos[0] * mul,
+      pos[1] * mul,
+      pos[2] * mul,
+    ];
     for x in min..max {
-      println!("{}", x);
       for y in min..max {
         for z in min..max {
 
-          let tmp = Vec3::new(
-            pos.x + (x as f32 * scale),
-            pos.y + (y as f32 * scale),
-            pos.z + (z as f32 * scale),
-          );
+          let tmp = [
+            p[0] as i64 + x,
+            p[1] as i64 + y,
+            p[2] as i64 + z,
+          ];
 
-          self.set_voxel(tmp, preview.voxel);
+          self.set_voxel_default(tmp, preview.voxel);
         }
       }
     }
