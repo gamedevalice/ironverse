@@ -1,14 +1,8 @@
 Installation
 
-
-
 ```
-git clone https://github.com/ironverse/ironverse-editor
-git submodule update --init --recursive --remote
-```
-
-Install cargo make then after that:
-
-```
+git clone https://github.com/chaoticgood1/ironverse.git
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+cargo install --no-default-features --force cargo-make
 cargo make run
 ```
