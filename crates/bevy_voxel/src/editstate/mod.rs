@@ -4,6 +4,7 @@ mod add_normal;
 mod add_dist;
 
 mod remove_normal;
+mod remove_dist;
 
 mod dist_common;
 mod normal_common;
@@ -16,6 +17,7 @@ impl Plugin for CustomPlugin {
       .add_plugin(add_dist::CustomPlugin)
       .add_plugin(dist_common::CustomPlugin)
       .add_plugin(remove_normal::CustomPlugin)
+      .add_plugin(remove_dist::CustomPlugin)
       .add_plugin(normal_common::CustomPlugin);
   }
 }
