@@ -166,6 +166,39 @@ impl BevyVoxelResource {
     pos
   }
 
+  pub fn get_nearest_voxel_by_unit(&self, point: Vec3, unit: f32) -> Option<Vec3> {
+    let mul = 1.0 / unit;
+    let mut nearest_dist = f32::MAX;
+
+    let mut pos = None;
+    let n_c = RayUtils::get_nearest_coord(
+      [point.x, point.y, point.z], unit
+    );
+
+    let tmp_point = Vec3::new(n_c[0], n_c[1], n_c[2]);
+    let near_pos = get_near_positions(tmp_point, unit);
+    for n in near_pos.iter() {
+      let dist = point.distance(*n);
+      let tmp_pos = [
+        (n[0] * mul) as i64, 
+        (n[1] * mul) as i64, 
+        (n[2] * mul) as i64, 
+      ];
+
+      let res = self.chunk_manager.get_voxel_safe(&tmp_pos);
+      if res.is_some() && res.unwrap() > 0 {
+        if dist < nearest_dist {
+          nearest_dist = dist;
+          pos = Some(*n);
+        }
+      }
+    }
+
+    pos
+  }
+
+
+
 
   pub fn get_preview(&self, pos: Vec3, preview: &Preview) -> Chunk {
 

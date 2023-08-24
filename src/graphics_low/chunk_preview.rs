@@ -1,7 +1,7 @@
 use bevy::{prelude::*, pbr::NotShadowCaster};
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
-use bevy_voxel::{BevyVoxelResource, Preview, PreviewGraphics};
+use bevy_voxel::{BevyVoxelResource, Preview, PreviewGraphics, EditState};
 use voxels::data::voxel_octree::VoxelMode;
 
 pub struct CustomPlugin;
@@ -31,7 +31,7 @@ fn update(
     }
 
     let p = preview.pos.unwrap();
-    // println!("chunk_preview");
+    println!("chunk_preview {:?}", p);
     let chunk = bevy_voxel_res.get_preview(p, preview);
     
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);

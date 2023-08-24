@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use utils::RayUtils;
 use voxels::data::voxel_octree::VoxelMode;
 use crate::{EditState, Preview, BevyVoxelResource, Center, Chunks, PreviewGraphics, ChunkData, ShapeState};
 
@@ -7,10 +8,49 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(add_voxel_cube.in_set(OnUpdate(EditState::AddNormal)))
-      .add_system(add_voxel_sphere.in_set(OnUpdate(EditState::AddNormal)))
-      .add_system(remove.in_schedule(OnExit(EditState::AddNormal)))
+      .add_system(preview_position.in_set(OnUpdate(EditState::AddSnap)))
+      .add_system(add_voxel_cube.in_set(OnUpdate(EditState::AddSnap)))
+      .add_system(add_voxel_sphere.in_set(OnUpdate(EditState::AddSnap)))
+      .add_system(remove.in_schedule(OnExit(EditState::AddSnap)))
       ;
+  }
+}
+
+fn preview_position(
+  mut cam: Query<(&Transform, &mut Preview), With<Preview>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+  for (cam_trans, mut preview) in &mut cam {
+    let p = 
+      cam_trans.translation + (cam_trans.forward() * preview.dist)
+    ;
+
+    let tmp_p = RayUtils::get_nearest_coord(
+      [p.x, p.y, p.z], bevy_voxel_res.chunk_manager.voxel_scale
+    );
+    let point = Vec3::new(tmp_p[0], tmp_p[1], tmp_p[2]);
+
+
+    let pos = bevy_voxel_res.get_nearest_voxel_by_unit(point, preview.size as f32);
+
+    println!("point {:?} pos {:?}", point, pos);
+    if pos.is_none() && preview.pos.is_some() {
+      preview.pos = pos;
+    }
+
+    if pos.is_some() {
+      if preview.pos.is_some() {
+        let p = pos.unwrap();
+        let current = preview.pos.unwrap();
+        if current != p {
+          preview.pos = pos;
+        }
+      }
+      
+      if preview.pos.is_none() {
+        preview.pos = pos;
+      }
+    }
   }
 }
 
