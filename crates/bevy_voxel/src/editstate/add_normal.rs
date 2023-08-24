@@ -9,8 +9,7 @@ impl Plugin for CustomPlugin {
     app
       .add_system(add_voxel_cube.in_set(OnUpdate(EditState::AddNormal)))
       .add_system(add_voxel_sphere.in_set(OnUpdate(EditState::AddNormal)))
-      .add_system(remove.in_schedule(OnExit(EditState::AddNormal)))
-      ;
+      .add_system(remove.in_schedule(OnExit(EditState::AddNormal)));
   }
 }
 

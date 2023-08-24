@@ -475,6 +475,7 @@ impl BevyVoxelResource {
     &self, calc_pos: Vec3, preview: &Preview,
   ) -> Chunk {
     let voxel = preview.voxel;
+    // println!("voxel {}", voxel);
     let size = preview.size;
 
     let scale = self.chunk_manager.voxel_scale;
