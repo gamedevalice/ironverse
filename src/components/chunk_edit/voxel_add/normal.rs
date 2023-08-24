@@ -27,38 +27,36 @@ fn update_position(
   mut chunk_edits: Query<(&Transform, &ChunkEditParams, &mut ChunkEdit)>,
 ) {
   for (trans, params, mut edit) in &mut chunk_edits {
-    let min = 0;
-    let max = params.size as i64;
-
     let mut pos_op = None;
-    let total_div = 10;
+    let total_div = (params.dist * 2.0) as i64;
     let min_dist = params.size as f32 * 2.0;
 
     'main: for i in (0..total_div).rev() {
       let div_f32 = total_div as f32 - 1.0;
       let dist = (params.dist / div_f32) * i as f32;
       if dist < min_dist {
-        break;
+        continue;
       }
 
-      let p = get_point_by_edit_mode(&trans, dist, params.size, false);
-      for x in min..max {
-        for y in min..max {
-          for z in min..max {
-            let tmp_pos = [
-              p.x as i64 + x,
-              p.y as i64 + y,
-              p.z as i64 + z
-            ];
+      // let p = get_point_by_edit_mode(&trans, dist, params.size, false);
+      let t = trans.translation;
+      let f = trans.forward();
+      let p = utils::RayUtils::get_normal_point_with_scale(
+        [t.x, t.y, t.z], [f.x, f.y, f.z], dist, game_res.voxel_scale
+      );
+      let mul = 1.0 / game_res.voxel_scale;
+      let voxel_x = (p[0] * mul) as i64;
+      let voxel_y = (p[1] * mul) as i64;
+      let voxel_z = (p[2] * mul) as i64;
+      
+      let p_i64 = [voxel_x, voxel_y, voxel_z];
   
-            let res = game_res.chunk_manager.get_voxel_safe(&tmp_pos);
-            if res.is_some() && res.unwrap() == 0 {
-              pos_op = Some(p);
-              break 'main;
-            }
-          }
-        }
+      let res = game_res.chunk_manager.get_voxel_safe(&p_i64);
+      if res.is_some() && res.unwrap() == 0 {
+        pos_op = Some(Vec3::new(p[0], p[1], p[2]));
+        break 'main;
       }
+
     }
 
     if pos_op.is_none() {
@@ -121,7 +119,7 @@ fn position_changed(
     let min_prev = min - 2;
     let max_prev = max + 2;
     let mut chunk = Chunk::default();
-    let chunk_pos = game_res.chunk_manager.config.chunk_size / 2;
+    let chunk_pos = (chunk.octree.get_size() / 2) as f32 * game_res.voxel_scale;
     for x in min_prev..max_prev {
       for y in min_prev..max_prev {
         for z in min_prev..max_prev {
@@ -140,6 +138,7 @@ fn position_changed(
         }
       }
     }
+    // chunk.octree.set_voxel(2, 2, 2, 1);
 
     edit.chunk = Some(chunk);
   }

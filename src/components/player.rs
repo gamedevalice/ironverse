@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_voxel::{BevyVoxelResource, Center};
 use rapier3d::{na::Vector3, prelude::{RigidBodyHandle, ColliderHandle}};
 use voxels::utils::posf32_to_world_key;
 use crate::{physics::Physics, data::{GameResource, GameState}};
@@ -9,57 +10,63 @@ impl Plugin for CustomPlugin {
     app
       .add_system(start.in_schedule(OnEnter(GameState::Start)))
       .add_system(init.in_schedule(OnEnter(GameState::Init)))
-      .add_system(update);
+      .add_system(update)
+      ;
   }
 }
 
 fn start(
   mut commands: Commands,
-  mut physics: ResMut<Physics>,
-  game_res: Res<GameResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
-  let pos = [0.0, 5.0, 0.0];
-  // let pos = [0.0, 5.0, -13.0];
+  // // let pos = [0.0, 5.0, 0.0];
+  let pos = Vec3::new(0.0, 0.4, 0.0);
 
-  let (body, collider) = physics.spawn_character(1.0, 0.5, Vec3::new(pos[0], pos[1], pos[2]));
-  let k = posf32_to_world_key(&pos, game_res.chunk_manager.config.seamless_size);
+  let (body, collider) = bevy_voxel_res.physics.spawn_character(1.0, 0.5, pos);
+  let k = bevy_voxel_res.get_key(pos);
+
+  println!("start player key {:?}", k);
   commands
     .spawn(
       (Player::new(body, collider, k),
-    ));
+      Center {key: k } )
+    );
 }
 
 fn init(
   mut commands: Commands,
-  mut physics: ResMut<Physics>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
   game_res: Res<GameResource>,
 ) {
-  let pos = game_res.data.status.position;
-  // let pos = [0.0, 5.0, 0.0];
-  let (body, collider) = physics.spawn_character(1.0, 0.5, Vec3::new(pos[0], pos[1], pos[2]));
-  let k = posf32_to_world_key(&pos, game_res.chunk_manager.config.seamless_size);
+  let p = game_res.data.status.position;
+  let pos = Vec3::new(p[0], p[1], p[2]);
+  let (body, collider) = bevy_voxel_res.physics.spawn_character(
+    1.0, 0.5, pos
+  );
+  let k = bevy_voxel_res.get_key(pos);
   commands
     .spawn(
       (Player::new(body, collider, k),
-    ));
+      Center {key: k } )
+    );
 
-  info!("player init() {:?}", pos);
+  // info!("player init() {:?}", pos);
 }
 
 fn update(
-  mut query: Query<(&Transform, &mut Player)>,
-  mut physics: ResMut<Physics>,
-  game_res: Res<GameResource>,
+  mut query: Query<(&Transform, &mut Center, &mut Player)>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
-  for (trans, mut player) in &mut query {
+  for (trans, mut center, mut player) in &mut query {
     let p = trans.translation;
-    let rigid_body = &mut physics.rigid_body_set[player.body];
+    let rigid_body = &mut bevy_voxel_res.physics.rigid_body_set[player.body];
     rigid_body.set_position(Vector3::new(p.x, p.y, p.z).into(), false);
 
-    let k = posf32_to_world_key(&[p.x, p.y, p.z], game_res.chunk_manager.config.seamless_size);
+    let k = bevy_voxel_res.get_key(p);
     if player.key != k {
       player.prev_key = player.key.clone();
       player.key = k;
+      center.key = k;
     }
   }
 }

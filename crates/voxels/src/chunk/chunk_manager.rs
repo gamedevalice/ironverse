@@ -60,18 +60,18 @@ pub struct ChunkManager {
   pub height_scale: f64,
   pub frequency: f64,
 
-  pub lod_dist: Vec<i64>,
-  pub ray_dist: i64,
-  pub voxel_reuse: VoxelReuse,
-  pub config: Configuration,
+  pub voxel_scale: f32,
+  pub range: u8,
+  pub colors: Vec<[f32; 3]>,
 }
 
 impl Default for ChunkManager {
   fn default() -> Self {
     let depth = 4;
-    let loop_count = 3; // indices/axes being used, [x, y, z]
+    // let loop_count = 3; // indices/axes being used, [x, y, z]
+    // let voxel_reuse = VoxelReuse::new(depth, loop_count);
+    
     let noise = OpenSimplex::new().set_seed(1234);
-    let voxel_reuse = VoxelReuse::new(depth, loop_count);
     let offset = 2;
     let chunk_size = 2_i32.pow(depth) as u32;
 
@@ -84,25 +84,53 @@ impl Default for ChunkManager {
       noise: noise,
       height_scale: 16.0,
       frequency: 0.0125,
+      voxel_scale: 1.0,
+      range: 1,
+      colors: vec![
+        [1.0, 0.0, 0.0], 
+        [0.0, 1.0, 0.0], 
+        [0.0, 0.0, 1.0], 
+        [0.0, 0.0, 0.0],
 
-      lod_dist: vec![1, 2],
-      ray_dist: 5,
-      voxel_reuse: voxel_reuse.clone(),
+        [0.2, 0.0, 0.0],
+        [0.4, 0.0, 0.0],
+        [0.6, 0.0, 0.0],
+        [0.8, 0.0, 0.0],
 
-      // Used for player simulator
-      config: Configuration {
-        depth: depth as u8, 
-        lod: depth as u8, 
-        noise: noise,
-        voxel_reuse: voxel_reuse.clone(),
-        seamless_size: chunk_size - offset,
-        chunk_size: chunk_size,
-      }
+        [0.0, 0.2, 0.0],
+        [0.0, 0.4, 0.0],
+      ],
     }
   }
 }
 
 impl ChunkManager {
+
+  pub fn new(
+    depth: u32, 
+    voxel_scale: f32, 
+    range: u8,
+    colors: Vec<[f32; 3]>,  
+  ) -> Self {
+    let noise = OpenSimplex::new().set_seed(1234);
+    let offset = 2;
+    let chunk_size = 2_i32.pow(depth) as u32;
+
+    ChunkManager {
+      chunks: HashMap::new(),
+      colliders: HashMap::new(),
+      depth: depth,
+      chunk_size: chunk_size,
+      offset: offset,
+      noise: noise,
+      height_scale: 16.0,
+      frequency: 0.0125,
+      voxel_scale: voxel_scale,
+      range: range,
+      colors: colors,
+    }
+  }
+
   /* TODO: Remove later */
   pub fn set_voxel1(&mut self, pos: &[i64; 3], voxel: u8) -> Vec<[i64; 3]> {
     let mut keys = Vec::new();
@@ -171,8 +199,10 @@ impl ChunkManager {
 
   pub fn set_voxel2(&mut self, pos: &[i64; 3], voxel: u8) -> Vec<([i64; 3], Chunk)> {
     let mut chunks = Vec::new();
+    let chunk_size = self.chunk_size;
+    let seamless_size = self.seamless_size();
 
-    let coords = get_chunk_coords(pos, voxel);
+    let coords = get_chunk_coords(pos, chunk_size, seamless_size);
     for coord in coords.iter() {
       let key = &coord.key;
       let local = &coord.local;
@@ -221,7 +251,6 @@ impl ChunkManager {
   pub fn get_voxel_safe(&self, pos: &[i64; 3]) -> Option<u8> {
     let seamless_size = self.seamless_size();
     let key = voxel_pos_to_key(pos, seamless_size);
-    // let key = world_pos_to_key(pos, seamless_size);
     
     let octree = match self.get_octree(&pos) {
       Some(o) => o,
@@ -297,7 +326,10 @@ impl ChunkManager {
           
           let elevation = noise_elevation(&x, &z, &region_middle_pos, noise);
           let mid_y = y as i64 - region_middle_pos;
+
+          /* Uncomment this later, testing for now */
           let voxel = if mid_y < elevation { 1 } else { 0 };
+          // let voxel = if mid_y < 0 { 1 } else { 0 };
           data.push([octree_x, octree_y, octree_z, voxel]);
 
           /*
@@ -399,31 +431,34 @@ impl ChunkManager {
     self.chunks.len()
   }
 
-  // FOR TESTING
-  pub fn get_noise(&self, x: f64, z: f64, middle: i64) -> i64 {
-    let fx = (x as i64 - middle) as f64 * self.frequency;
-    let fz = (z as i64 - middle) as f64 * self.frequency;
-    let noise = self.noise.get([fx, fz]);
-    let elevation = (noise * self.height_scale) as i64;
-    elevation
+  
+
+  pub fn get_adj_chunks(&mut self, key: [i64; 3]) -> Vec<Chunk> {
+    let mut chunks = Vec::new();
+
+    let keys = adjacent_keys(&key, self.range as i64, true);
+    for key in keys.iter() {
+      let res = self.chunks.get(key);
+      if res.is_some() {
+        chunks.push(res.unwrap().clone());
+      }
+
+      if res.is_none() {
+        let c = self.new_chunk3(key, self.depth as u8);
+        chunks.push(c.clone());
+        self.chunks.insert(*key, c);
+      }
+    }
+
+    chunks
   }
+
+
 }
-
-#[derive(Clone)]
-pub struct Configuration {
-  pub depth: u8,
-  pub lod: u8,
-  pub noise: OpenSimplex,
-  pub voxel_reuse: VoxelReuse,
-  pub seamless_size: u32,
-  pub chunk_size: u32,
-}
-
-
 
 #[cfg(test)]
 mod tests {
-  use crate::{data::surface_nets::{GridPosition, VoxelReuse}, utils::get_length};
+  use crate::{data::{surface_nets::{GridPosition, VoxelReuse}, voxel_octree::VoxelMode}, utils::get_length};
   use super::*;
 
   #[test]
@@ -483,10 +518,17 @@ mod tests {
     let chunk_size = 16;
     let mut chunk_manager = ChunkManager::default();
 
-    let keys = adjacent_keys(&[0, 0, 0], 5);
+    let color = vec![[0.0, 0.0, 0.0]];
+
+    let keys = adjacent_keys(&[0, 0, 0], 5, true);
     for key in keys.iter() {
       let chunk = chunk_manager.new_chunk3(key, chunk_manager.depth as u8);
-      let d = chunk.octree.compute_mesh2(VoxelMode::SurfaceNets, &mut voxel_reuse);
+      let d = chunk.octree.compute_mesh(
+        VoxelMode::SurfaceNets, 
+        &mut voxel_reuse,
+        &color,
+        1.0
+      );
       if d.indices.len() != 0 {
         assert_eq!(chunk.mode, ChunkMode::Loaded, "key {:?}", key);
       } else {
@@ -502,3 +544,12 @@ mod tests {
     Ok(())
   }
 }
+
+
+
+/*
+  Need to refactor ChunkManger(Defer)
+  Make new features work first
+  Then refactor once approved
+*/
+

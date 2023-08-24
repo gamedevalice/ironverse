@@ -1,11 +1,12 @@
-use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PresentMode, PrimaryWindow, CursorGrabMode}};
+use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}, window::{PresentMode, PrimaryWindow, CursorGrabMode}, pbr::NotShadowCaster};
 use bevy_egui::{EguiPlugin, EguiContexts, egui::{Color32, Frame, Rect, Pos2, RichText, Style, Vec2}};
 use bevy_flycam::FlyCam;
 use rapier3d::prelude::ColliderHandle;
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::{voxel_octree::VoxelMode, surface_nets::VoxelReuse}};
 use bevy_flycam::NoCameraAndGrabPlugin;
-use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource, Selected, SelectedGraphics};
+use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource};
+
 
 fn main() {
   let mut app = App::new();
@@ -26,7 +27,7 @@ fn main() {
     .add_plugin(BevyVoxelPlugin)
     .insert_resource(BevyVoxelResource::new(
       4, 
-      0.5, 
+      1.0, 
       1, 
       vec![
         [1.0, 0.0, 0.0], 
@@ -46,9 +47,12 @@ fn main() {
     .insert_resource(LocalResource::default())
     .add_startup_system(setup_camera)
     .add_startup_system(setup_starting_chunks)
-    .add_system(detect_voxel_preview_position)
-    .add_system(reposition_voxel_preview)
-    .add_system(remove_voxel)
+    .add_system(detect_selected_voxel_position)
+    .add_system(detect_preview_voxel_position)
+    .add_system(reposition_selected_voxel)
+    .add_system(reposition_preview_voxel)
+    .add_system(add_voxel)
+    .add_system(change_voxel_size)
     .add_system(show_diagnostic_texts)
     .run();
 
@@ -64,14 +68,8 @@ fn setup_camera(
       ..Default::default()
     })
     .insert(FlyCam)
-    .insert(Preview::default())
     .insert(Selected::default())
-    ;
-
-  commands
-    .spawn(SelectedGraphics)
-    // .insert(PreviewGraphics)
-    ;
+    .insert(Preview::default());
 
   // Sun
   commands.spawn(DirectionalLightBundle {
@@ -100,7 +98,6 @@ fn setup_starting_chunks(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
-  mut local_res: ResMut<LocalResource>,
 
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
@@ -120,7 +117,6 @@ fn setup_starting_chunks(
     if data.positions.len() == 0 {
       continue;
     }
-
     let pos = bevy_voxel_res.get_pos(chunk.key);
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
@@ -146,7 +142,153 @@ fn setup_starting_chunks(
 
 }
 
-fn remove_voxel(
+
+fn detect_selected_voxel_position(
+  mut cam: Query<(&Transform, &mut Selected), With<FlyCam>>,
+
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+  for (cam_trans, mut selected) in &mut cam {
+    let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
+    if hit.is_none() {
+      continue;
+    }
+
+    let pos = bevy_voxel_res.get_hit_voxel_pos(hit.unwrap());
+    // println!("pos {:?}", pos);
+
+    if pos.is_none() && selected.pos.is_some() {
+      selected.pos = pos;
+    }
+
+    if pos.is_some() {
+      if selected.pos.is_some() {
+        let p = pos.unwrap();
+        let current = selected.pos.unwrap();
+        if current != p {
+          selected.pos = pos;
+        }
+      }
+      
+      if selected.pos.is_none() {
+        selected.pos = pos;
+      }
+    }
+  }
+}
+
+fn detect_preview_voxel_position(
+  mut cam: Query<(&Transform, &mut Preview), With<FlyCam>>,
+
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+  for (cam_trans, mut preview) in &mut cam {
+    let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
+    if hit.is_none() {
+      continue;
+    }
+    let point = hit.unwrap();
+
+    let pos = bevy_voxel_res.get_nearest_voxel_air(point);
+    // println!("preview {:?}", pos);
+
+    if pos.is_none() && preview.pos.is_some() {
+      preview.pos = pos;
+    }
+
+    if pos.is_some() {
+      if preview.pos.is_some() {
+        let p = pos.unwrap();
+        let current = preview.pos.unwrap();
+        if current != p {
+          preview.pos = pos;
+        }
+      }
+      
+      if preview.pos.is_none() {
+        preview.pos = pos;
+      }
+    }
+  }
+}
+
+
+fn reposition_selected_voxel(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+
+  selecteds: Query<&Selected, Changed<Selected>>,
+  preview_graphics: Query<Entity, With<SelectedGraphics>>,
+) {
+  for selected in &selecteds {
+    for entity in &preview_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
+
+    if selected.pos.is_none() {
+      continue;
+    }
+    let p = selected.pos.unwrap();
+    
+    let scale = bevy_voxel_res.chunk_manager.voxel_scale;
+    let size = scale + (scale * 0.1);
+    commands.spawn(PbrBundle {
+      mesh: meshes.add(Mesh::from(shape::Cube { size: size})),
+      material: materials.add(Color::rgba(0.0, 0.0, 1.0, 0.5).into()),
+      transform: Transform::from_translation(p),
+      ..default()
+    })
+    .insert(SelectedGraphics { })
+    .insert(NotShadowCaster);
+
+  }
+}
+
+fn reposition_preview_voxel(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+
+  previews: Query<&Preview, Changed<Preview>>,
+  preview_graphics: Query<Entity, With<PreviewGraphics>>,
+) {
+  for preview in &previews {
+    for entity in &preview_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
+
+    if preview.pos.is_none() {
+      continue;
+    }
+    let p = preview.pos.unwrap();
+    // println!("preview {:?}", p);
+    let chunk = bevy_voxel_res.get_preview_chunk(p);
+    let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
+    
+    let pos = bevy_voxel_res.get_preview_pos(p);
+
+    let mut render = Mesh::new(PrimitiveTopology::TriangleList);
+    render.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+    render.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+    render.set_indices(Some(Indices::U32(data.indices.clone())));
+
+    commands
+      .spawn(MaterialMeshBundle {
+        mesh: meshes.add(render),
+        material: materials.add(Color::rgba(0.7, 0.7, 0.7, 0.8).into()),
+        transform: Transform::from_translation(pos),
+        ..default()
+      })
+      .insert(PreviewGraphics { })
+      .insert(NotShadowCaster);
+  }
+}
+
+
+fn add_voxel(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
@@ -158,14 +300,14 @@ fn remove_voxel(
 ) {
   let mut voxel = None;
   if mouse.just_pressed(MouseButton::Left) {
-    voxel = Some(0);
+    voxel = Some(1);
   }
   if voxel.is_none() {
     return;
   }
 
   for (_, preview) in &previews {
-    if preview.voxel_pos.is_none() {
+    if preview.pos.is_none() {
       continue;
     }
     for (entity, graphics) in &chunk_graphics {
@@ -173,7 +315,9 @@ fn remove_voxel(
       bevy_voxel_res.physics.remove_collider(graphics.handle);
     }
 
-    let pos = preview.voxel_pos.unwrap();
+    let p = preview.pos.unwrap();
+    let pos = bevy_voxel_res.get_nearest_voxel_air(p).unwrap();
+
     bevy_voxel_res.set_voxel(pos, voxel.unwrap());
     
     let key = [0, 0, 0];
@@ -183,7 +327,6 @@ fn remove_voxel(
       if data.positions.len() == 0 {
         continue;
       }
-
       let pos = bevy_voxel_res.get_pos(chunk.key);
 
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
@@ -195,7 +338,6 @@ fn remove_voxel(
       if chunk.key[0] == key[0] && chunk.key[2] == key[0] {
         color = Color::rgb(1.0, 0.0, 0.0);
       }
-
       commands
         .spawn(MaterialMeshBundle {
           mesh: meshes.add(render_mesh),
@@ -206,6 +348,29 @@ fn remove_voxel(
         .insert(ChunkGraphics {
           handle: bevy_voxel_res.add_collider(pos, &data)
         }); 
+    }
+  }
+}
+
+fn change_voxel_size(
+  key_input: Res<Input<KeyCode>>,
+  mut previews: Query<&mut Preview>,
+) {
+  if key_input.just_pressed(KeyCode::Equals) {
+    for mut params in previews.iter_mut() {
+      if params.level < 3 {
+        params.level += 1;
+        params.size = 2_u8.pow(params.level as u32);
+      }
+    }
+  }
+
+  if key_input.just_pressed(KeyCode::Minus) {
+    for mut params in previews.iter_mut() {
+      if params.level > 0 {
+        params.level -= 1;
+        params.size = 2_u8.pow(params.level as u32);
+      }
     }
   }
 }
@@ -307,17 +472,38 @@ impl Default for LocalResource {
 
 
 #[derive(Component, Clone)]
+struct Selected {
+  pos: Option<Vec3>,
+}
+
+impl Default for Selected {
+  fn default() -> Self {
+    Self {
+      pos: None,
+    }
+  }
+}
+
+#[derive(Component, Clone)]
 struct Preview {
-  voxel_pos: Option<Vec3>,
+  pos: Option<Vec3>,
+  level: u8,
+  size: u8,
 }
 
 impl Default for Preview {
   fn default() -> Self {
+    let level = 1;
     Self {
-      voxel_pos: None,
+      pos: None,
+      level: level,
+      size: 2_u8.pow(level as u32),
     }
   }
 }
+
+#[derive(Component, Clone)]
+struct SelectedGraphics { }
 
 #[derive(Component, Clone)]
 struct PreviewGraphics { }
@@ -327,23 +513,3 @@ struct PreviewGraphics { }
 struct ChunkGraphics {
   pub handle: ColliderHandle,
 }
-
-
-/*
-  Refactor ChunkManager
-
-  Implement chunk range
-  Implement voxel per chunk
-
-  Position of the preview
-    There are some conditions
-    Should be either be modified by state
-
-
-  Types of features
-    Dynamic switching: Only one state at a time
-      Can be called cartridge
-    Parallel: Can co-exists with other features
-    Compile time conditional: Minimum graphics vs Normal graphics for faster compilation
-    
-*/
