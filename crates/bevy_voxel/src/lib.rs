@@ -1,9 +1,8 @@
 mod physics;
-mod remove;
-mod add;
 mod util;
 mod functions;
 mod implement;
+mod editstate;
 
 use bevy::prelude::*;
 use physics::Physics;
@@ -14,9 +13,10 @@ pub struct BevyVoxelPlugin;
 impl Plugin for BevyVoxelPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_state::<EditState>()
+      .add_state::<ShapeState>()
       .add_plugin(functions::CustomPlugin)
-      .add_plugin(remove::CustomPlugin)
-      .add_plugin(add::CustomPlugin);
+      .add_plugin(editstate::CustomPlugin);
   }
 }
 
@@ -26,6 +26,8 @@ pub struct BevyVoxelResource {
   pub physics: Physics,
 
   colliders_cache: Vec<ColliderHandle>,
+  shape_state: ShapeState,
+  edit_state: EditState,
 }
 
 impl Default for BevyVoxelResource {
@@ -34,6 +36,8 @@ impl Default for BevyVoxelResource {
       chunk_manager: ChunkManager::default(),
       physics: Physics::default(),
       colliders_cache: Vec::new(),
+      shape_state: ShapeState::Cube,
+      edit_state: EditState::AddNormal,
     }
   }
 }
@@ -42,9 +46,19 @@ impl Default for BevyVoxelResource {
 pub enum EditState {
   #[default]
   AddNormal,
+  AddDist,
   AddSnap,
+  
   RemoveNormal,
+  RemoveDist,
   RemoveSnap,
+}
+
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
+pub enum ShapeState {
+  #[default]
+  Cube,
+  Sphere,
 }
 
 #[derive(Component, Clone)]
@@ -66,6 +80,9 @@ pub struct Preview {
   pub level: u8,
   pub size: u8,
   pub voxel: u8,
+
+  pub sphere_size: f32,
+  pub dist: f32,
 }
 
 impl Default for Preview {
@@ -76,6 +93,9 @@ impl Default for Preview {
       level: level,
       size: 2_u8.pow(level as u32),
       voxel: 1,
+
+      sphere_size: 1.0,
+      dist: 3.0,
     }
   }
 }
@@ -118,7 +138,6 @@ impl Default for Center {
     }
   }
 }
-
 
 
 /*

@@ -1,20 +1,27 @@
+mod sphere;
+mod cube;
+
 use bevy::{prelude::*, input::mouse::MouseWheel};
+use utils::RayUtils;
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{EditState, BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData};
+use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState, EditState};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_state::<EditState>()
+      .add_plugin(sphere::CustomPlugin)
+      .add_plugin(cube::CustomPlugin)
       .insert_resource(BevyVoxelResource::default())
       .add_startup_system(startup)
       .add_system(update)
       .add_system(detect_selected_voxel_position)
-      .add_system(detect_preview_voxel_position)
       .add_system(added_chunks)
       .add_system(center_changed)
-      .add_system(preview_params);
+      .add_system(shape_state_changed)
+      // .add_system(set_distance.run_if(distance_state))
+      // .add_system(preview_position_by_dist.run_if(distance_state))
+      ;
   }
 }
 
@@ -22,8 +29,14 @@ fn startup() {
   println!("startup BevyVoxel");
 }
 
-fn update(mut res: ResMut<BevyVoxelResource>) {
+fn update(
+  mut res: ResMut<BevyVoxelResource>,
+  shape_state: Res<State<ShapeState>>,
+  edit_state: Res<State<EditState>>,
+) {
   res.physics.step();
+  res.shape_state = shape_state.0;
+  res.edit_state = edit_state.0;
 }
 
 fn detect_selected_voxel_position(
@@ -52,37 +65,6 @@ fn detect_selected_voxel_position(
       
       if selected.pos.is_none() {
         selected.pos = pos;
-      }
-    }
-  }
-}
-
-fn detect_preview_voxel_position(
-  mut cam: Query<(&Transform, &mut Preview), With<Preview>>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
-) {
-  for (cam_trans, mut preview) in &mut cam {
-    let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
-    if hit.is_none() {
-      continue;
-    }
-    let point = hit.unwrap();
-    let pos = bevy_voxel_res.get_nearest_voxel_air(point);
-    if pos.is_none() && preview.pos.is_some() {
-      preview.pos = pos;
-    }
-
-    if pos.is_some() {
-      if preview.pos.is_some() {
-        let p = pos.unwrap();
-        let current = preview.pos.unwrap();
-        if current != p {
-          preview.pos = pos;
-        }
-      }
-      
-      if preview.pos.is_none() {
-        preview.pos = pos;
       }
     }
   }
@@ -130,51 +112,26 @@ fn center_changed(
 }
 
 
-fn preview_params(
-  mut mouse_wheels: EventReader<MouseWheel>,
-  key_input: Res<Input<KeyCode>>,
-  time: Res<Time>,
+fn shape_state_changed(
+  shape_state: Res<State<ShapeState>>,
+  mut local: Local<ShapeState>,
   mut previews: Query<&mut Preview>,
+
+  edit_state: Res<State<EditState>>,
+  mut local1: Local<EditState>,
 ) {
-  for event in mouse_wheels.iter() {
-    // for mut params in previews.iter_mut() {
-    //   // Need to clamp as event.y is returning -120.0 to 120.0 (Bevy bug)
-    //   let seamless_size = 12 as f32;
-    //   let adj = 12.0;
-    //   let limit = seamless_size + adj;
-    //   if params.dist <= limit {
-    //     params.dist += event.y.clamp(-1.0, 1.0) * time.delta_seconds() * 50.0;
-    //   }
-      
-    //   if params.dist > limit {
-    //     params.dist = limit;
-    //   }
-
-    //   let size = 2_u32.pow(params.level as u32);
-    //   let min_val = size as f32;
-    //   if params.dist < min_val {
-    //     params.dist = min_val;
-    //   }
-    // }
-  }
-
-  if key_input.just_pressed(KeyCode::Equals) {
-    for mut preview in previews.iter_mut() {
-      if preview.level < 3 {
-        preview.level += 1;
-        preview.size = 2_u8.pow(preview.level as u32);
-      }
+  if *local != shape_state.0 {
+    *local = shape_state.0;
+    for mut preview in &mut previews {
+      preview.size = preview.size;
     }
   }
 
-  if key_input.just_pressed(KeyCode::Minus) {
-    for mut preview in previews.iter_mut() {
-      if preview.level > 0 {
-        preview.level -= 1;
-        preview.size = 2_u8.pow(preview.level as u32);
-      }
+  if *local1 != edit_state.0 {
+    *local1 = edit_state.0;
+    for mut preview in &mut previews {
+      preview.size = preview.size;
     }
   }
-    
+  
 }
-
