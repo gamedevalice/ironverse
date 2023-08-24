@@ -1,7 +1,7 @@
 mod sphere;
 mod cube;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, input::mouse::MouseWheel};
 use voxels::data::voxel_octree::VoxelMode;
 use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState, EditState};
 
@@ -17,9 +17,16 @@ impl Plugin for CustomPlugin {
       .add_system(detect_selected_voxel_position)
       .add_system(added_chunks)
       .add_system(center_changed)
-      .add_system(shape_state_changed);
+      .add_system(shape_state_changed)
+      .add_system(set_distance.run_if(distance_state));
   }
 }
+
+fn distance_state(edit_state: Res<State<EditState>>,) -> bool {
+  edit_state.0 == EditState::AddDist ||
+  edit_state.0 == EditState::RemoveDist
+}
+
 
 fn startup() {
   println!("startup BevyVoxel");
@@ -28,9 +35,11 @@ fn startup() {
 fn update(
   mut res: ResMut<BevyVoxelResource>,
   shape_state: Res<State<ShapeState>>,
+  edit_state: Res<State<EditState>>,
 ) {
   res.physics.step();
   res.shape_state = shape_state.0;
+  res.edit_state = edit_state.0;
 }
 
 fn detect_selected_voxel_position(
@@ -128,4 +137,36 @@ fn shape_state_changed(
     }
   }
   
+}
+
+
+fn set_distance(
+  mut mouse_wheels: EventReader<MouseWheel>,
+  time: Res<Time>,
+  mut previews: Query<&mut Preview>,
+) {
+  for event in mouse_wheels.iter() {
+    for mut params in previews.iter_mut() {
+      // Need to clamp as event.y is returning -120.0 to 120.0 (Bevy bug)
+      // let seamless_size = 12 as f32;
+      // let adj = 12.0;
+      // let max = seamless_size + adj;
+      let max = 20.0;
+      if params.dist <= max {
+        params.dist += event.y.clamp(-1.0, 1.0) * time.delta_seconds() * 10.0;
+      }
+      
+      if params.dist > max {
+        params.dist = max;
+      }
+
+      // let size = 2_u32.pow(params.level as u32);
+      // let min = size as f32;
+      let min = 1.0;
+      if params.dist < min {
+        params.dist = min;
+      }
+    }
+  }
+    
 }

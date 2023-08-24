@@ -8,7 +8,7 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_systems(
-        (preview_position, preview_params, add_voxel)
+        (preview_position, add_voxel)
           .in_set(OnUpdate(EditState::AddDist)
       ))
       .add_system(remove.in_schedule(OnExit(EditState::AddDist)));
@@ -49,37 +49,6 @@ fn preview_position(
       }
     }
   }
-}
-
-fn preview_params(
-  mut mouse_wheels: EventReader<MouseWheel>,
-  time: Res<Time>,
-  mut previews: Query<&mut Preview>,
-) {
-  for event in mouse_wheels.iter() {
-    for mut params in previews.iter_mut() {
-      // Need to clamp as event.y is returning -120.0 to 120.0 (Bevy bug)
-      // let seamless_size = 12 as f32;
-      // let adj = 12.0;
-      // let max = seamless_size + adj;
-      let max = 20.0;
-      if params.dist <= max {
-        params.dist += event.y.clamp(-1.0, 1.0) * time.delta_seconds() * 5.0;
-      }
-      
-      if params.dist > max {
-        params.dist = max;
-      }
-
-      // let size = 2_u32.pow(params.level as u32);
-      // let min = size as f32;
-      let min = 1.0;
-      if params.dist < min {
-        params.dist = min;
-      }
-    }
-  }
-    
 }
 
 fn add_voxel(

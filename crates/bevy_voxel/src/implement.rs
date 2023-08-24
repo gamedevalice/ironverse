@@ -3,7 +3,7 @@ use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use voxels::utils::key_to_world_coord_f32;
-use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState};
+use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState};
 use crate::util::*;
 
 impl BevyVoxelResource {
@@ -24,6 +24,7 @@ impl BevyVoxelResource {
       physics: Physics::default(),
       colliders_cache: Vec::new(),
       shape_state: ShapeState::Cube,
+      edit_state: EditState::AddNormal,
     }
   }
 
@@ -167,11 +168,59 @@ impl BevyVoxelResource {
 
 
   pub fn get_preview(&self, pos: Vec3, preview: &Preview) -> Chunk {
+
+    match self.edit_state {
+      EditState::AddNormal | 
+      EditState::AddDist |
+      EditState::AddSnap => {
+        match self.shape_state {
+          ShapeState::Cube => { return self.get_preview_cube(pos, preview); },
+          ShapeState::Sphere => { return self.get_preview_sphere(pos, preview); }
+        }
+      },
+      EditState::RemoveNormal |
+      EditState::RemoveDist |
+      EditState::RemoveSnap => {
+        self.get_preview_remove(pos, preview)
+      },
+    }
+    
+  }
+
+  pub fn get_preview_remove(&self, pos: Vec3, preview: &Preview) -> Chunk {
     match self.shape_state {
-      ShapeState::Cube => { return self.get_preview_cube(pos, preview); },
+      ShapeState::Cube => { return self.get_preview_remove_cube(pos, preview); },
       ShapeState::Sphere => { return self.get_preview_sphere(pos, preview); }
     }
   }
+
+  fn get_preview_remove_cube(&self, pos: Vec3, preview: &Preview) -> Chunk {
+    let voxel = preview.voxel;
+    let size = preview.size;
+
+    let s = size as i64;
+    let max = (s / 2) + 1;
+    let min = max - s;
+    
+    let mut chunk = Chunk::default();
+    let mid_pos = (chunk.octree.get_size() / 2) as i64;
+    for x in min..max {
+      for y in min..max {
+        for z in min..max {
+
+          let local_x = (mid_pos + x) as u32;
+          let local_y = (mid_pos + y) as u32;
+          let local_z = (mid_pos + z) as u32;
+
+          chunk.octree.set_voxel(local_x, local_y, local_z, voxel);
+        }
+      }
+    }
+    
+    chunk
+  }
+
+  
 
   
   /// Get preview chunk pos converted to world pos considering the size of chunk
@@ -423,4 +472,5 @@ impl BevyVoxelResource {
 
 
 
+  
 }

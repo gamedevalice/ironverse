@@ -8,8 +8,10 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(update.in_set(OnUpdate(EditState::AddNormal)))
-      .add_system(update.in_set(OnUpdate(EditState::AddDist)));
+      // .add_system(update.in_set(OnUpdate(EditState::AddNormal)))
+      // .add_system(update.in_set(OnUpdate(EditState::AddDist)))
+      .add_system(update)
+      ;
   }
 }
 
@@ -26,10 +28,11 @@ fn update(
     for entity in &preview_graphics {
       commands.entity(entity).despawn_recursive();
     }
-    
+
     if preview.pos.is_none() {
       continue;
     }
+
     let p = preview.pos.unwrap();
     // let chunk = bevy_voxel_res.get_preview_chunk(
     //   p, preview.voxel, preview.size

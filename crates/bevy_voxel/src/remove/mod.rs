@@ -2,11 +2,13 @@ use bevy::{prelude::*, pbr::NotShadowCaster};
 use voxels::data::voxel_octree::VoxelMode;
 use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Selected, SelectedGraphics};
 
+mod bydist;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_plugin(bydist::CustomPlugin)
       .add_systems(
         (remove_voxel, reposition_selected_voxel)
           .in_set(OnUpdate(EditState::RemoveNormal)))

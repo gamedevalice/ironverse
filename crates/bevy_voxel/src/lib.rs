@@ -29,6 +29,7 @@ pub struct BevyVoxelResource {
 
   colliders_cache: Vec<ColliderHandle>,
   shape_state: ShapeState,
+  edit_state: EditState,
 }
 
 impl Default for BevyVoxelResource {
@@ -38,6 +39,7 @@ impl Default for BevyVoxelResource {
       physics: Physics::default(),
       colliders_cache: Vec::new(),
       shape_state: ShapeState::Cube,
+      edit_state: EditState::AddNormal,
     }
   }
 }
@@ -49,6 +51,7 @@ pub enum EditState {
   AddDist,
   AddSnap,
   RemoveNormal,
+  RemoveDist,
   RemoveSnap,
 }
 
