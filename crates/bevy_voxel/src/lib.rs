@@ -44,13 +44,12 @@ impl Default for BevyVoxelResource {
 
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum EditState {
-  
   AddNormal,
-  #[default]
+  
   AddDist,
   AddSnap,
 
-  
+  #[default]
   RemoveNormal,
   RemoveDist,
   RemoveSnap,
