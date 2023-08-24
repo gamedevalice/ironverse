@@ -1,5 +1,4 @@
-use bevy::{prelude::*, input::mouse::MouseWheel};
-use utils::RayUtils;
+use bevy::prelude::*;
 use voxels::data::voxel_octree::VoxelMode;
 use crate::{EditState, Preview, BevyVoxelResource, PreviewGraphics, Chunks, Center, ChunkData};
 
@@ -7,47 +6,8 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(
-        (preview_position, add_voxel)
-          .in_set(OnUpdate(EditState::AddDist)
-      ))
+      .add_system(add_voxel)
       .add_system(remove.in_schedule(OnExit(EditState::AddDist)));
-  }
-}
-
-fn preview_position(
-  mut cam: Query<(&Transform, &mut Preview), With<Preview>>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
-) {
-  for (cam_trans, mut preview) in &mut cam {
-    preview.size = preview.size;
-
-    let p = 
-      cam_trans.translation + (cam_trans.forward() * preview.dist)
-    ;
-
-    let p1 = RayUtils::get_nearest_coord(
-      [p.x, p.y, p.z], bevy_voxel_res.chunk_manager.voxel_scale
-    );
-    let pos = Some(Vec3::new(p1[0], p1[1], p1[2]));
-
-    if pos.is_none() && preview.pos.is_some() {
-      preview.pos = pos;
-    }
-
-    if pos.is_some() {
-      if preview.pos.is_some() {
-        let p = pos.unwrap();
-        let current = preview.pos.unwrap();
-        if current != p {
-          preview.pos = pos;
-        }
-      }
-      
-      if preview.pos.is_none() {
-        preview.pos = pos;
-      }
-    }
   }
 }
 

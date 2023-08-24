@@ -1,6 +1,6 @@
 use bevy::{prelude::*, pbr::NotShadowCaster};
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Selected, SelectedGraphics};
+use crate::{BevyVoxelResource, EditState, Chunks, Center, ChunkData, Selected, SelectedGraphics, Preview};
 
 mod bydist;
 
@@ -21,7 +21,7 @@ fn remove_voxel(
   mouse: Res<Input<MouseButton>>,
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 
-  mut chunks: Query<(&Selected, &Center, &mut Chunks)>,
+  mut chunks: Query<(&Preview, &Center, &mut Chunks)>,
 ) {
   let mut voxel = None;
   
@@ -32,15 +32,14 @@ fn remove_voxel(
     return;
   }
 
-  for (selected, center, mut chunks) in &mut chunks {
-    if selected.pos.is_none() {
+  for (preview, center, mut chunks) in &mut chunks {
+    if preview.pos.is_none() {
       continue;
     }
 
-    
     chunks.data.clear();
     
-    let p = selected.pos.unwrap();
+    let p = preview.pos.unwrap();
     bevy_voxel_res.set_voxel(p, voxel.unwrap());
 
     let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
@@ -83,6 +82,7 @@ fn reposition_selected_voxel(
       mesh: meshes.add(Mesh::from(shape::Cube { size: size})),
       material: materials.add(Color::rgba(0.0, 0.0, 1.0, 0.5).into()),
       transform: Transform::from_translation(p),
+      visibility: Visibility::Hidden, // Remove this to see what voxel is hit
       ..default()
     })
     .insert(SelectedGraphics)

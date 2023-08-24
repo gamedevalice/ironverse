@@ -2,6 +2,7 @@ mod sphere;
 mod cube;
 
 use bevy::{prelude::*, input::mouse::MouseWheel};
+use utils::RayUtils;
 use voxels::data::voxel_octree::VoxelMode;
 use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState, EditState};
 
@@ -18,7 +19,8 @@ impl Plugin for CustomPlugin {
       .add_system(added_chunks)
       .add_system(center_changed)
       .add_system(shape_state_changed)
-      .add_system(set_distance.run_if(distance_state));
+      .add_system(set_distance.run_if(distance_state))
+      .add_system(preview_position_by_dist.run_if(distance_state));
   }
 }
 
@@ -169,4 +171,38 @@ fn set_distance(
     }
   }
     
+}
+
+
+fn preview_position_by_dist(
+  mut cam: Query<(&Transform, &mut Preview), With<Preview>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+  for (cam_trans, mut preview) in &mut cam {
+    let p = 
+      cam_trans.translation + (cam_trans.forward() * preview.dist)
+    ;
+
+    let p1 = RayUtils::get_nearest_coord(
+      [p.x, p.y, p.z], bevy_voxel_res.chunk_manager.voxel_scale
+    );
+    let pos = Some(Vec3::new(p1[0], p1[1], p1[2]));
+
+    if pos.is_none() && preview.pos.is_some() {
+      preview.pos = pos;
+    }
+    if pos.is_some() {
+      if preview.pos.is_some() {
+        let p = pos.unwrap();
+        let current = preview.pos.unwrap();
+        if current != p {
+          preview.pos = pos;
+        }
+      }
+      
+      if preview.pos.is_none() {
+        preview.pos = pos;
+      }
+    }
+  }
 }

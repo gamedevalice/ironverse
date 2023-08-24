@@ -12,7 +12,8 @@ impl Plugin for CustomPlugin {
       .add_plugin(bydist::CustomPlugin)
       .add_system(add_voxel.in_set(OnUpdate(EditState::AddNormal)))
       .add_system(preview_position.in_set(OnUpdate(EditState::AddNormal)))
-      .add_system(remove.in_schedule(OnExit(EditState::AddNormal)));
+      .add_system(remove.in_schedule(OnExit(EditState::AddNormal)))
+      ;
   }
 }
 
