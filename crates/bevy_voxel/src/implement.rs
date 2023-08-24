@@ -251,7 +251,7 @@ impl BevyVoxelResource {
     self.chunk_manager.set_voxel2(&coord, voxel);
   }
 
-  pub fn set_voxel_by_preview(&mut self, pos: Vec3, preview: &Preview) {
+  pub fn set_voxel_cube(&mut self, pos: Vec3, preview: &Preview) {
     let scale = self.chunk_manager.voxel_scale;
 
     let s = preview.size as i64;
@@ -279,6 +279,10 @@ impl BevyVoxelResource {
       }
     }
   }
+
+
+
+
 
   pub fn set_voxel_sphere(&mut self, pos: Vec3, preview: &Preview) {
     let scale = self.chunk_manager.voxel_scale;
