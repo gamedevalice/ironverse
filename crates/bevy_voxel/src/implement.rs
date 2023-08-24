@@ -244,6 +244,8 @@ impl BevyVoxelResource {
       (pos.z * mul) as i64,
     ];
 
+    println!("set_voxel {:?}", p);
+
     self.chunk_manager.set_voxel2(&p, voxel);
   }
 
@@ -298,6 +300,15 @@ impl BevyVoxelResource {
       pos[1] * mul,
       pos[2] * mul,
     ];
+
+    let p1 = [
+      (pos.x * mul) as i64,
+      (pos.y * mul) as i64,
+      (pos.z * mul) as i64,
+    ];
+
+    println!("set_voxel_cube_default {:?}, {:?}", p, p1);
+
     for x in min..max {
       for y in min..max {
         for z in min..max {

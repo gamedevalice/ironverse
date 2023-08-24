@@ -11,8 +11,8 @@ impl Plugin for CustomPlugin {
 }
 
 fn normal_state(edit_state: Res<State<EditState>>,) -> bool {
-  edit_state.0 == EditState::AddNormal ||
-  edit_state.0 == EditState::RemoveNormal
+  edit_state.0 == EditState::AddNormal
+  // edit_state.0 == EditState::RemoveNormal
 }
 
 fn preview_position(

@@ -8,12 +8,36 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
+      .add_system(preview_position.in_set(OnUpdate(EditState::RemoveNormal)))
       .add_system(add_voxel_cube.in_set(OnUpdate(EditState::RemoveNormal)))
       // .add_system(add_voxel_sphere.in_set(OnUpdate(EditState::RemoveNormal)))
       .add_system(remove.in_schedule(OnExit(EditState::RemoveNormal)))
       ;
   }
 }
+
+fn preview_position(
+  mut previews: Query<(&Selected, &mut Preview), With<Preview>>,
+) {
+  for (selected, mut preview) in &mut previews {
+    if preview.pos.is_none() && selected.pos.is_some() {
+      preview.pos = selected.pos;
+    }
+
+    if preview.pos.is_some() && selected.pos.is_none() {
+      preview.pos = selected.pos;
+    }
+
+    if preview.pos.is_some() && selected.pos.is_some() {
+      let p = preview.pos.unwrap();
+      let s = selected.pos.unwrap();
+      if p != s {
+        preview.pos = selected.pos;
+      }
+    }
+  }
+}
+
 
 fn add_voxel_cube(
   mouse: Res<Input<MouseButton>>,
@@ -37,6 +61,7 @@ fn add_voxel_cube(
 
     // preview.voxel = 0;
     bevy_voxel_res.set_voxel_cube_default(p, preview.size, 0);
+    // bevy_voxel_res.set_voxel(p, 0);
 
     let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
     for chunk in all_chunks.iter() {
