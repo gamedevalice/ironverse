@@ -222,12 +222,12 @@ impl BevyVoxelResource {
 
   pub fn get_preview_remove(&self, pos: Vec3, preview: &Preview) -> Chunk {
     match self.shape_state {
-      ShapeState::Cube => { return self.get_preview_remove_cube(pos, preview); },
-      ShapeState::Sphere => { return self.get_preview_sphere(pos, preview); }
+      ShapeState::Cube => { return self.get_preview_remove_cube(preview); },
+      ShapeState::Sphere => { return self.get_preview_remove_sphere(pos, preview); }
     }
   }
 
-  fn get_preview_remove_cube(&self, pos: Vec3, preview: &Preview) -> Chunk {
+  fn get_preview_remove_cube(&self, preview: &Preview) -> Chunk {
     // let voxel = preview.voxel;
     let size = preview.size;
 
@@ -248,6 +248,25 @@ impl BevyVoxelResource {
           chunk.octree.set_voxel(local_x, local_y, local_z, 1);
         }
       }
+    }
+    
+    chunk
+  }
+
+  fn get_preview_remove_sphere(
+    &self, pos: Vec3, preview: &Preview
+  ) -> Chunk {
+    let mut chunk = Chunk::default();
+    let mid_pos = (chunk.octree.get_size() / 2) as i64;
+
+    let size = preview.sphere_size;
+    let coords = get_sphere_coords(size);
+    for c in coords.iter() {
+      let local_x = (mid_pos + c[0]) as u32;
+      let local_y = (mid_pos + c[1]) as u32;
+      let local_z = (mid_pos + c[2]) as u32;
+
+      chunk.octree.set_voxel(local_x, local_y, local_z, 1);
     }
     
     chunk
