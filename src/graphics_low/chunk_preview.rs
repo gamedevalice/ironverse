@@ -1,17 +1,14 @@
 use bevy::{prelude::*, pbr::NotShadowCaster};
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
-use bevy_voxel::{BevyVoxelResource, Preview, PreviewGraphics, EditState};
+use bevy_voxel::{BevyVoxelResource, Preview, PreviewGraphics};
 use voxels::data::voxel_octree::VoxelMode;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      // .add_system(update.in_set(OnUpdate(EditState::AddNormal)))
-      // .add_system(update.in_set(OnUpdate(EditState::AddDist)))
-      .add_system(update)
-      ;
+      .add_system(update);
   }
 }
 
@@ -34,10 +31,7 @@ fn update(
     }
 
     let p = preview.pos.unwrap();
-    // let chunk = bevy_voxel_res.get_preview_chunk(
-    //   p, preview.voxel, preview.size
-    // );
-    println!("chunk_preview");
+    // println!("chunk_preview");
     let chunk = bevy_voxel_res.get_preview(p, preview);
     
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);

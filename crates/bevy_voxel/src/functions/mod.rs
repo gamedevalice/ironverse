@@ -19,16 +19,11 @@ impl Plugin for CustomPlugin {
       .add_system(added_chunks)
       .add_system(center_changed)
       .add_system(shape_state_changed)
-      .add_system(set_distance.run_if(distance_state))
-      .add_system(preview_position_by_dist.run_if(distance_state));
+      // .add_system(set_distance.run_if(distance_state))
+      // .add_system(preview_position_by_dist.run_if(distance_state))
+      ;
   }
 }
-
-fn distance_state(edit_state: Res<State<EditState>>,) -> bool {
-  edit_state.0 == EditState::AddDist ||
-  edit_state.0 == EditState::RemoveDist
-}
-
 
 fn startup() {
   println!("startup BevyVoxel");
@@ -175,7 +170,7 @@ fn set_distance(
 
 
 fn preview_position_by_dist(
-  mut cam: Query<(&Transform, &mut Preview), With<Preview>>,
+  mut cam: Query<(&Transform, &mut Preview)>,
   bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
   for (cam_trans, mut preview) in &mut cam {

@@ -1,9 +1,8 @@
 mod physics;
-mod remove;
-mod add;
 mod util;
 mod functions;
 mod implement;
+mod editstate;
 
 use bevy::prelude::*;
 use physics::Physics;
@@ -17,8 +16,7 @@ impl Plugin for BevyVoxelPlugin {
       .add_state::<EditState>()
       .add_state::<ShapeState>()
       .add_plugin(functions::CustomPlugin)
-      .add_plugin(remove::CustomPlugin)
-      .add_plugin(add::CustomPlugin);
+      .add_plugin(editstate::CustomPlugin);
   }
 }
 
@@ -50,6 +48,8 @@ pub enum EditState {
   AddNormal,
   AddDist,
   AddSnap,
+
+  
   RemoveNormal,
   RemoveDist,
   RemoveSnap,
@@ -58,8 +58,8 @@ pub enum EditState {
 #[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum ShapeState {
   #[default]
-  Sphere,
   Cube,
+  Sphere,
 }
 
 #[derive(Component, Clone)]
@@ -139,7 +139,6 @@ impl Default for Center {
     }
   }
 }
-
 
 
 /*

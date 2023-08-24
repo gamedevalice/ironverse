@@ -303,6 +303,32 @@ impl BevyVoxelResource {
   }
 
 
+  /// Load Chunks, MeshData then create Collider for MeshData
+  pub fn load_adj_mesh_data(&mut self, key: [i64; 3]) -> Vec<([i64; 3], MeshData)> {
+    let mut mesh_data = Vec::new();
+    let chunks = self.load_adj_chunks(key);
+
+    for _ in 0..self.colliders_cache.len() {
+      let h = self.colliders_cache.pop().unwrap();
+      self.remove_collider(h);
+    }    
+
+    self.colliders_cache.clear();
+
+    for chunk in chunks.iter() {
+      let data = self.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+
+      let pos = self.get_pos(chunk.key);
+      let c = self.add_collider(pos, &data);
+      self.colliders_cache.push(c);
+      mesh_data.push((chunk.key, data));
+    }
+
+    mesh_data
+  }
 
   pub fn load_adj_chunks_with_collider(&mut self, key: [i64; 3]) -> Vec<Chunk> {
     let chunks = self.load_adj_chunks(key);

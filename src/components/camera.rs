@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_flycam::FlyCam;
-use crate::{components::player::Player, physics::Physics};
+use crate::components::player::Player;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -13,7 +13,6 @@ impl Plugin for CustomPlugin {
 fn add(
   mut commands: Commands,
   query: Query<(Entity, &Player), Added<Player>>,
-  // mut physics: ResMut<Physics>,
 ) {
   for (entity, player) in &query {
     info!("Add cam");

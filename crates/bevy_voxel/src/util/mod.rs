@@ -126,7 +126,6 @@ pub fn get_sphere_coords(size: f32) -> Vec<[i64; 3]> {
 }
 
 
-
 #[cfg(test)]
 mod tests {
   use bevy::prelude::Vec3;
