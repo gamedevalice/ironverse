@@ -31,7 +31,6 @@ fn update(
     }
 
     let p = preview.pos.unwrap();
-    println!("chunk_preview {:?}", p);
     let chunk = bevy_voxel_res.get_preview(p, preview);
     
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);

@@ -20,18 +20,23 @@ impl Plugin for CustomPlugin {
 fn preview_position(
   mut cam: Query<(&Transform, &mut Preview), With<Preview>>,
   bevy_voxel_res: Res<BevyVoxelResource>,
-) {
-  /*
-    Position based on dist
-    Then find out the nearest voxel snapping by preview size
-   */
 
+  shape_state: Res<State<ShapeState>>,
+) {
   for (cam_trans, mut preview) in &mut cam {
     let p = 
       cam_trans.translation + (cam_trans.forward() * preview.dist)
     ;
 
-    let snap_dist = bevy_voxel_res.chunk_manager.voxel_scale * preview.size as f32;
+    let mut snap_dist = bevy_voxel_res.chunk_manager.voxel_scale * preview.size as f32;
+    if shape_state.0 == ShapeState::Sphere {
+
+      let size = preview.sphere_size as i64;
+      snap_dist = 
+      bevy_voxel_res.chunk_manager.voxel_scale * 
+      (size + size) as f32;
+    }
+
     let tmp_p = RayUtils::get_nearest_coord(
       // [p.x, p.y, p.z], bevy_voxel_res.chunk_manager.voxel_scale
       [p.x, p.y, p.z], snap_dist
