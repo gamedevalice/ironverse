@@ -46,11 +46,11 @@ impl Default for BevyVoxelResource {
 pub enum EditState {
   AddNormal,
   AddDist,
-  #[default]
   AddSnap,
   
   RemoveNormal,
   RemoveDist,
+  #[default]
   RemoveSnap,
 }
 

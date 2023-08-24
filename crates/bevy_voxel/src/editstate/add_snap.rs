@@ -38,14 +38,10 @@ fn preview_position(
     }
 
     let tmp_p = RayUtils::get_nearest_coord(
-      // [p.x, p.y, p.z], bevy_voxel_res.chunk_manager.voxel_scale
       [p.x, p.y, p.z], snap_dist
     );
     let point = Vec3::new(tmp_p[0], tmp_p[1], tmp_p[2]);
     let pos = Some(point);
-
-
-    // let pos = bevy_voxel_res.get_nearest_voxel_by_unit(point, preview.size as f32);
 
     // println!("point {:?} pos {:?}, size {:?}", point, pos, preview.size);
     if pos.is_none() && preview.pos.is_some() {
