@@ -244,8 +244,6 @@ impl BevyVoxelResource {
       (pos.z * mul) as i64,
     ];
 
-    println!("set_voxel {:?}", p);
-
     self.chunk_manager.set_voxel2(&p, voxel);
   }
 
@@ -301,14 +299,6 @@ impl BevyVoxelResource {
       pos[2] * mul,
     ];
 
-    let p1 = [
-      (pos.x * mul) as i64,
-      (pos.y * mul) as i64,
-      (pos.z * mul) as i64,
-    ];
-
-    println!("set_voxel_cube_default {:?}, {:?}", p, p1);
-
     for x in min..max {
       for y in min..max {
         for z in min..max {
@@ -327,7 +317,31 @@ impl BevyVoxelResource {
 
 
 
+  pub fn set_voxel_sphere_default(
+    &mut self, 
+    pos: Vec3, 
+    size: f32,
+    voxel: u8,
+  ) {
+    let scale = self.chunk_manager.voxel_scale;
+    let mul = 1.0 / scale;
+    let p = [
+      pos.x * mul,
+      pos.y * mul,
+      pos.z * mul,
+    ];
 
+    let coords = get_sphere_coords(size);
+    for c in coords.iter() {
+      let tmp = [
+        p[0] as i64 + c[0],
+        p[1] as i64 + c[1],
+        p[2] as i64 + c[2],
+      ];
+      
+      self.set_voxel_default(tmp, voxel);
+    }
+  }
 
   pub fn set_voxel_sphere(&mut self, pos: Vec3, preview: &Preview) {
     let scale = self.chunk_manager.voxel_scale;

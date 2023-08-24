@@ -10,7 +10,7 @@ impl Plugin for CustomPlugin {
     app
       .add_system(preview_position.in_set(OnUpdate(EditState::RemoveNormal)))
       .add_system(add_voxel_cube.in_set(OnUpdate(EditState::RemoveNormal)))
-      // .add_system(add_voxel_sphere.in_set(OnUpdate(EditState::RemoveNormal)))
+      .add_system(add_voxel_sphere.in_set(OnUpdate(EditState::RemoveNormal)))
       .add_system(remove.in_schedule(OnExit(EditState::RemoveNormal)))
       ;
   }
@@ -97,7 +97,7 @@ fn add_voxel_sphere(
 
     chunks.data.clear();
     let p = preview.pos.unwrap();
-    bevy_voxel_res.set_voxel_sphere(p, preview);
+    bevy_voxel_res.set_voxel_sphere_default(p, preview.sphere_size, 0);
 
     let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
     for chunk in all_chunks.iter() {
