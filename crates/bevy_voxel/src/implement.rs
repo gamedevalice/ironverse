@@ -195,7 +195,7 @@ impl BevyVoxelResource {
   }
 
   fn get_preview_remove_cube(&self, pos: Vec3, preview: &Preview) -> Chunk {
-    let voxel = preview.voxel;
+    // let voxel = preview.voxel;
     let size = preview.size;
 
     let s = size as i64;
@@ -212,7 +212,7 @@ impl BevyVoxelResource {
           let local_y = (mid_pos + y) as u32;
           let local_z = (mid_pos + z) as u32;
 
-          chunk.octree.set_voxel(local_x, local_y, local_z, voxel);
+          chunk.octree.set_voxel(local_x, local_y, local_z, 1);
         }
       }
     }
@@ -275,6 +275,40 @@ impl BevyVoxelResource {
           ];
 
           self.set_voxel_default(tmp, preview.voxel);
+        }
+      }
+    }
+  }
+
+  pub fn set_voxel_cube_default(
+    &mut self, 
+    pos: Vec3, 
+    size: u8,
+    voxel: u8,
+  ) {
+    let scale = self.chunk_manager.voxel_scale;
+
+    let s = size as i64;
+    let max = (s / 2) + 1;
+    let min = max - s;
+    
+    let mul = 1.0 / scale;
+    let p = [
+      pos[0] * mul,
+      pos[1] * mul,
+      pos[2] * mul,
+    ];
+    for x in min..max {
+      for y in min..max {
+        for z in min..max {
+
+          let tmp = [
+            p[0] as i64 + x,
+            p[1] as i64 + y,
+            p[2] as i64 + z,
+          ];
+
+          self.set_voxel_default(tmp, voxel);
         }
       }
     }
