@@ -38,6 +38,14 @@ pub fn load_chunk(resource: &mut BevyVoxelResource, key: [i64; 3]) -> Chunk {
   res.unwrap().clone()
 }
 
+pub fn load_chunk_with_lod(
+  resource: &mut BevyVoxelResource, 
+  key: [i64; 3], 
+  lod: u8,
+) -> Chunk {
+  resource.chunk_manager.new_chunk3(&key, lod)
+}
+
 
 pub fn get_near_positions(pos: Vec3, unit: f32) -> Vec<Vec3> {
   let mut res = Vec::new();
@@ -141,21 +149,19 @@ pub fn get_keys_by_lod(
   let min = -m1;
   let max = m1 + 1;
 
-  // println!("index {}, min {}, max {}, r {}, ", index, min, max, r);
   let mut res = Vec::new();
   for x in min..max {
     for y in min..max {
       for z in min..max {
         if index == 0 {
-          res.push([x, y, z]);
+          res.push([key[0] + x, key[1] + y, key[2] + z]);
         }
-
+        
         if index > 0 {
-          if x.abs() > m0 && y.abs() > m0 && z.abs() > m0 {
-            res.push([x, y, z]);
+          if x.abs() > m0 || y.abs() > m0 || z.abs() > m0 {
+            res.push([key[0] + x, key[1] + y, key[2] + z]);
           }
         }
-
       }
     }
   }
@@ -419,7 +425,7 @@ mod tests {
     let coords = get_sphere_coords(1.0);
 
     for c in coords.iter() {
-      println!("{:?}", c);
+      // println!("{:?}", c);
     }
 
     Ok(())

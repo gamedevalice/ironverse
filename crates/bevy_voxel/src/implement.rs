@@ -598,15 +598,25 @@ impl BevyVoxelResource {
 
 
   pub fn load_lod_meshes(&mut self, key: [i64; 3], lod: u8) -> Vec<ChunkMesh> {
+    let mut chunk_meshes = Vec::new();
+
     let range = self.chunk_manager.range;
     let max_lod = self.chunk_manager.depth as u8;
     let ranges = vec![0, range as i64, 4, 8, 12];
 
-    // let keys = get_keys_by_lod(ranges, key, max_lod, lod);
-    
+    let keys = get_keys_by_lod(ranges, key, max_lod, lod);
+    for k in keys.iter() {
+      let chunk = load_chunk_with_lod(self, *k, lod);
+      let data = self.compute_mesh(VoxelMode::SurfaceNets, &chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
 
+      
+      chunk_meshes.push(ChunkMesh { key: *k, mesh: data });
+    }
 
-    Vec::new()
+    chunk_meshes
   }
 
   
