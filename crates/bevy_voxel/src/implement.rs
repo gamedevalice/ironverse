@@ -3,7 +3,7 @@ use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use voxels::utils::key_to_world_coord_f32;
-use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState};
+use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState, ChunkMesh};
 use crate::util::*;
 
 impl BevyVoxelResource {
@@ -197,9 +197,6 @@ impl BevyVoxelResource {
     pos
   }
 
-
-
-
   pub fn get_preview(&self, pos: Vec3, preview: &Preview) -> Chunk {
 
     match self.edit_state {
@@ -272,9 +269,6 @@ impl BevyVoxelResource {
     chunk
   }
 
-  
-
-  
   /// Get preview chunk pos converted to world pos considering the size of chunk
   /// and positioned visually correct
   pub fn get_preview_pos(&self, calc_pos: Vec3) -> Vec3 {
@@ -366,8 +360,6 @@ impl BevyVoxelResource {
       }
     }
   }
-
-
 
   pub fn set_voxel_sphere_default(
     &mut self, 
@@ -483,8 +475,6 @@ impl BevyVoxelResource {
   pub fn remove_collider(&mut self, handle: ColliderHandle) {
     self.physics.remove_collider(handle);
   }
-
-
 
 
   /// - calc_pos should be the calculated position based on edit mode
@@ -605,14 +595,25 @@ impl BevyVoxelResource {
     chunk
   }
 
-  /*
-    Editable sphere
-      Mid position set by distance/raycast
-
-   */
 
 
+  pub fn load_lod_meshes(&mut self, key: [i64; 3], lod: u8) -> Vec<ChunkMesh> {
+    let range = self.chunk_manager.range;
+    let max_lod = self.chunk_manager.depth as u8;
+    let ranges = vec![0, range as i64, 4, 8, 12];
 
+    // let keys = get_keys_by_lod(ranges, key, max_lod, lod);
+    
+
+
+    Vec::new()
+  }
 
   
 }
+
+/*
+  TODO
+    Categorize the functions later
+
+*/

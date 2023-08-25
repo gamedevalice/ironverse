@@ -6,9 +6,6 @@ use crate::{input::hotbar::HotbarResource, graphics::ChunkGraphics};
 
 use super::player::Player;
 
-// mod voxel_add;
-// mod voxel_remove;
-
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
@@ -20,9 +17,6 @@ impl Plugin for CustomPlugin {
       .add_system(switch_state);
   }
 }
-
-
-
 
 fn add_to_player(
   mut commands: Commands,
@@ -69,32 +63,6 @@ fn switch_state(
       }
     }
   }
-
-  // if key_input.just_pressed(KeyCode::M) {
-  //   next_state.set(EditState::AddNormal);
-  //   println!("EditState::AddNormal");
-  //   // match state.0 {
-  //   //   EditState::AddNormal => {
-  //   //     next_state.set(EditState::AddSnap);
-  //   //   },
-  //   //   EditState::AddSnap | _ => {
-  //   //     next_state.set(EditState::AddNormal);
-  //   //   }
-  //   // }
-  // }
-
-  // if key_input.just_pressed(KeyCode::N) {
-  //   next_state.set(EditState::RemoveNormal);
-  //   println!("EditState::RemoveNormal");
-  //   // match state.0 {
-  //   //   EditState::RemoveNormal => {
-  //   //     next_state.set(EditState::RemoveSnap);
-  //   //   },
-  //   //   EditState::RemoveSnap | _ => {
-  //   //     next_state.set(EditState::RemoveNormal);
-  //   //   }
-  //   // }
-  // }
 
   if key_input.just_pressed(KeyCode::Up) {
     let len = ShapeState::variants().len();

@@ -127,14 +127,6 @@ fn main() {
         .add_plugin(components::player::CustomPlugin);
     }
   }
-  
-  cfg_if! {
-    if #[cfg(feature = "chunk")] {
-      app
-        .add_plugin(components::chunk::CustomPlugin);
-    }
-  }
-
   cfg_if! {
     if #[cfg(feature = "graphics_low")] {
       app

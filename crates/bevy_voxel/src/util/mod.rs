@@ -126,12 +126,50 @@ pub fn get_sphere_coords(size: f32) -> Vec<[i64; 3]> {
 }
 
 
+pub fn get_keys_by_lod(
+  ranges: Vec<i64>,
+  key: [i64; 3], 
+  max_lod: u8,
+  lod: u8, 
+) -> Vec<[i64; 3]> {
+  // Add level restriction later on
+  let level = max_lod - lod;
+  
+  let index = level as usize;
+  let m0 = ranges[index] as i64;
+  let m1 = ranges[index + 1] as i64;
+  let min = -m1;
+  let max = m1 + 1;
+
+  // println!("index {}, min {}, max {}, r {}, ", index, min, max, r);
+  let mut res = Vec::new();
+  for x in min..max {
+    for y in min..max {
+      for z in min..max {
+        if index == 0 {
+          res.push([x, y, z]);
+        }
+
+        if index > 0 {
+          if x.abs() > m0 && y.abs() > m0 && z.abs() > m0 {
+            res.push([x, y, z]);
+          }
+        }
+
+      }
+    }
+  }
+  res
+}
+
+
+
 #[cfg(test)]
 mod tests {
   use bevy::prelude::Vec3;
   use voxels::chunk::chunk_manager::ChunkManager;
   use crate::util::get_key;
-  use super::{get_near_positions, get_sphere_coords};
+  use super::{get_near_positions, get_sphere_coords, get_keys_by_lod};
 
   #[test]
   fn test_near_positions_1_0() -> Result<(), String> {
@@ -308,8 +346,77 @@ mod tests {
   }
 
   #[test]
+  fn test_get_keys_by_lod() -> Result<(), String> {
+    let key = [0, 0, 0];
+    let lod = 4;
+    let max_lod = 4;
+    let range = 1;
+
+    let ranges = vec![0, range, 4, 8, 12];
+
+    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
+    assert_eq!(keys.len(), 27);
+
+    for k in keys.iter() {
+      assert!(k[0] >= -1);
+      assert!(k[0] <=  1);
+
+      assert!(k[1] >= -1);
+      assert!(k[1] <=  1);
+
+      assert!(k[2] >= -1);
+      assert!(k[2] <=  1);
+    }
+
+    let lod = 3;
+    let max = ranges[2];
+    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
+    for k in keys.iter() {
+      assert!(k[0] < range || k[0] > range);
+      assert!(k[0] <= max);
+
+      assert!(k[1] < range || k[1] > range);
+      assert!(k[1] <= max);
+
+      assert!(k[2] < range || k[2] > range);
+      assert!(k[2] <= max);
+    }
+
+    let lod = 2;
+    let max = ranges[3];
+    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
+    for k in keys.iter() {
+      assert!(k[0] < range || k[0] > range);
+      assert!(k[0] <= max);
+
+      assert!(k[1] < range || k[1] > range);
+      assert!(k[1] <= max);
+
+      assert!(k[2] < range || k[2] > range);
+      assert!(k[2] <= max);
+    }
+
+    let lod = 1;
+    let max = ranges[4];
+    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
+    for k in keys.iter() {
+      assert!(k[0] < range || k[0] > range);
+      assert!(k[0] <= max);
+
+      assert!(k[1] < range || k[1] > range);
+      assert!(k[1] <= max);
+
+      assert!(k[2] < range || k[2] > range);
+      assert!(k[2] <= max);
+    }
+
+    Ok(())
+  }
+
+  /// TODO: Implement later
+  #[test]
   fn test_sphere_coords() -> Result<(), String> {
-    let coords = get_sphere_coords(4);
+    let coords = get_sphere_coords(1.0);
 
     for c in coords.iter() {
       println!("{:?}", c);
@@ -317,6 +424,5 @@ mod tests {
 
     Ok(())
   }
-
 
 }

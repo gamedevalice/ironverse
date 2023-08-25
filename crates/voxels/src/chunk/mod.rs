@@ -744,6 +744,7 @@ pub fn adj_keys_by_scale(world_key: [i64; 3], range: i64, scale: f32) -> Vec<[i6
   keys
 }
 
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -769,7 +770,6 @@ mod tests {
     assert_eq!(key, [-2, -3, -3]);
     Ok(())
   }
-
 
   #[test]
   fn test_adjacent_keys() -> Result<(), String> {
@@ -1140,3 +1140,9 @@ mod tests {
   
 
 }
+
+
+/*
+  Refactor later on
+    Remove unused functions
+*/

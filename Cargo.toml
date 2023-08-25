@@ -55,7 +55,6 @@ wasm-bindgen-futures = "0.4.19"
 default = [
   "core",
   "player",
-  "chunk",
   "utils",
   # "graphics_low",
   "graphics_normal",  # Either graphics_low or graphics_normal
@@ -75,7 +74,6 @@ core = [
   "array-bytes"
 ]
 player = []
-chunk = []
 
 # Graphics
 graphics_low = []

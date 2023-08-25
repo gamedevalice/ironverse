@@ -3,6 +3,7 @@ mod util;
 mod functions;
 mod implement;
 mod editstate;
+mod lod;
 
 use bevy::prelude::*;
 use physics::Physics;
@@ -16,7 +17,8 @@ impl Plugin for BevyVoxelPlugin {
       .add_state::<EditState>()
       .add_state::<ShapeState>()
       .add_plugin(functions::CustomPlugin)
-      .add_plugin(editstate::CustomPlugin);
+      .add_plugin(editstate::CustomPlugin)
+      .add_plugin(lod::CustomPlugin);
   }
 }
 
@@ -140,8 +142,7 @@ impl Default for Center {
 }
 
 
-/*
-  Implement changable voxel edit size
-    Preview
-    Edit
-*/
+pub struct ChunkMesh {
+  pub key: [i64; 3],
+  pub mesh: MeshData,
+}
