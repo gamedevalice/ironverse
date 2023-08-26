@@ -1,9 +1,7 @@
 mod sphere;
 mod cube;
 
-use bevy::{prelude::*, input::mouse::MouseWheel};
-use utils::RayUtils;
-use voxels::data::voxel_octree::VoxelMode;
+use bevy::prelude::*;
 use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState, EditState};
 
 pub struct CustomPlugin;
@@ -18,10 +16,7 @@ impl Plugin for CustomPlugin {
       .add_system(detect_selected_voxel_position)
       .add_system(added_chunks)
       .add_system(center_changed)
-      .add_system(shape_state_changed)
-      // .add_system(set_distance.run_if(distance_state))
-      // .add_system(preview_position_by_dist.run_if(distance_state))
-      ;
+      .add_system(shape_state_changed);
   }
 }
 
@@ -75,16 +70,25 @@ fn added_chunks(
   mut chunks: Query<(&Center, &mut Chunks), Added<Chunks>>
 ) {
   for (center, mut chunks) in &mut chunks {
-    let all_chunks = res.load_adj_chunks_with_collider(center.key);
-    for chunk in all_chunks.iter() {
-      let data = res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-      if data.positions.len() == 0 {
-        continue;
-      }
-      
+    let all_chunks = res.load_adj_mesh_data(center.key);
+    chunks.data.clear();
+
+    for (key, data) in all_chunks.iter() {
       chunks.data.push(ChunkData {
         data: data.clone(),
-        key: chunk.key,
+        key: *key,
+      });
+    }
+
+    let lod = res.chunk_manager.depth;
+
+    let mut meshes = res.load_lod_meshes(center.key, lod as u8 - 1);
+    meshes.append(&mut res.load_lod_meshes(center.key, lod as u8 - 2));
+    meshes.append(&mut res.load_lod_meshes(center.key, lod as u8 - 3));
+    for mesh in meshes.iter() {
+      chunks.data.push(ChunkData {
+        data: mesh.mesh.clone(),
+        key: mesh.key,
       });
     }
   }
@@ -95,17 +99,25 @@ fn center_changed(
   mut centers: Query<(&Center, &mut Chunks), Changed<Center>>
 ) {
   for (center, mut chunks) in &mut centers {
-    let all_chunks = res.load_adj_chunks_with_collider(center.key);
+    let all_chunks = res.load_adj_mesh_data(center.key);
     chunks.data.clear();
 
-    for chunk in all_chunks.iter() {
-      let data = res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-      if data.positions.len() == 0 {
-        continue;
-      }
+    for (key, data) in all_chunks.iter() {
       chunks.data.push(ChunkData {
         data: data.clone(),
-        key: chunk.key,
+        key: *key,
+      });
+    }
+
+
+    let lod = res.chunk_manager.depth;
+    let mut meshes = res.load_lod_meshes(center.key, lod as u8 - 1);
+    meshes.append(&mut res.load_lod_meshes(center.key, lod as u8 - 2));
+    meshes.append(&mut res.load_lod_meshes(center.key, lod as u8 - 3));
+    for mesh in meshes.iter() {
+      chunks.data.push(ChunkData {
+        data: mesh.mesh.clone(),
+        key: mesh.key,
       });
     }
   }

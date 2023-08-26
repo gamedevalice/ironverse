@@ -3,7 +3,7 @@ use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use voxels::utils::key_to_world_coord_f32;
-use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState};
+use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState, ChunkMesh};
 use crate::util::*;
 
 impl BevyVoxelResource {
@@ -12,7 +12,8 @@ impl BevyVoxelResource {
     depth: u32, 
     voxel_scale: f32, 
     range: u8,
-    colors: Vec<[f32; 3]>,  
+    colors: Vec<[f32; 3]>,
+    ranges: Vec<u8>,
   ) -> Self {
     Self {
       chunk_manager: ChunkManager::new(
@@ -25,6 +26,7 @@ impl BevyVoxelResource {
       colliders_cache: Vec::new(),
       shape_state: ShapeState::Cube,
       edit_state: EditState::AddNormal,
+      ranges: ranges,
     }
   }
 
@@ -197,9 +199,6 @@ impl BevyVoxelResource {
     pos
   }
 
-
-
-
   pub fn get_preview(&self, pos: Vec3, preview: &Preview) -> Chunk {
 
     match self.edit_state {
@@ -272,9 +271,6 @@ impl BevyVoxelResource {
     chunk
   }
 
-  
-
-  
   /// Get preview chunk pos converted to world pos considering the size of chunk
   /// and positioned visually correct
   pub fn get_preview_pos(&self, calc_pos: Vec3) -> Vec3 {
@@ -366,8 +362,6 @@ impl BevyVoxelResource {
       }
     }
   }
-
-
 
   pub fn set_voxel_sphere_default(
     &mut self, 
@@ -483,8 +477,6 @@ impl BevyVoxelResource {
   pub fn remove_collider(&mut self, handle: ColliderHandle) {
     self.physics.remove_collider(handle);
   }
-
-
 
 
   /// - calc_pos should be the calculated position based on edit mode
@@ -605,14 +597,32 @@ impl BevyVoxelResource {
     chunk
   }
 
-  /*
-    Editable sphere
-      Mid position set by distance/raycast
-
-   */
 
 
+  pub fn load_lod_meshes(&mut self, key: [i64; 3], lod: u8) -> Vec<ChunkMesh> {
+    let mut chunk_meshes = Vec::new();
+    let max_lod = self.chunk_manager.depth as u8;
 
+    let keys = get_keys_by_lod(self.ranges.clone(), key, max_lod, lod);
+    for k in keys.iter() {
+      let chunk = load_chunk_with_lod(self, *k, lod);
+      let data = self.compute_mesh(VoxelMode::SurfaceNets, &chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+
+      
+      chunk_meshes.push(ChunkMesh { key: *k, mesh: data });
+    }
+
+    chunk_meshes
+  }
 
   
 }
+
+/*
+  TODO
+    Categorize the functions later
+
+*/

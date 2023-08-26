@@ -86,12 +86,13 @@ fn main() {
 
   cfg_if! {
     if #[cfg(feature = "core")] {
+      let range = 1;
       app
         .add_plugin(BevyVoxelPlugin)
         .insert_resource(BevyVoxelResource::new(
           4, 
           0.5, 
-          1, 
+          range, 
           vec![
             [1.0, 0.0, 0.0], 
             [0.0, 1.0, 0.0], 
@@ -105,7 +106,8 @@ fn main() {
       
             [0.0, 0.2, 0.0],
             [0.0, 0.4, 0.0],
-          ]
+          ],
+          vec![0, range, 4, 8, 12],
         ))
         .add_plugin(data::CustomPlugin)
         // .add_plugin(physics::CustomPlugin)
@@ -127,14 +129,6 @@ fn main() {
         .add_plugin(components::player::CustomPlugin);
     }
   }
-  
-  cfg_if! {
-    if #[cfg(feature = "chunk")] {
-      app
-        .add_plugin(components::chunk::CustomPlugin);
-    }
-  }
-
   cfg_if! {
     if #[cfg(feature = "graphics_low")] {
       app
