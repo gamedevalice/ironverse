@@ -12,7 +12,8 @@ impl BevyVoxelResource {
     depth: u32, 
     voxel_scale: f32, 
     range: u8,
-    colors: Vec<[f32; 3]>,  
+    colors: Vec<[f32; 3]>,
+    ranges: Vec<u8>,
   ) -> Self {
     Self {
       chunk_manager: ChunkManager::new(
@@ -25,6 +26,7 @@ impl BevyVoxelResource {
       colliders_cache: Vec::new(),
       shape_state: ShapeState::Cube,
       edit_state: EditState::AddNormal,
+      ranges: ranges,
     }
   }
 
@@ -599,12 +601,9 @@ impl BevyVoxelResource {
 
   pub fn load_lod_meshes(&mut self, key: [i64; 3], lod: u8) -> Vec<ChunkMesh> {
     let mut chunk_meshes = Vec::new();
-
-    let range = self.chunk_manager.range;
     let max_lod = self.chunk_manager.depth as u8;
-    let ranges = vec![0, range as i64, 4, 8, 12];
 
-    let keys = get_keys_by_lod(ranges, key, max_lod, lod);
+    let keys = get_keys_by_lod(self.ranges.clone(), key, max_lod, lod);
     for k in keys.iter() {
       let chunk = load_chunk_with_lod(self, *k, lod);
       let data = self.compute_mesh(VoxelMode::SurfaceNets, &chunk);

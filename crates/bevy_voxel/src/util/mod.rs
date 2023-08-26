@@ -135,7 +135,7 @@ pub fn get_sphere_coords(size: f32) -> Vec<[i64; 3]> {
 
 
 pub fn get_keys_by_lod(
-  ranges: Vec<i64>,
+  ranges: Vec<u8>,
   key: [i64; 3], 
   max_lod: u8,
   lod: u8, 

@@ -30,6 +30,7 @@ pub struct BevyVoxelResource {
   colliders_cache: Vec<ColliderHandle>,
   shape_state: ShapeState,
   edit_state: EditState,
+  ranges: Vec<u8>,
 }
 
 impl Default for BevyVoxelResource {
@@ -40,6 +41,7 @@ impl Default for BevyVoxelResource {
       colliders_cache: Vec::new(),
       shape_state: ShapeState::Cube,
       edit_state: EditState::AddNormal,
+      ranges: vec![0, 1, 4, 8, 12],
     }
   }
 }
