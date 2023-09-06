@@ -89,6 +89,10 @@ test_voxel_size_config = []
 test_raycast = []
 
 
+[[example]]
+name = "editor"
+path = "examples/editor/editor.rs"
+
 
 [[example]]
 name = "add_voxel"
