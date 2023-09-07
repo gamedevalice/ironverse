@@ -47,9 +47,53 @@ fn round(num: f32, nearest: f32) -> f32 {
   res
 }
 
+pub struct Utils;
+impl Utils {
+  pub fn get_keys_by_tile_dist(key: &[i64; 3], min: i64, max: i64) -> Vec<[i64; 3]> {
+    let mut keys = Vec::new();
+    let mut tmp = [0; 3];
+
+    let start = -max;
+    let end = max + 1;
+    for x in start..end {
+      for y in start..end {
+        for z in start..end {
+          tmp[0] = key[0] + x;
+          tmp[1] = key[1] + y;
+          tmp[2] = key[2] + z;
+
+          let range = get_tile_range(key, &tmp);
+          if range >= min && range <= max {
+            keys.push(tmp);
+            println!("key {:?}", tmp);
+          }
+        }
+      }
+    }
+
+    keys
+  }
+
+  
+}
+
+fn get_tile_range(key1: &[i64; 3], key2: &[i64; 3]) -> i64 {
+  let mut range = 0;
+  for i in 0..key1.len() {
+    let r = (key1[i] - key2[i]).abs();
+    if r > range {
+      range = r;
+    }
+  }
+  range
+}
+
+
+
+
 #[cfg(test)]
 mod tests {
-  use crate::round;
+  use crate::{round, Utils, get_tile_range};
 
   #[test]
   fn test_nearest_negative_positions_by_4_0() -> Result<(), String> {
@@ -242,6 +286,64 @@ mod tests {
     assert_eq!(round(1.374, scale), 1.25);
     assert_eq!(round(1.375, scale), 1.5);
     assert_eq!(round(1.499, scale), 1.5);
+
+    Ok(())
+  }
+
+
+  #[test]
+  fn test_get_tile_range() -> Result<(), String> {
+    
+    let range = get_tile_range(&[0, 0, 0], &[0, 0, 0]);
+    assert_eq!(range, 0);
+
+    let range = get_tile_range(&[0, 0, 0], &[1, 0, 0]);
+    assert_eq!(range, 1);
+
+    let range = get_tile_range(&[0, 0, 0], &[1, 1, 1]);
+    assert_eq!(range, 1);
+
+    let range = get_tile_range(&[0, 0, 0], &[2, 1, 1]);
+    assert_eq!(range, 2);
+
+    let range = get_tile_range(&[-1, -1, -1], &[0, 0, 0]);
+    assert_eq!(range, 1);
+
+    let range = get_tile_range(&[-2, -2, -2], &[1, 1, 1]);
+    assert_eq!(range, 3);
+
+    let range = get_tile_range(&[-3, -3, -3], &[-1, -1, -1]);
+    assert_eq!(range, 2);
+
+    let range = get_tile_range(&[-3, -3, -3], &[0, 0, -1]);
+    assert_eq!(range, 3);
+
+
+    Ok(())
+  }
+
+  #[test]
+  fn test_get_keys_by_tile_dist_min0_max1() -> Result<(), String> {
+    let start_key = [0, 0, 0];
+    let min = 0;
+    let max = 1;
+    let keys = Utils::get_keys_by_tile_dist(&start_key, min, max);
+
+    assert_eq!(keys.len(), 27);
+    Ok(())
+  }
+
+  #[test]
+  fn test_get_keys_by_tile_dist_min1_max2() -> Result<(), String> {
+    let start_key = [0, 0, 0];
+    let min = 1;
+    let max = 2;
+    let keys = Utils::get_keys_by_tile_dist(&start_key, min, max);
+
+    // assert_eq!(keys.len(), 27);
+    for key in keys.iter() {
+
+    }
 
     Ok(())
   }
