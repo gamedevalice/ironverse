@@ -23,9 +23,7 @@ fn add(
 ) {
 
   for (_, mesh_comp) in &chunk_query {
-    for key in mesh_comp.added_keys.iter() {
-      // println!("chunks {:?}", key);
-      let data = mesh_comp.data.get(key).unwrap();
+    for data in mesh_comp.added.iter() {
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
@@ -42,7 +40,7 @@ fn add(
           transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics { key: *key, lod: 4 });
+        .insert(ChunkGraphics { key: data.key, lod: 4 });
     }
   }
 }

@@ -155,7 +155,7 @@ impl Utils {
     let min = ranges[index] as i64;
     let max = ranges[index + 1] as i64;
     
-    println!("min {}: max {}", min, max);
+    // println!("min {}: max {}", min, max);
     if index == 0 {
       let keys = Utils::get_keys_by_tile_dist(&key, min, max);
       let mut delta = Vec::new();
@@ -172,7 +172,8 @@ impl Utils {
       let keys = Utils::get_keys_by_dist(&key, min + 1, max);
       let mut res = Vec::new();
       for k in keys.iter() {
-        if Utils::get_tile_range(&key, k) > min {
+        if Utils::get_tile_range(&key, k) > min &&
+        !Utils::in_range(&prev_key, k, max) {
           res.push(*k);
         }
       }

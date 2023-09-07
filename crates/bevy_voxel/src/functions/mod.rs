@@ -1,6 +1,7 @@
 mod sphere;
 mod cube;
 
+
 use bevy::prelude::*;
 use utils::Utils;
 use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState, EditState, MeshComponent};
@@ -11,6 +12,12 @@ cfg_if! {
     use multithread::plugin::PluginResource;
   }
 }
+
+// cfg_if! {
+//   if #[cfg(not(target_arch = "wasm32"))] {
+    mod async_loading;
+//   }
+// }
 
 
 pub struct CustomPlugin;
@@ -23,10 +30,19 @@ impl Plugin for CustomPlugin {
       .add_startup_system(startup)
       .add_system(update)
       .add_system(detect_selected_voxel_position)
-      .add_system(request_chunks)
-      // .add_system(receive_chunks)
+      .add_system(load_main_chunks)
+      .add_system(load_lod_chunks.after(load_main_chunks))
+      .add_system(receive_chunks)
+      .add_system(receive_mesh)
       .add_system(center_changed)
       .add_system(shape_state_changed);
+
+    // cfg_if! {
+    //   if #[cfg(not(target_arch = "wasm32"))] {
+        app
+          .add_plugin(async_loading::CustomPlugin);
+    //   }
+    // }
   }
 }
 
@@ -75,7 +91,7 @@ fn detect_selected_voxel_position(
   }
 }
 
-fn request_chunks(
+fn load_main_chunks(
   mut res: ResMut<BevyVoxelResource>,
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
@@ -88,15 +104,53 @@ fn request_chunks(
     }
     chunks.added_keys.append(&mut keys.clone());
     
-    
-    mesh_comp.added_keys.clear();
+    mesh_comp.added.clear();
     let data = res.load_mesh_data(&tmp_c);
     for d in data.iter() {
       mesh_comp.data.insert(d.key, d.clone());
-      mesh_comp.added_keys.push(d.key);
+      mesh_comp.added.push(d.clone());
     }
   }
 }
+
+fn load_lod_chunks(
+  mut res: ResMut<BevyVoxelResource>,
+  mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
+) {
+  /*
+    Check if chunk is already saved
+    Else
+      Request async
+    
+    Check if mesh data is already saved
+    Else
+      Request async
+  */
+
+  for (center, mut chunks, mut mesh_comp) in &mut chunks {
+    let lod = res.chunk_manager.depth as u8;
+    let keys = res.get_keys_by_lod(center.key, lod - 1);
+    request_load_chunk(&keys, &mut res);
+    
+
+    
+    // let tmp_c = res.load_chunks(&keys);
+    // for c in tmp_c.iter() {
+    //   chunks.data.insert(c.key, c.clone());
+    // }
+    // chunks.added_keys.append(&mut keys.clone());
+    
+    // mesh_comp.added_keys.clear();
+    // let data = res.load_mesh_data(&tmp_c);
+    // for d in data.iter() {
+    //   mesh_comp.data.insert(d.key, d.clone());
+    //   mesh_comp.added_keys.push(d.key);
+    // }
+  }
+}
+
+
+
 
 fn center_changed(
   mut res: ResMut<BevyVoxelResource>,
@@ -116,14 +170,17 @@ fn center_changed(
     chunks.added_keys.append(&mut keys.clone());
 
 
-    mesh_comp.added_keys.clear();
+    mesh_comp.added.clear();
     let data = res.load_mesh_data(&tmp_c);
     for d in data.iter() {
       mesh_comp.data.insert(d.key, d.clone());
-      mesh_comp.added_keys.push(d.key);
+      mesh_comp.added.push(d.clone());
     }
   }
 }
+
+
+
 
 
 fn shape_state_changed(
@@ -149,5 +206,52 @@ fn shape_state_changed(
   }
   
 }
+
+
+
+fn request_load_chunk(
+  keys: &Vec<[i64; 3]>, 
+  bevy_voxel_res: &mut BevyVoxelResource
+) {
+  for key in keys.iter() {
+    let _ = bevy_voxel_res.send_key.send(*key);
+  }
+}
+
+fn receive_chunks(
+  mut res: ResMut<BevyVoxelResource>,
+  mut queries: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
+) {
+  for c in res.recv_chunk.drain() {
+    for (center, mut chunks, mut mesh_comp) in &mut queries {
+      chunks.data.insert(c.key, c.clone());
+
+      res.send_process_mesh.send(c.clone());
+    }
+  }
+}
+
+fn receive_mesh(
+  mut res: ResMut<BevyVoxelResource>,
+  mut queries: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
+) {
+  for data in res.recv_mesh.drain() {
+    for (center, mut chunks, mut mesh_comp) in &mut queries {
+      let d = data.clone();
+      mesh_comp.data.insert(d.key, d);
+
+
+      mesh_comp.added.push(data.clone());
+    }
+  }
+}
+
+
+#[derive(Resource)]
+struct LocalResource {
+
+}
+
+
 
 

@@ -6,6 +6,7 @@ mod editstate;
 mod lod;
 
 use bevy::{prelude::*, utils::HashMap};
+use flume::{Sender, Receiver};
 use physics::Physics;
 use rapier3d::prelude::ColliderHandle;
 use voxels::{chunk::chunk_manager::{ChunkManager, Chunk}, data::voxel_octree::MeshData};
@@ -37,6 +38,18 @@ pub struct BevyVoxelResource {
   pub chunk_manager: ChunkManager,
   pub physics: Physics,
 
+  pub send_key: Sender<[i64; 3]>,
+  pub recv_key: Receiver<[i64; 3]>,
+
+  pub send_chunk: Sender<Chunk>,
+  pub recv_chunk: Receiver<Chunk>,
+
+  pub send_process_mesh: Sender<Chunk>,
+  pub recv_process_mesh: Receiver<Chunk>,
+
+  pub send_mesh: Sender<MeshData>,
+  pub recv_mesh: Receiver<MeshData>,
+
   colliders_cache: Vec<ColliderHandle>,
   shape_state: ShapeState,
   edit_state: EditState,
@@ -45,6 +58,11 @@ pub struct BevyVoxelResource {
 
 impl Default for BevyVoxelResource {
   fn default() -> Self {
+    let (send_key, recv_key) = flume::unbounded();
+    let (send_chunk, recv_chunk) = flume::unbounded();
+    let (send_process_mesh, recv_process_mesh) = flume::unbounded();
+    let (send_mesh, recv_mesh) = flume::unbounded();
+
     Self {
       chunk_manager: ChunkManager::default(),
       physics: Physics::default(),
@@ -52,6 +70,15 @@ impl Default for BevyVoxelResource {
       shape_state: ShapeState::Cube,
       edit_state: EditState::AddNormal,
       ranges: vec![0, 1, 3, 5, 7],
+
+      send_key: send_key,
+      recv_key: recv_key,
+      send_chunk: send_chunk,
+      recv_chunk: recv_chunk,
+      send_process_mesh: send_process_mesh,
+      recv_process_mesh: recv_process_mesh,
+      send_mesh: send_mesh,
+      recv_mesh: recv_mesh,
     }
   }
 }
@@ -132,7 +159,7 @@ pub struct ChunkData {
 #[derive(Component, Debug, Clone, Default)]
 pub struct MeshComponent {
   pub data: HashMap<[i64; 3], MeshData>,
-  pub added_keys: Vec<[i64; 3]>,
+  pub added: Vec<MeshData>,
 }
 
 #[derive(Component, Debug, Clone)]

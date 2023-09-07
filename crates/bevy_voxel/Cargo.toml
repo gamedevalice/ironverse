@@ -13,6 +13,8 @@ voxels = { path = "../voxels" }
 utils = { path = "../utils" }
 multithread = { path = "../multithread" }
 rapier3d = { version = "0.17.2", features = [ "simd-stable" ]}
+flume = "0.11.0"
 
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+futures-lite = "1.11.3"

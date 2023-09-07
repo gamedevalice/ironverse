@@ -37,6 +37,7 @@ impl BevyVoxelResource {
       shape_state: ShapeState::Cube,
       edit_state: EditState::AddNormal,
       ranges: ranges,
+      ..Default::default()
     }
   }
 
