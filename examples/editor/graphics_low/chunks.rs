@@ -21,30 +21,28 @@ fn add(
 ) {
 
   for (_, mesh_comp) in &chunk_query {
-    // for (entity, graphics) in &chunk_graphics {
-    //   commands.entity(entity).despawn_recursive();
-    // }
+    for (entity, graphics) in &chunk_graphics {
+      commands.entity(entity).despawn_recursive();
+    }
 
-    // for mesh in &chunks.data {
-    //   let data = &mesh.data;
+    for (key, data) in mesh_comp.data.iter() {
+      let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+      render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
+      render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
+      render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
 
-    //   let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    //   render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    //   render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    //   render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
+      let mesh_handle = meshes.add(render_mesh);
+      let mut pos = bevy_voxel_res.get_pos(data.key);
 
-    //   let mesh_handle = meshes.add(render_mesh);
-    //   let mut pos = bevy_voxel_res.get_pos(mesh.key);
-
-    //   let mat = materials.add(Color::rgb(0.7, 0.7, 0.7).into());
-    //   commands
-    //     .spawn(MaterialMeshBundle {
-    //       mesh: mesh_handle,
-    //       material: mat,
-    //       transform: Transform::from_translation(pos),
-    //       ..default()
-    //     })
-    //     .insert(ChunkGraphics);
-    // }
+      let mat = materials.add(Color::rgb(0.7, 0.7, 0.7).into());
+      commands
+        .spawn(MaterialMeshBundle {
+          mesh: mesh_handle,
+          material: mat,
+          transform: Transform::from_translation(pos),
+          ..default()
+        })
+        .insert(ChunkGraphics);
+    }
   }
 }

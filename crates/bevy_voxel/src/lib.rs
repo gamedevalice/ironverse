@@ -127,17 +127,7 @@ pub struct ChunkData {
   pub data: MeshData,
 }
 
-#[derive(Component, Debug, Clone)]
-pub struct Chunks {
-  pub data: Vec<ChunkData>,
-}
 
-
-#[derive(Component, Debug, Clone, Default)]
-pub struct ChunkComponet {
-  pub data: HashMap<[i64; 3], MeshData>,
-  pub added_keys: Vec<[i64; 3]>,
-}
 
 #[derive(Component, Debug, Clone, Default)]
 pub struct MeshComponent {
@@ -145,10 +135,17 @@ pub struct MeshComponent {
   pub added_keys: Vec<[i64; 3]>,
 }
 
+#[derive(Component, Debug, Clone)]
+pub struct Chunks {
+  pub data: HashMap<[i64; 3], Chunk>,
+  pub added_keys: Vec<[i64; 3]>,
+}
+
 impl Default for Chunks {
   fn default() -> Self {
     Self {
-      data: Vec::new(),
+      data: HashMap::new(),
+      added_keys: Vec::new(),
     }
   }
 }

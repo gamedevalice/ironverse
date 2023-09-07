@@ -123,10 +123,7 @@ fn remove_voxel_cube(
         continue;
       }
       
-      chunks.data.push(ChunkData {
-        data: data.clone(),
-        key: chunk.key,
-      });
+      chunks.data.insert(chunk.key, chunk.clone());
     }
   }
 }
@@ -159,10 +156,7 @@ fn remove_sphere(
         continue;
       }
       
-      chunks.data.push(ChunkData {
-        data: data.clone(),
-        key: chunk.key,
-      });
+      chunks.data.insert(chunk.key, chunk.clone());
     }
   }
 }

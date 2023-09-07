@@ -77,18 +77,26 @@ fn detect_selected_voxel_position(
 
 fn request_chunks(
   mut res: ResMut<BevyVoxelResource>,
-  mut chunks: Query<(&Center, &mut Chunks), Added<Chunks>>
+  mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
-  for (center, mut chunks) in &mut chunks {
+  for (center, mut chunks, mut mesh_comp) in &mut chunks {
     /*
       Load data
       Load mesh
      */
     let lod = res.chunk_manager.depth as u8;
     let keys = res.get_keys_by_lod(center.key, lod);
-    let chunks = res.load_chunks(&keys);
+    let tmp_c = res.load_chunks(&keys);
+    for c in tmp_c.iter() {
+      chunks.data.insert(c.key, c.clone());
+    }
+    let data = res.load_mesh_data(center.key, &tmp_c);
+    chunks.added_keys.append(&mut keys.clone());
 
-
+    for d in data.iter() {
+      mesh_comp.data.insert(d.key, d.clone());
+    }
+    mesh_comp.added_keys.append(&mut keys.clone());
 
     // chunks.data.clear();
 

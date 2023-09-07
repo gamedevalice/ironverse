@@ -70,10 +70,7 @@ fn add_voxel_cube(
         continue;
       }
       
-      chunks.data.push(ChunkData {
-        data: data.clone(),
-        key: chunk.key,
-      });
+      chunks.data.insert(chunk.key, chunk.clone());
     }
   }
 }
@@ -106,10 +103,7 @@ fn add_voxel_sphere(
         continue;
       }
       
-      chunks.data.push(ChunkData {
-        data: data.clone(),
-        key: chunk.key,
-      });
+      chunks.data.insert(chunk.key, chunk.clone());
     }
   }
 }
