@@ -62,12 +62,23 @@ impl Utils {
           tmp[1] = key[1] + y;
           tmp[2] = key[2] + z;
 
-          let min_range = Utils::get_min_range(key, &tmp);
-          let max_range = Utils::get_max_range(key, &tmp);
-          if min_range >= min && max_range <= max {
-            keys.push(tmp);
-            // println!("key {:?}", tmp);
+          if min == 0 {
+            let range = Utils::get_tile_range(key, &tmp);
+            if range <= max {
+              keys.push(tmp);
+              // println!("key {:?}", tmp);
+            }
           }
+
+          if min > 0 {
+            let range = Utils::get_tile_range(key, &tmp);
+            if range >= min && range <= max {
+              keys.push(tmp);
+              // println!("key {:?}", tmp);
+            }
+          }
+
+          
         }
       }
     }
@@ -75,7 +86,7 @@ impl Utils {
     keys
   }
 
-  pub fn get_max_range(key1: &[i64; 3], key2: &[i64; 3]) -> i64 {
+  pub fn get_tile_range(key1: &[i64; 3], key2: &[i64; 3]) -> i64 {
     let mut range = 0;
     for i in 0..key1.len() {
       let r = (key1[i] - key2[i]).abs();
@@ -85,17 +96,51 @@ impl Utils {
     }
     range
   }
-  
-  pub fn get_min_range(key1: &[i64; 3], key2: &[i64; 3]) -> i64 {
-    let mut range = i64::MAX;
-    for i in 0..key1.len() {
-      let r = (key1[i] - key2[i]).abs();
-      if r < range {
-        range = r;
+
+  pub fn get_keys_by_dist(key: &[i64; 3], min: i64, max: i64) -> Vec<[i64; 3]> {
+    let mut keys = Vec::new();
+    let mut tmp = [0; 3];
+    let start = -max;
+    let end = max + 1;
+    for x in start..end {
+      for y in start..end {
+        for z in start..end {
+          tmp[0] = key[0] + x;
+          tmp[1] = key[1] + y;
+          tmp[2] = key[2] + z;
+
+
+          if min == 0 {
+            if Utils::in_range(key, &tmp, max) {
+              keys.push(tmp);
+            }
+          }
+
+          if min > 0 {
+            if !Utils::in_range(key, &tmp, min) &&
+            Utils::in_range(key, &tmp, max) {
+              keys.push(tmp);
+            }
+          }
+        }
       }
     }
-    range
+
+    keys
   }
+
+  pub fn in_range(key1: &[i64; 3], key2: &[i64; 3], range: i64) -> bool {
+    let mut dist_sqr = 0.0;
+    for i in 0..key1.len() {
+      let diff = key1[i] - key2[i];
+      dist_sqr += (diff * diff) as f32;
+
+    }
+
+    // println!("{}: {}: {:?}", dist_sqr, (range as f32).powf(2.0), key2);
+    dist_sqr <= (range as f32).powf(2.0)
+  }
+
 }
 
 
@@ -302,62 +347,31 @@ mod tests {
     Ok(())
   }
 
-
   #[test]
-  fn test_get_min_range() -> Result<(), String> {
+  fn test_get_tile_range() -> Result<(), String> {
     
-    let range = Utils::get_min_range(&[0, 0, 0], &[0, 0, 0]);
+    let range = Utils::get_tile_range(&[0, 0, 0], &[0, 0, 0]);
     assert_eq!(range, 0);
 
-    let range = Utils::get_min_range(&[0, 0, 0], &[1, 0, 0]);
-    assert_eq!(range, 0);
-
-    let range = Utils::get_min_range(&[0, 0, 0], &[1, 1, 1]);
+    let range = Utils::get_tile_range(&[0, 0, 0], &[1, 0, 0]);
     assert_eq!(range, 1);
 
-    let range = Utils::get_min_range(&[0, 0, 0], &[2, 1, 1]);
+    let range = Utils::get_tile_range(&[0, 0, 0], &[1, 1, 1]);
     assert_eq!(range, 1);
 
-    let range = Utils::get_min_range(&[-1, -1, -1], &[0, 0, 0]);
+    let range = Utils::get_tile_range(&[0, 0, 0], &[2, 1, 1]);
+    assert_eq!(range, 2);
+
+    let range = Utils::get_tile_range(&[-1, -1, -1], &[0, 0, 0]);
     assert_eq!(range, 1);
 
-    let range = Utils::get_min_range(&[-2, -2, -2], &[1, 1, 1]);
+    let range = Utils::get_tile_range(&[-2, -2, -2], &[1, 1, 1]);
     assert_eq!(range, 3);
 
-    let range = Utils::get_min_range(&[-3, -3, -3], &[-1, -1, -1]);
+    let range = Utils::get_tile_range(&[-3, -3, -3], &[-1, -1, -1]);
     assert_eq!(range, 2);
 
-    let range = Utils::get_min_range(&[-3, -3, -3], &[0, 0, -1]);
-    assert_eq!(range, 2);
-
-    Ok(())
-  }
-
-  #[test]
-  fn test_get_max_range() -> Result<(), String> {
-    
-    let range = Utils::get_max_range(&[0, 0, 0], &[0, 0, 0]);
-    assert_eq!(range, 0);
-
-    let range = Utils::get_max_range(&[0, 0, 0], &[1, 0, 0]);
-    assert_eq!(range, 1);
-
-    let range = Utils::get_max_range(&[0, 0, 0], &[1, 1, 1]);
-    assert_eq!(range, 1);
-
-    let range = Utils::get_max_range(&[0, 0, 0], &[2, 1, 1]);
-    assert_eq!(range, 2);
-
-    let range = Utils::get_max_range(&[-1, -1, -1], &[0, 0, 0]);
-    assert_eq!(range, 1);
-
-    let range = Utils::get_max_range(&[-2, -2, -2], &[1, 1, 1]);
-    assert_eq!(range, 3);
-
-    let range = Utils::get_max_range(&[-3, -3, -3], &[-1, -1, -1]);
-    assert_eq!(range, 2);
-
-    let range = Utils::get_max_range(&[-3, -3, -3], &[0, 0, -1]);
+    let range = Utils::get_tile_range(&[-3, -3, -3], &[0, 0, -1]);
     assert_eq!(range, 3);
 
     Ok(())
@@ -375,41 +389,70 @@ mod tests {
   }
 
   #[test]
-  fn test_get_keys_by_tile_dist_min1_max2() -> Result<(), String> {
+  fn test_get_keys_by_tile_dist_min2_max3() -> Result<(), String> {
     let start_key = [0, 0, 0];
-    let min = 1;
-    let max = 2;
+    let min = 2;
+    let max = 3;
     let keys = Utils::get_keys_by_tile_dist(&start_key, min, max);
 
     for key in keys.iter() {
-      println!("{:?}", key);
-
-      let min_range = Utils::get_max_range(&start_key, key);
-      let max_range = Utils::get_max_range(&start_key, key);
-      assert!(min_range >= min && max_range <= max, "{:?} is out of range", key);
+      // println!("{:?}", key);
+      let range = Utils::get_tile_range(&start_key, key);
+      assert!(range >= min && range <= max, "{:?} is out of range", key);
     }
 
     Ok(())
   }
 
   #[test]
-  fn test_get_keys_by_tile_dist_min3_max5() -> Result<(), String> {
+  fn test_get_keys_by_tile_dist_min4_max6() -> Result<(), String> {
     let start_key = [0, 0, 0];
-    let min = 3;
-    let max = 5;
+    let min = 4;
+    let max = 6;
     let keys = Utils::get_keys_by_tile_dist(&start_key, min, max);
 
     for key in keys.iter() {
       println!("{:?}", key);
-
-      let min_range = Utils::get_max_range(&start_key, key);
-      let max_range = Utils::get_max_range(&start_key, key);
-      assert!(min_range >= min && max_range <= max, "{:?} is out of range", key);
+      let range = Utils::get_tile_range(&start_key, key);
+      assert!(range >= min && range <= max, "{:?} is out of range", key);
     }
 
     Ok(())
   }
 
+  #[test]
+  fn test_in_range() -> Result<(), String> {
+    assert!(Utils::in_range(&[0, 0, 0], &[0, 0, 0], 1));
+    assert!(Utils::in_range(&[0, 0, 0], &[1, 0, 0], 1));
 
+    assert!(Utils::in_range(&[0, 0, 0], &[1, 1, 0], 2));
+    assert!(!Utils::in_range(&[0, 0, 0], &[1, 1, 0], 1));
+    
+    assert!(Utils::in_range(&[0, 0, 0], &[1, 1, 1], 2));
+    assert!(!Utils::in_range(&[0, 0, 0], &[1, 1, 1], 1));
+
+    assert!(Utils::in_range(&[0, 0, 0], &[2, 0, 0], 2));
+    assert!(!Utils::in_range(&[0, 0, 0], &[2, 0, 0], 1));
+
+    assert!(Utils::in_range(&[0, 0, 0], &[2, 2, 0], 3));
+    assert!(!Utils::in_range(&[0, 0, 0], &[2, 2, 0], 2));
+
+    Ok(())
+  }
+
+  #[test]
+  fn test_get_keys_by_dist() -> Result<(), String> {
+    let keys = Utils::get_keys_by_dist(&[0, 0, 0], 0, 1);
+    assert_eq!(keys.len(), 7);
+
+    // let keys = Utils::get_keys_by_dist(&[0, 0, 0], 0, 2);
+    // assert_eq!(keys.len(), 7);
+
+    // for k in keys.iter() {
+    //   println!("{:?}", k);
+    // }
+
+    Ok(())
+  }
 
 }

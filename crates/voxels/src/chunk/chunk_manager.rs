@@ -53,7 +53,6 @@ impl Default for Chunk {
 #[derive(Clone)]
 pub struct ChunkManager {
   pub chunks: HashMap<[i64; 3], Chunk>,
-  pub colliders: HashMap<[i64; 3], Chunk>,
   pub depth: u32,
   pub chunk_size: u32,
   pub offset: u32,
@@ -78,7 +77,6 @@ impl Default for ChunkManager {
 
     ChunkManager {
       chunks: HashMap::new(),
-      colliders: HashMap::new(),
       depth: depth,
       chunk_size: chunk_size,
       offset: offset,
@@ -119,7 +117,6 @@ impl ChunkManager {
 
     ChunkManager {
       chunks: HashMap::new(),
-      colliders: HashMap::new(),
       depth: depth,
       chunk_size: chunk_size,
       offset: offset,

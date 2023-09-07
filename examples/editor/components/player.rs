@@ -29,7 +29,7 @@ fn start(
   commands
     .spawn(
       (Player::new(body, collider, k),
-      Center {key: k } )
+      Center {prev_key: k, key: k } )
     );
 }
 
@@ -47,7 +47,7 @@ fn init(
   commands
     .spawn(
       (Player::new(body, collider, k),
-      Center {key: k } )
+      Center {prev_key: k, key: k } )
     );
 
   // info!("player init() {:?}", pos);
@@ -66,6 +66,8 @@ fn update(
     if player.key != k {
       player.prev_key = player.key.clone();
       player.key = k;
+
+      center.prev_key = center.key;
       center.key = k;
     }
   }

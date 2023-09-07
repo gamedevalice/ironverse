@@ -1,10 +1,20 @@
 use bevy::prelude::*;
+
 use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use voxels::utils::key_to_world_coord_f32;
 use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState, ChunkMesh};
 use crate::util::*;
+
+use cfg_if::cfg_if;
+
+cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    use multithread::plugin::send_key;
+  }
+}
+
 
 impl BevyVoxelResource {
 
@@ -619,7 +629,32 @@ impl BevyVoxelResource {
     chunk_meshes
   }
 
-  
+  pub fn request_chunks(&self, player_key: [i64; 3], lod: u8) {
+    let max_lod = self.chunk_manager.depth as u8;
+
+    let keys = get_keys_by_lod(self.ranges.clone(), player_key, max_lod, lod);
+    for key in keys.iter() {
+      // send_key(*key);
+    }
+  }
+
+
+
+
+  pub fn get_keys_by_lod(&self, key: [i64; 3], lod: u8) -> Vec<[i64; 3]> {
+    let max_lod = self.chunk_manager.depth as u8;
+    get_keys_by_lod(self.ranges.clone(), key, max_lod, lod)
+  }
+
+  pub fn load_chunks(&mut self, keys: &Vec<[i64; 3]>) -> Vec<Chunk> {
+    let mut chunks = Vec::new();
+    for key in keys.iter() {
+      chunks.push(load_chunk(self, *key));
+    }
+    chunks
+  }
+
+
 }
 
 /*

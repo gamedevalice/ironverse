@@ -5,10 +5,13 @@ mod implement;
 mod editstate;
 mod lod;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use physics::Physics;
 use rapier3d::prelude::ColliderHandle;
 use voxels::{chunk::chunk_manager::{ChunkManager, Chunk}, data::voxel_octree::MeshData};
+
+use cfg_if::cfg_if;
+
 
 pub struct BevyVoxelPlugin;
 impl Plugin for BevyVoxelPlugin {
@@ -19,6 +22,13 @@ impl Plugin for BevyVoxelPlugin {
       .add_plugin(functions::CustomPlugin)
       .add_plugin(editstate::CustomPlugin)
       .add_plugin(lod::CustomPlugin);
+
+    cfg_if! {
+      if #[cfg(target_arch = "wasm32")] {
+        app
+          .add_plugin(multithread::plugin::CustomPlugin);
+      }
+    }
   }
 }
 
@@ -41,7 +51,7 @@ impl Default for BevyVoxelResource {
       colliders_cache: Vec::new(),
       shape_state: ShapeState::Cube,
       edit_state: EditState::AddNormal,
-      ranges: vec![0, 1, 4, 8, 12],
+      ranges: vec![0, 1, 3, 5, 7],
     }
   }
 }
@@ -122,6 +132,19 @@ pub struct Chunks {
   pub data: Vec<ChunkData>,
 }
 
+
+#[derive(Component, Debug, Clone, Default)]
+pub struct ChunkComponet {
+  pub data: HashMap<[i64; 3], MeshData>,
+  pub added_keys: Vec<[i64; 3]>,
+}
+
+#[derive(Component, Debug, Clone, Default)]
+pub struct MeshComponent {
+  pub data: HashMap<[i64; 3], MeshData>,
+  pub added_keys: Vec<[i64; 3]>,
+}
+
 impl Default for Chunks {
   fn default() -> Self {
     Self {
@@ -132,12 +155,14 @@ impl Default for Chunks {
 
 #[derive(Component)]
 pub struct Center {
+  pub prev_key: [i64; 3],
   pub key: [i64; 3],
 }
 
 impl Default for Center {
   fn default() -> Self {
     Self {
+      prev_key: [0; 3],
       key: [0; 3],
     }
   }

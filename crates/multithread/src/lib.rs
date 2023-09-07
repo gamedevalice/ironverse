@@ -6,7 +6,7 @@ use wasm_mt_pool::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_mt::utils::{console_ln, fetch_as_arraybuffer, sleep};
-use voxels::{chunk::chunk_manager::*, data::{voxel_octree::{MeshData, VoxelMode}, surface_nets::VoxelReuse}};
+use voxels::{chunk::chunk_manager::*, data::{voxel_octree::{MeshData, VoxelMode, VoxelOctree}, surface_nets::VoxelReuse}};
 use flume::{Sender, Receiver};
 use web_sys::{CustomEvent, HtmlInputElement, CustomEventInit};
 use crate::plugin::Octree;
@@ -107,8 +107,6 @@ async fn load_data_from_wasm(
 ) {
 
   while let Ok(msg) = recv.recv_async().await {
-    // console_ln!("load_data_from_wasm {:?}", );
-
     if msg.key.is_some() {
       let key = msg.key.unwrap();
       // console_ln!("load_data {:?}", key);
@@ -119,12 +117,18 @@ async fn load_data_from_wasm(
         let vec = js_sys::Uint8Array::new(ab);
     
         let bytes = vec.to_vec();
-        let octree = Octree {
+        // let octree = Octree {
+        //   key: key,
+        //   data: bytes,
+        // };
+
+        let chunk = Chunk {
           key: key,
-          data: bytes,
+          octree: VoxelOctree::new_from_bytes(bytes),
+          ..Default::default()
         };
         
-        let encoded: Vec<u8> = bincode::serialize(&octree).unwrap();
+        let encoded: Vec<u8> = bincode::serialize(&chunk).unwrap();
         let str = array_bytes::bytes2hex("", encoded);
   
         let e = CustomEvent::new_with_event_init_dict(

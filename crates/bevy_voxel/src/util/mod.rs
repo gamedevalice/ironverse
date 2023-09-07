@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use utils::Utils;
 use voxels::chunk::chunk_manager::{ChunkManager, Chunk};
 use crate::BevyVoxelResource;
 
@@ -144,28 +145,26 @@ pub fn get_keys_by_lod(
   let level = max_lod - lod;
   
   let index = level as usize;
-  let m0 = ranges[index] as i64;
-  let m1 = ranges[index + 1] as i64;
-  let min = -m1;
-  let max = m1 + 1;
+  let min = ranges[index] as i64;
+  let max = ranges[index + 1] as i64;
 
-  let mut res = Vec::new();
-  for x in min..max {
-    for y in min..max {
-      for z in min..max {
-        if index == 0 {
-          res.push([key[0] + x, key[1] + y, key[2] + z]);
-        }
-        
-        if index > 0 {
-          if x.abs() > m0 || y.abs() > m0 || z.abs() > m0 {
-            res.push([key[0] + x, key[1] + y, key[2] + z]);
-          }
-        }
+  if index == 0 {
+    return Utils::get_keys_by_tile_dist(&key, min, max);
+  }
+
+  if index == 1 {
+    let mut keys = Utils::get_keys_by_dist(&key, min + 1, max);
+    let mut res = Vec::new();
+    let len = keys.len();
+    for k in keys.iter() {
+      if Utils::get_tile_range(&key, k) > min {
+        res.push(*k);
       }
     }
+    return res;
   }
-  res
+
+  Utils::get_keys_by_dist(&key, min + 1, max)
 }
 
 
