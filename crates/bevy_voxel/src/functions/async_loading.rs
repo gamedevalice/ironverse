@@ -30,7 +30,6 @@ fn recv_keys(
     let key = key.clone();
     let task = thread_pool.spawn(async move {
       let chunk = ChunkManager::new_chunk(&key, depth, depth, noise);
-
       chunk
     });
   
@@ -46,7 +45,7 @@ fn recv_chunk(
   mut tasks: Query<(Entity, &mut LoadChunk)>,
 ) {
   for (entity, mut task) in &mut tasks {
-    if let Some(chunk) = future::block_on(future::poll_once(&mut task.0)) {
+    if let Some(chunk) = future::block_on(future::poll_once(&mut task.0)) {      
       bevy_voxel_res.send_chunk.send(chunk);
 
       // Task is complete, so remove task component from entity

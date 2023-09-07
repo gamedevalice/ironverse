@@ -95,57 +95,32 @@ fn load_main_chunks(
   mut res: ResMut<BevyVoxelResource>,
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
-  for (center, mut chunks, mut mesh_comp) in &mut chunks {
-    let lod = res.chunk_manager.depth as u8;
-    let keys = res.get_keys_by_lod(center.key, lod);
-    let tmp_c = res.load_chunks(&keys);
-    for c in tmp_c.iter() {
-      chunks.data.insert(c.key, c.clone());
-    }
-    chunks.added_keys.append(&mut keys.clone());
+  // for (center, mut chunks, mut mesh_comp) in &mut chunks {
+  //   let lod = res.chunk_manager.depth as u8;
+  //   let keys = res.get_keys_by_lod(center.key, lod);
+  //   let tmp_c = res.load_chunks(&keys);
+  //   for c in tmp_c.iter() {
+  //     chunks.data.insert(c.key, c.clone());
+  //   }
+  //   chunks.added_keys.append(&mut keys.clone());
     
-    mesh_comp.added.clear();
-    let data = res.load_mesh_data(&tmp_c);
-    for d in data.iter() {
-      mesh_comp.data.insert(d.key, d.clone());
-      mesh_comp.added.push(d.clone());
-    }
-  }
+  //   mesh_comp.added.clear();
+  //   let data = res.load_mesh_data(&tmp_c);
+  //   for d in data.iter() {
+  //     mesh_comp.data.insert(d.key, d.clone());
+  //     mesh_comp.added.push(d.clone());
+  //   }
+  // }
 }
 
 fn load_lod_chunks(
   mut res: ResMut<BevyVoxelResource>,
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
-  /*
-    Check if chunk is already saved
-    Else
-      Request async
-    
-    Check if mesh data is already saved
-    Else
-      Request async
-  */
-
   for (center, mut chunks, mut mesh_comp) in &mut chunks {
     let lod = res.chunk_manager.depth as u8;
     let keys = res.get_keys_by_lod(center.key, lod - 1);
     request_load_chunk(&keys, &mut res);
-    
-
-    
-    // let tmp_c = res.load_chunks(&keys);
-    // for c in tmp_c.iter() {
-    //   chunks.data.insert(c.key, c.clone());
-    // }
-    // chunks.added_keys.append(&mut keys.clone());
-    
-    // mesh_comp.added_keys.clear();
-    // let data = res.load_mesh_data(&tmp_c);
-    // for d in data.iter() {
-    //   mesh_comp.data.insert(d.key, d.clone());
-    //   mesh_comp.added_keys.push(d.key);
-    // }
   }
 }
 
@@ -220,28 +195,31 @@ fn request_load_chunk(
 
 fn receive_chunks(
   mut res: ResMut<BevyVoxelResource>,
-  mut queries: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
+  mut queries: Query<(&Center, &mut Chunks, &mut MeshComponent)>
 ) {
   for c in res.recv_chunk.drain() {
     for (center, mut chunks, mut mesh_comp) in &mut queries {
       chunks.data.insert(c.key, c.clone());
-
       res.send_process_mesh.send(c.clone());
+
+      // println!("receive_chunks {:?}", c.key);
     }
   }
 }
 
 fn receive_mesh(
   mut res: ResMut<BevyVoxelResource>,
-  mut queries: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
+  mut queries: Query<(&Center, &mut Chunks, &mut MeshComponent)>
 ) {
   for data in res.recv_mesh.drain() {
     for (center, mut chunks, mut mesh_comp) in &mut queries {
       let d = data.clone();
       mesh_comp.data.insert(d.key, d);
 
-
-      mesh_comp.added.push(data.clone());
+      if Utils::get_tile_range(&center.key, &data.key) > 1 {
+        mesh_comp.added.push(data.clone());
+      }
+      
     }
   }
 }
