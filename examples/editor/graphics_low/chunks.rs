@@ -1,12 +1,14 @@
 use bevy::{prelude::*, render::{render_resource::PrimitiveTopology, mesh::Indices}};
-use bevy_voxel::{BevyVoxelResource, Chunks, MeshComponent};
+use bevy_voxel::{BevyVoxelResource, Chunks, MeshComponent, Center};
+use utils::Utils;
 use crate::graphics::ChunkGraphics;
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(add);
+      .add_system(add)
+      .add_system(remove);
   }
 }
 
@@ -21,11 +23,9 @@ fn add(
 ) {
 
   for (_, mesh_comp) in &chunk_query {
-    for (entity, graphics) in &chunk_graphics {
-      commands.entity(entity).despawn_recursive();
-    }
-
-    for (key, data) in mesh_comp.data.iter() {
+    for key in mesh_comp.added_keys.iter() {
+      // println!("chunks {:?}", key);
+      let data = mesh_comp.data.get(key).unwrap();
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
@@ -42,7 +42,29 @@ fn add(
           transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics);
+        .insert(ChunkGraphics { key: *key, lod: 4 });
+    }
+  }
+}
+
+fn remove(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
+
+  chunk_query: Query<(Entity, &Center), Changed<MeshComponent>>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+
+  for (_, center) in &chunk_query {
+    for (entity, graphics) in &chunk_graphics {
+
+      if graphics.lod == 4 && 
+      Utils::get_tile_range(&center.key, &graphics.key) > 1 {
+        commands.entity(entity).despawn_recursive();
+      }
+      
     }
   }
 }

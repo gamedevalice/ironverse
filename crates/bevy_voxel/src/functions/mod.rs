@@ -80,74 +80,48 @@ fn request_chunks(
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut chunks {
-    /*
-      Load data
-      Load mesh
-     */
     let lod = res.chunk_manager.depth as u8;
     let keys = res.get_keys_by_lod(center.key, lod);
     let tmp_c = res.load_chunks(&keys);
     for c in tmp_c.iter() {
       chunks.data.insert(c.key, c.clone());
     }
-    let data = res.load_mesh_data(center.key, &tmp_c);
     chunks.added_keys.append(&mut keys.clone());
-
+    
+    
+    mesh_comp.added_keys.clear();
+    let data = res.load_mesh_data(&tmp_c);
     for d in data.iter() {
       mesh_comp.data.insert(d.key, d.clone());
+      mesh_comp.added_keys.push(d.key);
     }
-    mesh_comp.added_keys.append(&mut keys.clone());
-
-    // chunks.data.clear();
-
-    // let all_chunks = res.load_adj_mesh_data(center.key);
-    // for (key, data) in all_chunks.iter() {
-    //   chunks.data.push(ChunkData {
-    //     data: data.clone(),
-    //     key: *key,
-    //   });
-    // }
-
-    // let lod = res.chunk_manager.depth;
-
-    // res.request_chunks(center.key, lod as u8 - 1);
-    // res.request_chunks(center.key, lod as u8 - 2);
-    // res.request_chunks(center.key, lod as u8 - 3);
-
-    // let mut meshes = res.load_lod_meshes(center.key, lod as u8 - 1);
-    // meshes.append(&mut res.load_lod_meshes(center.key, lod as u8 - 2));
-    // meshes.append(&mut res.load_lod_meshes(center.key, lod as u8 - 3));
-    // for mesh in meshes.iter() {
-    //   chunks.data.push(ChunkData {
-    //     data: mesh.mesh.clone(),
-    //     key: mesh.key,
-    //   });
-    // }
   }
 }
 
-// fn receive_chunks(
-//   mut res: ResMut<BevyVoxelResource>,
-//   plugin_res: Res<PluginResource>,
-// ) {
-
-//   for chunk in plugin_res.recv_chunk.drain() {
-    
-//     res.chunk_manager.chunks.insert(chunk.key, chunk);
-//   }
-
-  
-// }
-
-
-
 fn center_changed(
   mut res: ResMut<BevyVoxelResource>,
-  mut centers: Query<(&Center, &mut Chunks), Changed<Center>>
+  mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
-  for (center, mut chunks) in &mut centers {
-    let all_chunks = res.load_adj_mesh_data(center.key);
-    chunks.data.clear();
+  for (center, mut chunks, mut mesh_comp) in &mut centers {
+    let lod = res.chunk_manager.depth as u8;
+    let keys = res.get_delta_keys_by_lod(
+      center.prev_key, center.key, lod
+    );
+
+    let tmp_c = res.load_chunks(&keys);
+    for c in tmp_c.iter() {
+      chunks.data.insert(c.key, c.clone());
+    }
+    chunks.added_keys.clear();
+    chunks.added_keys.append(&mut keys.clone());
+
+
+    mesh_comp.added_keys.clear();
+    let data = res.load_mesh_data(&tmp_c);
+    for d in data.iter() {
+      mesh_comp.data.insert(d.key, d.clone());
+      mesh_comp.added_keys.push(d.key);
+    }
   }
 }
 
@@ -175,15 +149,5 @@ fn shape_state_changed(
   }
   
 }
-
-
-/*
-  Async loading
-    Request Chunk to load by key
-    Receive Chunk loaded by keys
-    Request MeshData by chunk
-    Receive MeshData
-*/
-
 
 

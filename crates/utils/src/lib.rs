@@ -141,6 +141,47 @@ impl Utils {
     dist_sqr <= (range as f32).powf(2.0)
   }
 
+
+  pub fn get_delta_keys_by_lod(
+    ranges: Vec<u8>,
+    prev_key: [i64; 3],
+    key: [i64; 3], 
+    max_lod: u8,
+    lod: u8, 
+  ) -> Vec<[i64; 3]> {
+    let level = max_lod - lod;
+    
+    let index = level as usize;
+    let min = ranges[index] as i64;
+    let max = ranges[index + 1] as i64;
+    
+    println!("min {}: max {}", min, max);
+    if index == 0 {
+      let keys = Utils::get_keys_by_tile_dist(&key, min, max);
+      let mut delta = Vec::new();
+      for k in keys.iter() {
+        // println!("1 {:?}: {}", k, Utils::get_tile_range(&prev_key, k));
+        if Utils::get_tile_range(&prev_key, k) > max {
+          delta.push(*k);
+        }
+      }
+      return delta
+    }
+  
+    if index == 1 {
+      let keys = Utils::get_keys_by_dist(&key, min + 1, max);
+      let mut res = Vec::new();
+      for k in keys.iter() {
+        if Utils::get_tile_range(&key, k) > min {
+          res.push(*k);
+        }
+      }
+      return res;
+    }
+  
+    Utils::get_keys_by_dist(&key, min + 1, max)
+  }
+
 }
 
 
@@ -445,11 +486,21 @@ mod tests {
     let keys = Utils::get_keys_by_dist(&[0, 0, 0], 0, 1);
     assert_eq!(keys.len(), 7);
 
-    // let keys = Utils::get_keys_by_dist(&[0, 0, 0], 0, 2);
-    // assert_eq!(keys.len(), 7);
+    Ok(())
+  }
 
+  #[test]
+  fn test_get_delta_keys_by_lod() -> Result<(), String> {
+    let ranges = vec![0, 1, 3, 5, 7];
+    let keys = Utils::get_delta_keys_by_lod(
+      ranges, [-1, 0, 0], [0, 0, 0], 4, 4
+    );
+
+    assert_eq!(keys.len(), 9);
+
+    // assert_eq!(keys.len(), 9);
     // for k in keys.iter() {
-    //   println!("{:?}", k);
+    //   println!("res {:?}", k);
     // }
 
     Ok(())

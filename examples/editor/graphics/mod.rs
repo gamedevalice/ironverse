@@ -68,7 +68,10 @@ impl Default for GraphicsResource {
 
 
 #[derive(Component)]
-pub struct ChunkGraphics;
+pub struct ChunkGraphics {
+  pub key: [i64; 3],
+  pub lod: u8,
+}
 
 #[derive(Component, Clone)]
 pub struct ChunkPreviewGraphics {

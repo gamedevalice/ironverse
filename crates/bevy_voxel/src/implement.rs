@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
-use utils::RayUtils;
+use utils::{RayUtils, Utils};
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use voxels::utils::key_to_world_coord_f32;
 use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState, ChunkMesh};
@@ -656,30 +656,8 @@ impl BevyVoxelResource {
 
   pub fn load_mesh_data(
     &mut self, 
-    key: [i64; 3],
     chunks: &Vec<Chunk>,
   ) -> Vec<MeshData> {
-    // let mut mesh_data = Vec::new();
-    // let chunks = self.load_adj_chunks(key);
-
-    // for _ in 0..self.colliders_cache.len() {
-    //   let h = self.colliders_cache.pop().unwrap();
-    //   self.remove_collider(h);
-    // }    
-
-    // self.colliders_cache.clear();
-
-    // for chunk in chunks.iter() {
-    //   let data = self.compute_mesh(VoxelMode::SurfaceNets, chunk);
-    //   if data.positions.len() == 0 {
-    //     continue;
-    //   }
-
-    //   let pos = self.get_pos(chunk.key);
-    //   let c = self.add_collider(pos, &data);
-    //   self.colliders_cache.push(c);
-    //   mesh_data.push((chunk.key, data));
-    // }
 
     let mut mesh_data = Vec::new();
     for _ in 0..self.colliders_cache.len() {
@@ -703,6 +681,15 @@ impl BevyVoxelResource {
     mesh_data
   }
 
+
+  pub fn get_delta_keys_by_lod(
+    &self, prev_key: [i64; 3], key: [i64; 3], lod: u8
+  ) -> Vec<[i64; 3]> {
+    let max_lod = self.chunk_manager.depth as u8;
+    Utils::get_delta_keys_by_lod(
+      self.ranges.clone(), prev_key, key, max_lod, lod
+    )
+  }
 
 }
 
