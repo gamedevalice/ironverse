@@ -32,9 +32,10 @@ impl Plugin for CustomPlugin {
       .add_system(detect_selected_voxel_position)
       .add_system(load_main_chunks)
       .add_system(load_lod_chunks.after(load_main_chunks))
+      .add_system(center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
-      .add_system(center_changed)
+      .add_system(load_lod_center_changed)
       .add_system(shape_state_changed);
 
     // cfg_if! {
@@ -124,33 +125,43 @@ fn load_lod_chunks(
   }
 }
 
-
-
-
 fn center_changed(
+  mut res: ResMut<BevyVoxelResource>,
+  mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
+) {
+  // for (center, mut chunks, mut mesh_comp) in &mut centers {
+  //   let lod = res.chunk_manager.depth as u8;
+  //   let keys = res.get_delta_keys_by_lod(
+  //     center.prev_key, center.key, lod
+  //   );
+
+  //   let tmp_c = res.load_chunks(&keys);
+  //   for c in tmp_c.iter() {
+  //     chunks.data.insert(c.key, c.clone());
+  //   }
+  //   chunks.added_keys.clear();
+  //   chunks.added_keys.append(&mut keys.clone());
+
+
+  //   mesh_comp.added.clear();
+  //   let data = res.load_mesh_data(&tmp_c);
+  //   for d in data.iter() {
+  //     mesh_comp.data.insert(d.key, d.clone());
+  //     mesh_comp.added.push(d.clone());
+  //   }
+  // }
+}
+
+fn load_lod_center_changed(
   mut res: ResMut<BevyVoxelResource>,
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut centers {
     let lod = res.chunk_manager.depth as u8;
     let keys = res.get_delta_keys_by_lod(
-      center.prev_key, center.key, lod
+      center.prev_key, center.key, lod - 1
     );
-
-    let tmp_c = res.load_chunks(&keys);
-    for c in tmp_c.iter() {
-      chunks.data.insert(c.key, c.clone());
-    }
-    chunks.added_keys.clear();
-    chunks.added_keys.append(&mut keys.clone());
-
-
-    mesh_comp.added.clear();
-    let data = res.load_mesh_data(&tmp_c);
-    for d in data.iter() {
-      mesh_comp.data.insert(d.key, d.clone());
-      mesh_comp.added.push(d.clone());
-    }
+    request_load_chunk(&keys, &mut res);
   }
 }
 
@@ -200,9 +211,9 @@ fn receive_chunks(
   for c in res.recv_chunk.drain() {
     for (center, mut chunks, mut mesh_comp) in &mut queries {
       chunks.data.insert(c.key, c.clone());
-      res.send_process_mesh.send(c.clone());
 
-      // println!("receive_chunks {:?}", c.key);
+      
+      res.send_process_mesh.send(c.clone());
     }
   }
 }

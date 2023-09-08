@@ -29,6 +29,7 @@ pub struct VoxelOctree {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default, Clone)]
 pub struct MeshData {
   pub key: [i64; 3],
+  pub lod: u8,
   pub positions: Vec<[f32; 3]>,
   pub normals: Vec<[f32; 3]>,
   pub uvs: Vec<[f32; 2]>,

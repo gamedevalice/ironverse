@@ -91,7 +91,8 @@ fn main() {
         .add_plugin(BevyVoxelPlugin)
         .insert_resource(BevyVoxelResource::new(
           4, 
-          0.5, 
+          // 0.5,
+          1.0, 
           range, 
           vec![
             [1.0, 0.0, 0.0], 

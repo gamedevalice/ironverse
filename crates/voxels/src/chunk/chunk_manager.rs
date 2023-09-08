@@ -34,6 +34,7 @@ pub enum Deployment {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Chunk {
   pub key: [i64; 3],
+  pub lod: u8,
   pub octree: VoxelOctree,
   pub mode: ChunkMode,
   pub is_default: bool,
@@ -43,6 +44,7 @@ impl Default for Chunk {
   fn default() -> Chunk {
     Chunk {
       key: [0, 0, 0],
+      lod: 4,
       octree: VoxelOctree::new(0, 4),
       mode: ChunkMode::Unloaded,
       is_default: true,
@@ -301,6 +303,7 @@ impl ChunkManager {
     let new_octree = VoxelOctree::new(0, depth);
     let mut chunk = Chunk {
       key: key.clone(),
+
       octree: new_octree,
       mode: ChunkMode::None,
       is_default: true,
@@ -315,9 +318,12 @@ impl ChunkManager {
 
     let start = 0;
     let end = size;
-    for octree_x in (start..end).step_by(step) {
-      for octree_y in (start..end).step_by(step) {
-        for octree_z in (start..end).step_by(step) {
+    // for octree_x in (start..end).step_by(step) {
+    //   for octree_y in (start..end).step_by(step) {
+    //     for octree_z in (start..end).step_by(step) {
+    for octree_x in start..end {
+      for octree_y in start..end {
+        for octree_z in start..end {
           let x = start_x + octree_x;
           let y = start_y + octree_y;
           let z = start_z + octree_z;
