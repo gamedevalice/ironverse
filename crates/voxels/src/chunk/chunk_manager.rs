@@ -303,7 +303,7 @@ impl ChunkManager {
     let new_octree = VoxelOctree::new(0, depth);
     let mut chunk = Chunk {
       key: key.clone(),
-
+      lod: lod_level,
       octree: new_octree,
       mode: ChunkMode::None,
       is_default: true,

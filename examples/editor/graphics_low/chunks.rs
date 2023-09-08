@@ -40,7 +40,7 @@ fn add(
           transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics { key: data.key, lod: 4 });
+        .insert(ChunkGraphics { key: data.key, lod: data.lod });
     }
   }
 }
@@ -58,8 +58,12 @@ fn remove(
   for (_, center) in &chunk_query {
     for (entity, graphics) in &chunk_graphics {
 
-      if graphics.lod == 4 && 
-      Utils::get_tile_range(&center.key, &graphics.key) > 1 {
+      // if graphics.lod == 4 && 
+      // Utils::get_tile_range(&center.key, &graphics.key) > 1 {
+      //   commands.entity(entity).despawn_recursive();
+      // }
+
+      if Utils::get_tile_range(&center.key, &graphics.key) > 1 {
         commands.entity(entity).despawn_recursive();
       }
       
