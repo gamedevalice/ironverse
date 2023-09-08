@@ -41,6 +41,8 @@ fn add(
           ..default()
         })
         .insert(ChunkGraphics { key: data.key, lod: data.lod });
+
+      println!("data.lod {}", data.lod);
     }
   }
 }
@@ -51,10 +53,12 @@ fn remove(
   mut materials: ResMut<Assets<StandardMaterial>>,
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 
-  chunk_query: Query<(Entity, &Center), Changed<MeshComponent>>,
+  chunk_query: Query<(Entity, &Center)>,
   bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
 
+  let max_lod = bevy_voxel_res.chunk_manager.depth as u8;
+  let ranges = bevy_voxel_res.ranges.clone();
   for (_, center) in &chunk_query {
     for (entity, graphics) in &chunk_graphics {
 
@@ -63,8 +67,20 @@ fn remove(
       //   commands.entity(entity).despawn_recursive();
       // }
 
-      if Utils::get_tile_range(&center.key, &graphics.key) > 1 {
-        commands.entity(entity).despawn_recursive();
+      // if Utils::get_tile_range(&center.key, &graphics.key) > 1 {
+      //   commands.entity(entity).despawn_recursive();
+      // }
+
+      if graphics.lod == max_lod - 1 {
+        let min = ranges[1] as i64;
+        let max = ranges[2] as i64;
+        if Utils::get_tile_range(&center.key, &graphics.key) < min {
+          commands.entity(entity).despawn_recursive();
+        }
+
+        if Utils::get_tile_range(&center.key, &graphics.key) > max {
+          commands.entity(entity).despawn_recursive();
+        }
       }
       
     }

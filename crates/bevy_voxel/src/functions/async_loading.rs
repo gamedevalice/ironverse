@@ -26,10 +26,10 @@ fn recv_keys(
   let depth = bevy_voxel_res.chunk_manager.depth as u8;
   let noise = bevy_voxel_res.chunk_manager.noise;
 
-  for key in bevy_voxel_res.recv_key.drain() {
+  for (key, lod) in bevy_voxel_res.recv_key.drain() {
     let key = key.clone();
     let task = thread_pool.spawn(async move {
-      let chunk = ChunkManager::new_chunk(&key, depth, depth, noise);
+      let chunk = ChunkManager::new_chunk(&key, depth, lod as u8, noise);
       chunk
     });
   
@@ -45,7 +45,7 @@ fn recv_chunk(
   mut tasks: Query<(Entity, &mut LoadChunk)>,
 ) {
   for (entity, mut task) in &mut tasks {
-    if let Some(chunk) = future::block_on(future::poll_once(&mut task.0)) {      
+    if let Some(chunk) = future::block_on(future::poll_once(&mut task.0)) {
       bevy_voxel_res.send_chunk.send(chunk);
 
       // Task is complete, so remove task component from entity
@@ -73,7 +73,8 @@ fn recv_process_mesh(
         &mut VoxelReuse::new(depth, 3), 
         &colors, 
         scale, 
-        chunk.key
+        chunk.key,
+        chunk.lod
       )
     });
   

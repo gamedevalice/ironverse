@@ -70,7 +70,8 @@ impl BevyVoxelResource {
         &mut VoxelReuse::new(self.chunk_manager.depth, 3),
         &self.chunk_manager.colors,
         self.chunk_manager.voxel_scale,
-        chunk.key
+        chunk.key,
+        chunk.lod
       )
   }
 

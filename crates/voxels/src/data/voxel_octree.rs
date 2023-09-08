@@ -407,6 +407,7 @@ impl VoxelOctree {
     colors: &Vec<[f32; 3]>,
     scale: f32,
     key: [i64; 3],
+    lod: u8,
   ) -> MeshData {
     match mode {
       VoxelMode::SurfaceNets => get_surface_nets(
@@ -414,7 +415,8 @@ impl VoxelOctree {
         voxel_reuse, 
         colors, 
         scale,
-        key
+        key,
+        lod
       ),
       _ => panic!("VoxelMode {:?} implementation not existing yet", mode),
     }

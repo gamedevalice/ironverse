@@ -188,7 +188,8 @@ fn compute_mesh(chunk: Chunk) -> MeshData {
     &mut VoxelReuse::default(), 
     &vec!([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 1.0, 1.0]), 
     1.0, 
-    chunk.key
+    chunk.key,
+    chunk.lod
   )
 }
 

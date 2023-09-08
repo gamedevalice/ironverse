@@ -95,6 +95,7 @@ pub fn get_surface_nets(
   colors: &Vec<[f32; 3]>,
   scale: f32,
   key: [i64; 3],
+  lod: u8,
 ) -> MeshData {
   let voxel_start = 0;
   let voxel_end = octree.get_size();
@@ -111,6 +112,7 @@ pub fn get_surface_nets(
 
   let mut data = MeshData::default();
   data.key = key;
+  data.lod = lod;
 
   // Checking for each grid
   let start = 0;
