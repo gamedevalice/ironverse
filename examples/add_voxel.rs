@@ -5,7 +5,7 @@ use rapier3d::prelude::ColliderHandle;
 use utils::RayUtils;
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, utils::key_to_world_coord_f32, data::{voxel_octree::VoxelMode, surface_nets::VoxelReuse}};
 use bevy_flycam::NoCameraAndGrabPlugin;
-use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource};
+use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource, Preview};
 
 
 fn main() {
@@ -42,7 +42,8 @@ fn main() {
   
         [0.0, 0.2, 0.0],
         [0.0, 0.4, 0.0],
-      ]
+      ],
+      vec![0, 1, 4, 8, 12],
     ))
     .insert_resource(LocalResource::default())
     .add_startup_system(setup_camera)
@@ -265,7 +266,8 @@ fn reposition_preview_voxel(
     }
     let p = preview.pos.unwrap();
     // println!("preview {:?}", p);
-    let chunk = bevy_voxel_res.get_preview_chunk(p);
+    // let chunk = bevy_voxel_res.get_preview_chunk(p);
+    let chunk = bevy_voxel_res.get_preview(p, preview);
     let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, &chunk);
     
     let pos = bevy_voxel_res.get_preview_pos(p);
@@ -480,24 +482,6 @@ impl Default for Selected {
   fn default() -> Self {
     Self {
       pos: None,
-    }
-  }
-}
-
-#[derive(Component, Clone)]
-struct Preview {
-  pos: Option<Vec3>,
-  level: u8,
-  size: u8,
-}
-
-impl Default for Preview {
-  fn default() -> Self {
-    let level = 1;
-    Self {
-      pos: None,
-      level: level,
-      size: 2_u8.pow(level as u32),
     }
   }
 }
