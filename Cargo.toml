@@ -122,5 +122,9 @@ path = "examples/chunk_depth_voxel_scale_range.rs"
 name = "size_comparison"
 path = "examples/size_comparison.rs"
 
+[[example]]
+name = "lod"
+path = "examples/lod.rs"
+
 
 

@@ -632,7 +632,7 @@ impl BevyVoxelResource {
   }
 
   pub fn get_keys_by_lod(&self, key: [i64; 3], lod: usize) -> Vec<[i64; 3]> {
-    Utils::get_keys_by_lod(&self.ranges, key, lod)
+    Utils::get_keys_by_lod(&self.ranges, &key, lod)
   }
 
   pub fn load_chunks(&mut self, keys: &Vec<[i64; 3]>) -> Vec<Chunk> {

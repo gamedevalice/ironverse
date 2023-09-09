@@ -199,21 +199,21 @@ impl Utils {
 
   pub fn get_keys_by_lod(
     ranges: &Vec<u8>,
-    key: [i64; 3], 
+    key: &[i64; 3], 
     lod: usize,
   ) -> Vec<[i64; 3]> {
     let min = ranges[lod] as i64;
     let max = ranges[lod + 1] as i64;
   
     if lod == 0 {
-      return Utils::get_keys_by_tile_dist(&key, min, max);
+      return Utils::get_keys_by_tile_dist(key, min, max);
     }
   
     if lod == 1 {
-      let keys = Utils::get_keys_by_dist(&key, min + 1, max);
+      let keys = Utils::get_keys_by_dist(key, min + 1, max);
       let mut res = Vec::new();
       for k in keys.iter() {
-        if Utils::get_tile_range(&key, k) > min {
+        if Utils::get_tile_range(key, k) > min {
           res.push(*k);
         }
       }
