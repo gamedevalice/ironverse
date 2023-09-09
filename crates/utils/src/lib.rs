@@ -151,12 +151,10 @@ impl Utils {
     let min = ranges[lod] as i64;
     let max = ranges[lod + 1] as i64;
     
-    // println!("min {}: max {}", min, max);
     if lod == 0 {
       let keys = Utils::get_keys_by_tile_dist(&key, min, max);
       let mut delta = Vec::new();
       for k in keys.iter() {
-        // println!("1 {:?}: {}", k, Utils::get_tile_range(&prev_key, k));
         if Utils::get_tile_range(prev_key, k) > max {
           delta.push(*k);
         }
@@ -165,7 +163,7 @@ impl Utils {
     }
   
     if lod == 1 {
-      let keys = Utils::get_keys_by_dist(key, min + 1, max);
+      let keys = Utils::get_keys_by_dist(key, min, max);
       let mut res = Vec::new();
       for k in keys.iter() {
         if Utils::in_range_by_lod(key, k, ranges, lod) {
@@ -175,7 +173,7 @@ impl Utils {
       return res;
     }
   
-    Utils::get_keys_by_dist(&key, min + 1, max)
+    Utils::get_keys_by_dist(&key, min, max)
   }
 
   pub fn in_range_by_lod(
@@ -546,25 +544,6 @@ mod tests {
     Ok(())
   }
 
-
-  /* TODO: Complete later */
-  #[test]
-  fn test_get_delta_keys_by_lod() -> Result<(), String> {
-    // let ranges = vec![0, 1, 3, 5, 7];
-    // let keys = Utils::get_delta_keys_by_lod(
-    //   ranges, [-1, 0, 0], [0, 0, 0], 4, 4
-    // );
-
-    // assert_eq!(keys.len(), 9);
-
-    // assert_eq!(keys.len(), 9);
-    // for k in keys.iter() {
-    //   println!("res {:?}", k);
-    // }
-
-    Ok(())
-  }
-
   /// TODO: Add each lod index total keys if needed
   #[test]
   fn test_get_keys_by_lod() -> Result<(), String> {
@@ -587,74 +566,58 @@ mod tests {
     Ok(())
   }
 
-/* 
   #[test]
-  fn test_get_keys_by_lod() -> Result<(), String> {
-    let key = [0, 0, 0];
-    let lod = 4;
-    let max_lod = 4;
-    let range = 1;
+  fn test_get_delta_keys_by_lod() -> Result<(), String> {
+    let prev_key = [0, 0, 0];
+    let key = [1, 0, 0];
+    let ranges = vec![0, 1, 4, 8, 12];
 
-    let ranges = vec![0, range, 4, 8, 12];
+    /* Lod 0 */
+    let keys0 = Utils::get_keys_by_lod(&ranges, &key, 0);
+    let mut current_keys0 = Vec::new();
 
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    assert_eq!(keys.len(), 27);
-
-    for k in keys.iter() {
-      assert!(k[0] >= -1);
-      assert!(k[0] <=  1);
-
-      assert!(k[1] >= -1);
-      assert!(k[1] <=  1);
-
-      assert!(k[2] >= -1);
-      assert!(k[2] <=  1);
+    // Remove keys outside range
+    for k in keys0.iter() {
+      if Utils::in_range_by_lod(&prev_key, &k, &ranges, 0) {
+        current_keys0.push(*k);
+      }
     }
 
-    let lod = 3;
-    let max = ranges[2];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
+    // Add the new keys
+    let delta_keys0 = Utils::get_delta_keys_by_lod(&ranges, &prev_key, &key, 0);
+    current_keys0.append(&mut delta_keys0.clone());
 
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
+    assert_eq!(current_keys0.len(), keys0.len());
 
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
+    // Check for duplicates by ensuring all keys are unique
+    for k in keys0.iter() {
+      assert!(current_keys0.contains(k));
     }
 
-    let lod = 2;
-    let max = ranges[3];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
 
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
+    /* Lod 1 */
+    let lod1 = 1;
+    let keys1 = Utils::get_keys_by_lod(&ranges, &key, lod1);
+    let mut current_keys1 = Vec::new();
 
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
+    // Remove keys outside range
+    for k in keys1.iter() {
+      if Utils::in_range_by_lod(&prev_key, &k, &ranges, lod1) {
+        current_keys1.push(*k);
+      }
     }
 
-    let lod = 1;
-    let max = ranges[4];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
+    // Add the new keys
+    let delta_keys1 = Utils::get_delta_keys_by_lod(&ranges, &prev_key, &key, lod1);
+    current_keys1.append(&mut delta_keys1.clone());
+    current_keys1.append(&mut delta_keys1.clone());
 
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
+    assert_eq!(current_keys1.len(), keys1.len());
 
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
-    }
 
     Ok(())
   }
- */
+
+
 
 }

@@ -88,16 +88,18 @@ fn startup_lod(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
-  local_res: Res<LocalResource>,
+  mut local_res: ResMut<LocalResource>,
 ) {
   let ranges = local_res.ranges.clone();
   let key = [0, 0, 0];
 
-  for lod in 0..ranges.len() - 1 {
+  // for lod in 0..ranges.len() - 1 {
+  for lod in 0..2 {
     let keys = Utils::get_keys_by_lod(&ranges, &key, lod);
+    local_res.total_keys += keys.len();
+
     for k in keys.iter() {
       if k[1] != 0 { continue; } // Ignore y
-
       let c = local_res.colors[lod];
       commands.spawn(PbrBundle {
         mesh: meshes.add(shape::Plane::from_size(1.0).into()),
@@ -110,6 +112,8 @@ fn startup_lod(
       .insert(MeshGraphics { lod: lod });
     }
   }
+
+  println!("total_key {}", local_res.total_keys);
 
 }
 
@@ -187,12 +191,19 @@ fn add_mesh_by_delta_keys(
   local_res: Res<LocalResource>,
   centers: Query<&Center, Changed<Center>>,
 ) {
+  /* How to prevent double adding the mesh at startup */
   for center in &centers {
-    // for lod in local_res.ranges.len() - 1 {
-    for lod in 0..1 {
+    if center.prev_key == center.key {
+      return;
+    }
+    let mut total_keys = 0;
+    // for lod in 0..local_res.ranges.len() - 1 {
+    for lod in 0..2 {
       let keys = Utils::get_delta_keys_by_lod(
         &local_res.ranges, &center.prev_key, &center.key, lod
       );
+
+      // total_keys += keys.len();
 
       // println!(
       //   "prev_key {:?} key {:?} lod {} keys.len() {}", 
@@ -211,9 +222,8 @@ fn add_mesh_by_delta_keys(
         })
         .insert(MeshGraphics { lod: lod });
       }
-      
-
     }
+    println!("delta total_keys {}", total_keys);
   }
 }
 
@@ -270,18 +280,21 @@ fn show_diagnostic_texts(
 struct LocalResource {
   ranges: Vec<u32>,
   colors: Vec<[f32; 3]>,
+  total_keys: usize,
 }
 
 impl Default for LocalResource {
   fn default() -> Self {
     Self {
-      ranges: vec![0, 2, 6, 10, 14],
+      // ranges: vec![0, 2, 6, 10, 14],
+      ranges: vec![0, 1, 4, 8, 12],
       colors: vec![
         [1.0, 1.0, 1.0],
         [1.0, 0.0, 0.0],
         [0.0, 1.0, 0.0],
         [0.0, 0.0, 1.0],
       ],
+      total_keys: 0,
     }
   }
 }
