@@ -42,7 +42,7 @@ fn add(
         })
         .insert(ChunkGraphics { key: data.key, lod: data.lod });
 
-      println!("data.lod {}", data.lod);
+      // println!("data.lod {}", data.lod);
     }
   }
 }
@@ -62,23 +62,8 @@ fn remove(
   for (_, center) in &chunk_query {
     for (entity, graphics) in &chunk_graphics {
 
-      // if graphics.lod == 4 && 
-      // Utils::get_tile_range(&center.key, &graphics.key) > 1 {
-      //   commands.entity(entity).despawn_recursive();
-      // }
-
-      // if Utils::get_tile_range(&center.key, &graphics.key) > 1 {
-      //   commands.entity(entity).despawn_recursive();
-      // }
-
       if graphics.lod == max_lod - 1 {
-        let min = ranges[1] as i64;
-        let max = ranges[2] as i64;
-        if Utils::get_tile_range(&center.key, &graphics.key) < min {
-          commands.entity(entity).despawn_recursive();
-        }
-
-        if Utils::get_tile_range(&center.key, &graphics.key) > max {
+        if !bevy_voxel_res.in_lod_range(&center.key, &graphics.key, 1) {
           commands.entity(entity).despawn_recursive();
         }
       }

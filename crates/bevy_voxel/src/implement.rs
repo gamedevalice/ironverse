@@ -685,12 +685,21 @@ impl BevyVoxelResource {
 
 
   pub fn get_delta_keys_by_lod(
-    &self, prev_key: [i64; 3], key: [i64; 3], lod: u8
+    &self, prev_key: [i64; 3], key: [i64; 3], lod: usize
   ) -> Vec<[i64; 3]> {
-    let max_lod = self.chunk_manager.depth as u8;
     Utils::get_delta_keys_by_lod(
-      self.ranges.clone(), prev_key, key, max_lod, lod
+      self.ranges.clone(), prev_key, key, lod
     )
+  }
+
+
+  pub fn in_lod_range(
+    &self, 
+    key1: &[i64; 3], 
+    key2: &[i64; 3],
+    lod_index: usize,
+  ) -> bool {
+    Utils::in_lod_range(key1, key2, &self.ranges, lod_index)
   }
 
 }

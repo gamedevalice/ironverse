@@ -163,9 +163,11 @@ fn load_lod_center_changed(
 
     let cur_lod = lod - 1;
     let keys = res.get_delta_keys_by_lod(
-      center.prev_key, center.key, cur_lod
+      center.prev_key, center.key, 1
     );
     request_load_chunk(&keys, &mut res, cur_lod);
+
+    mesh_comp.added.clear();
   }
 }
 
@@ -231,25 +233,12 @@ fn receive_mesh(
     for (center, mut chunks, mut mesh_comp) in &mut queries {
       let d = data.clone();
       mesh_comp.data.insert(d.key, d);
-      mesh_comp.added.push(data.clone());
 
 
-      // if data.lod == max_lod {
-      //   let max_range = ranges[1] as i64;
-      //   if Utils::get_tile_range(&center.key, &data.key) <= max_range {
-      //     mesh_comp.added.push(data.clone());
-      //   }
+      // if res.in_lod_range(&center.key, &data.key, 1) {
+        mesh_comp.added.push(data.clone());
       // }
 
-      // if data.lod == max_lod - 1 {
-      //   let min = ranges[1] as i64 + 1;
-      //   let max = ranges[2] as i64;
-      //   if Utils::get_tile_range(&center.key, &data.key) >= min &&
-      //   Utils::get_tile_range(&center.key, &data.key) <= max {
-      //     mesh_comp.added.push(data.clone());
-      //   }
-      // }
-      
     }
   }
 }

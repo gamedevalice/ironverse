@@ -141,22 +141,18 @@ impl Utils {
     dist_sqr <= (range as f32).powf(2.0)
   }
 
-
   pub fn get_delta_keys_by_lod(
     ranges: Vec<u8>,
     prev_key: [i64; 3],
-    key: [i64; 3], 
-    max_lod: u8,
-    lod: u8, 
+    key: [i64; 3],
+    lod: usize, 
   ) -> Vec<[i64; 3]> {
-    let level = max_lod - lod;
     
-    let index = level as usize;
-    let min = ranges[index] as i64;
-    let max = ranges[index + 1] as i64;
+    let min = ranges[lod] as i64;
+    let max = ranges[lod + 1] as i64;
     
     // println!("min {}: max {}", min, max);
-    if index == 0 {
+    if lod == 0 {
       let keys = Utils::get_keys_by_tile_dist(&key, min, max);
       let mut delta = Vec::new();
       for k in keys.iter() {
@@ -168,12 +164,11 @@ impl Utils {
       return delta
     }
   
-    if index == 1 {
+    if lod == 1 {
       let keys = Utils::get_keys_by_dist(&key, min + 1, max);
       let mut res = Vec::new();
       for k in keys.iter() {
-        if Utils::get_tile_range(&key, k) > min &&
-        !Utils::in_range(&prev_key, k, max) {
+        if Utils::in_lod_range(&key, k, &ranges, lod) {
           res.push(*k);
         }
       }
@@ -183,6 +178,24 @@ impl Utils {
     Utils::get_keys_by_dist(&key, min + 1, max)
   }
 
+
+
+  pub fn in_lod_range(
+    key1: &[i64; 3], 
+    key2: &[i64; 3],
+    ranges: &Vec<u8>,
+    lod_index: usize
+  ) -> bool {
+    let min = ranges[lod_index] as i64;
+    let max = ranges[lod_index + 1] as i64;
+
+    if lod_index == 1 {
+      return Utils::get_tile_range(key1, key2) > min &&
+      Utils::in_range(key1, key2, max)
+    }
+
+    false
+  }
 }
 
 
