@@ -28,6 +28,7 @@ fn main() {
     .add_system(show_diagnostic_texts)
     .add_system(move_center)
     .add_system(remove_out_of_range_meshes)
+    .add_system(add_mesh_by_delta_keys)
     .run();
 }
 
@@ -92,19 +93,12 @@ fn startup_lod(
   let ranges = local_res.ranges.clone();
   let key = [0, 0, 0];
 
-  let total_lod = 3;
-  let color_indices = vec![
-    [1.0, 1.0, 1.0],
-    [1.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0],
-    [0.0, 0.0, 1.0],
-  ];
-  for lod in 0..total_lod {
+  for lod in 0..ranges.len() - 1 {
     let keys = Utils::get_keys_by_lod(&ranges, &key, lod);
     for k in keys.iter() {
       if k[1] != 0 { continue; } // Ignore y
 
-      let c = color_indices[lod];
+      let c = local_res.colors[lod];
       commands.spawn(PbrBundle {
         mesh: meshes.add(shape::Plane::from_size(1.0).into()),
         material: materials.add(Color::rgb(c[0], c[1], c[2]).into()),
@@ -155,7 +149,7 @@ fn move_center(
       t.z as i64
     ];
     if center.key != key {
-      center.prev_key = key;
+      center.prev_key = center.key;
       center.key = key;
     }
 
@@ -181,6 +175,44 @@ fn remove_out_of_range_meshes(
       if !Utils::in_range_by_lod(&center.key, &mesh_key, &local_res.ranges, mesh.lod) {
         commands.entity(entity).despawn_recursive();
       }
+    }
+  }
+}
+
+fn add_mesh_by_delta_keys(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+
+  local_res: Res<LocalResource>,
+  centers: Query<&Center, Changed<Center>>,
+) {
+  for center in &centers {
+    // for lod in local_res.ranges.len() - 1 {
+    for lod in 0..1 {
+      let keys = Utils::get_delta_keys_by_lod(
+        &local_res.ranges, &center.prev_key, &center.key, lod
+      );
+
+      // println!(
+      //   "prev_key {:?} key {:?} lod {} keys.len() {}", 
+      //   center.prev_key, center.key, lod, keys.len()
+      // );
+
+      for k in keys.iter() {
+        let c = local_res.colors[lod];
+        commands.spawn(PbrBundle {
+          mesh: meshes.add(shape::Plane::from_size(1.0).into()),
+          material: materials.add(Color::rgb(c[0], c[1], c[2]).into()),
+          transform: Transform::from_translation(
+            Vec3::new(k[0] as f32, 0.0, k[2] as f32)
+          ),
+          ..default()
+        })
+        .insert(MeshGraphics { lod: lod });
+      }
+      
+
     }
   }
 }
@@ -237,12 +269,19 @@ fn show_diagnostic_texts(
 #[derive(Resource)]
 struct LocalResource {
   ranges: Vec<u32>,
+  colors: Vec<[f32; 3]>,
 }
 
 impl Default for LocalResource {
   fn default() -> Self {
     Self {
-      ranges: vec![0, 2, 6, 10, 14]
+      ranges: vec![0, 2, 6, 10, 14],
+      colors: vec![
+        [1.0, 1.0, 1.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+      ],
     }
   }
 }

@@ -162,7 +162,7 @@ fn load_lod_center_changed(
 
     let cur_lod = lod - 1;
     let keys = res.get_delta_keys_by_lod(
-      center.prev_key, center.key, 1
+      &center.prev_key, &center.key, 1
     );
     request_load_chunk(&keys, &mut res, cur_lod);
 

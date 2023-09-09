@@ -142,9 +142,9 @@ impl Utils {
   }
 
   pub fn get_delta_keys_by_lod(
-    ranges: Vec<u32>,
-    prev_key: [i64; 3],
-    key: [i64; 3],
+    ranges: &Vec<u32>,
+    prev_key: &[i64; 3],
+    key: &[i64; 3],
     lod: usize, 
   ) -> Vec<[i64; 3]> {
     
@@ -157,7 +157,7 @@ impl Utils {
       let mut delta = Vec::new();
       for k in keys.iter() {
         // println!("1 {:?}: {}", k, Utils::get_tile_range(&prev_key, k));
-        if Utils::get_tile_range(&prev_key, k) > max {
+        if Utils::get_tile_range(prev_key, k) > max {
           delta.push(*k);
         }
       }
@@ -165,10 +165,10 @@ impl Utils {
     }
   
     if lod == 1 {
-      let keys = Utils::get_keys_by_dist(&key, min + 1, max);
+      let keys = Utils::get_keys_by_dist(key, min + 1, max);
       let mut res = Vec::new();
       for k in keys.iter() {
-        if Utils::in_range_by_lod(&key, k, &ranges, lod) {
+        if Utils::in_range_by_lod(key, k, ranges, lod) {
           res.push(*k);
         }
       }

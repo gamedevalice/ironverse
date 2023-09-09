@@ -672,10 +672,10 @@ impl BevyVoxelResource {
 
 
   pub fn get_delta_keys_by_lod(
-    &self, prev_key: [i64; 3], key: [i64; 3], lod: usize
+    &self, prev_key: &[i64; 3], key: &[i64; 3], lod: usize
   ) -> Vec<[i64; 3]> {
     Utils::get_delta_keys_by_lod(
-      self.ranges.clone(), prev_key, key, lod
+      &self.ranges, prev_key, key, lod
     )
   }
 
