@@ -93,13 +93,14 @@ fn startup_lod(
   let ranges = local_res.ranges.clone();
   let key = [0, 0, 0];
 
-  // for lod in 0..ranges.len() - 1 {
-  for lod in 0..2 {
+  for lod in 0..ranges.len() - 1 {
+  // for lod in 0..2 {
     let keys = Utils::get_keys_by_lod(&ranges, &key, lod);
-    local_res.total_keys += keys.len();
+    // local_res.total_keys += keys.len();
 
     for k in keys.iter() {
       if k[1] != 0 { continue; } // Ignore y
+
       let c = local_res.colors[lod];
       commands.spawn(PbrBundle {
         mesh: meshes.add(shape::Plane::from_size(1.0).into()),
@@ -110,6 +111,8 @@ fn startup_lod(
         ..default()
       })
       .insert(MeshGraphics { lod: lod });
+
+      local_res.total_keys += 1;
     }
   }
 
@@ -188,8 +191,9 @@ fn add_mesh_by_delta_keys(
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
 
-  local_res: Res<LocalResource>,
+  mut local_res: ResMut<LocalResource>,
   centers: Query<&Center, Changed<Center>>,
+  mesh_graphics: Query<&MeshGraphics>,
 ) {
   /* How to prevent double adding the mesh at startup */
   for center in &centers {
@@ -197,8 +201,9 @@ fn add_mesh_by_delta_keys(
       return;
     }
     let mut total_keys = 0;
-    // for lod in 0..local_res.ranges.len() - 1 {
-    for lod in 0..2 {
+    for lod in 0..local_res.ranges.len() - 1 {
+
+    // for lod in 0..2 {
       let keys = Utils::get_delta_keys_by_lod(
         &local_res.ranges, &center.prev_key, &center.key, lod
       );
@@ -211,6 +216,8 @@ fn add_mesh_by_delta_keys(
       // );
 
       for k in keys.iter() {
+        if k[1] != 0 { continue; } // Ignore y
+
         let c = local_res.colors[lod];
         commands.spawn(PbrBundle {
           mesh: meshes.add(shape::Plane::from_size(1.0).into()),
@@ -223,7 +230,16 @@ fn add_mesh_by_delta_keys(
         .insert(MeshGraphics { lod: lod });
       }
     }
-    println!("delta total_keys {}", total_keys);
+
+    // println!("delta total_keys {}", total_keys);
+  }
+
+  if local_res.total_mesh != mesh_graphics.iter().len() {
+    local_res.total_mesh = mesh_graphics.iter().len();
+    println!(
+      "total_key {} total_mesh {}", 
+      local_res.total_keys, local_res.total_mesh
+    );
   }
 }
 
@@ -281,6 +297,7 @@ struct LocalResource {
   ranges: Vec<u32>,
   colors: Vec<[f32; 3]>,
   total_keys: usize,
+  total_mesh: usize,
 }
 
 impl Default for LocalResource {
@@ -295,6 +312,7 @@ impl Default for LocalResource {
         [0.0, 0.0, 1.0],
       ],
       total_keys: 0,
+      total_mesh: 0,
     }
   }
 }

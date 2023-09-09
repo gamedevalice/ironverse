@@ -147,33 +147,15 @@ impl Utils {
     key: &[i64; 3],
     lod: usize, 
   ) -> Vec<[i64; 3]> {
-    
-    let min = ranges[lod] as i64;
-    let max = ranges[lod + 1] as i64;
-    
-    if lod == 0 {
-      let keys = Utils::get_keys_by_tile_dist(&key, min, max);
-      let mut delta = Vec::new();
-      for k in keys.iter() {
-        if Utils::get_tile_range(prev_key, k) > max {
-          delta.push(*k);
-        }
+    let keys = Utils::get_keys_by_lod(ranges, key, lod);
+    let mut delta = Vec::new();
+    for k in keys.iter() {
+      // if Utils::get_tile_range(prev_key, k) > max {
+      if !Utils::in_range_by_lod(prev_key, k, ranges, lod) {
+        delta.push(*k);
       }
-      return delta
     }
-  
-    if lod == 1 {
-      let keys = Utils::get_keys_by_dist(key, min, max);
-      let mut res = Vec::new();
-      for k in keys.iter() {
-        if Utils::in_range_by_lod(key, k, ranges, lod) {
-          res.push(*k);
-        }
-      }
-      return res;
-    }
-  
-    Utils::get_keys_by_dist(&key, min, max)
+    delta
   }
 
   pub fn in_range_by_lod(
