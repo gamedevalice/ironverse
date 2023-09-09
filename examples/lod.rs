@@ -27,6 +27,7 @@ fn main() {
     .add_startup_system(startup_lod)
     .add_system(show_diagnostic_texts)
     .add_system(move_center)
+    .add_system(remove_out_of_range_meshes)
     .run();
 }
 
@@ -72,7 +73,10 @@ fn startup(
     transform: Transform::from_xyz(0.0, 1.0, 0.0),
     ..default()
   })
-  .insert(Center::default());
+  .insert(Center {
+    prev_key: [0, 0, 0],
+    key: [0, 0, 0],
+  });
 }
 
 /// White for lod 0
@@ -88,10 +92,12 @@ fn startup_lod(
   let ranges = local_res.ranges.clone();
   let key = [0, 0, 0];
 
-  let total_lod = 2;
+  let total_lod = 3;
   let color_indices = vec![
     [1.0, 1.0, 1.0],
     [1.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.0, 0.0, 1.0],
   ];
   for lod in 0..total_lod {
     let keys = Utils::get_keys_by_lod(&ranges, &key, lod);
@@ -139,13 +145,45 @@ fn move_center(
 
   for (mut trans, mut center) in &mut centers {
     trans.translation.z += vertical;
-    trans.translation.x += horizontal;  
+    trans.translation.x += horizontal;
+
+    let t = trans.translation;
+
+    let key = [
+      t.x as i64,
+      0,
+      t.z as i64
+    ];
+    if center.key != key {
+      center.prev_key = key;
+      center.key = key;
+    }
+
   }
-
-
 }
 
 
+fn remove_out_of_range_meshes(
+  mut commands: Commands,
+  local_res: Res<LocalResource>,
+  meshes: Query<(Entity, &Transform, &MeshGraphics)>,
+  centers: Query<&Center, Changed<Center>>,
+) {
+  for center in &centers {
+    for (entity, trans, mesh) in &meshes {
+      let t = trans.translation;
+      let mesh_key = [
+        t.x as i64,
+        0,
+        t.z as i64
+      ];
+
+      if !Utils::in_range_by_lod(&center.key, &mesh_key, &local_res.ranges, mesh.lod) {
+        commands.entity(entity).despawn_recursive();
+      }
+    }
+  }
+}
 
 
 fn show_diagnostic_texts(

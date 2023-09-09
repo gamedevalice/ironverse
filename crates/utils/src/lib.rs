@@ -196,7 +196,7 @@ impl Utils {
       Utils::in_range(key1, key2, max)
     }
 
-    Utils::in_range(key1, key2, max)
+    !Utils::in_range(key1, key2, min) && Utils::in_range(key1, key2, max)
   }
 
   pub fn get_keys_by_lod(
