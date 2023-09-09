@@ -30,12 +30,12 @@ impl Plugin for CustomPlugin {
       .add_startup_system(startup)
       .add_system(update)
       .add_system(detect_selected_voxel_position)
-      .add_system(load_main_chunks)
-      // .add_system(load_lod_chunks)
-      .add_system(center_changed)
+      // .add_system(load_main_chunks)
+      .add_system(load_lod_chunks)
+      // .add_system(center_changed)
+      .add_system(load_lod_center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
-      // .add_system(load_lod_center_changed)
       .add_system(shape_state_changed);
 
     // cfg_if! {
@@ -120,13 +120,11 @@ fn load_lod_chunks(
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut chunks {
-    for lod in 1..res.ranges.len() - 3 {
-      println!("lod {}", lod);
+    for lod in 1..res.ranges.len() - 2 {
+      // println!("lod {}", lod);
       let keys = res.get_keys_by_lod(center.key, lod);
       request_load_chunk(&keys, &mut res, lod);
     }
-
-    
   }
 }
 
@@ -162,11 +160,12 @@ fn load_lod_center_changed(
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut centers {
-    for lod in 1..res.ranges.len() - 1{
-
+    for lod in 1..res.ranges.len() - 2{
+      let keys = res.get_delta_keys_by_lod(
+        &center.prev_key, &center.key, lod
+      );
+      request_load_chunk(&keys, &mut res, lod);
     }
-
-    mesh_comp.added.clear();
   }
 }
 
@@ -233,11 +232,9 @@ fn receive_mesh(
       let d = data.clone();
       mesh_comp.data.insert(d.key, d);
 
-
-      // if res.in_lod_range(&center.key, &data.key, 1) {
+      if res.in_range_by_lod(&center.key, &data.key, data.lod) {
         mesh_comp.added.push(data.clone());
-      // }
-
+      }
     }
   }
 }

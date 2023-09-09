@@ -19,11 +19,11 @@ fn add(
   mut materials: ResMut<Assets<StandardMaterial>>,
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 
-  chunk_query: Query<(Entity, &MeshComponent), Changed<MeshComponent>>,
+  mut chunk_query: Query<(Entity, &mut MeshComponent), Changed<MeshComponent>>,
   bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
 
-  for (_, mesh_comp) in &chunk_query {
+  for (_, mut mesh_comp) in &mut chunk_query {
     for data in mesh_comp.added.iter() {
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
@@ -45,6 +45,7 @@ fn add(
 
       // println!("data.lod {}", data.lod);
     }
+    mesh_comp.added.clear();
   }
 }
 
@@ -62,7 +63,7 @@ fn remove(
   for (_, center) in &chunk_query {
     for (entity, graphics) in &chunk_graphics {
 
-      if !bevy_voxel_res.in_lod_range(&center.key, &graphics.key, graphics.lod) {
+      if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
         commands.entity(entity).despawn_recursive();
       }
       

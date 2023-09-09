@@ -684,7 +684,7 @@ impl BevyVoxelResource {
   }
 
 
-  pub fn in_lod_range(
+  pub fn in_range_by_lod(
     &self, 
     key1: &[i64; 3], 
     key2: &[i64; 3],
