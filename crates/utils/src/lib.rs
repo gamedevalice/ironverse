@@ -142,7 +142,7 @@ impl Utils {
   }
 
   pub fn get_delta_keys_by_lod(
-    ranges: Vec<u8>,
+    ranges: Vec<u32>,
     prev_key: [i64; 3],
     key: [i64; 3],
     lod: usize, 
@@ -183,7 +183,7 @@ impl Utils {
   pub fn in_lod_range(
     key1: &[i64; 3], 
     key2: &[i64; 3],
-    ranges: &Vec<u8>,
+    ranges: &Vec<u32>,
     lod_index: usize
   ) -> bool {
     let min = ranges[lod_index] as i64;
@@ -198,7 +198,7 @@ impl Utils {
   }
 
   pub fn get_keys_by_lod(
-    ranges: &Vec<u8>,
+    ranges: &Vec<u32>,
     key: &[i64; 3], 
     lod: usize,
   ) -> Vec<[i64; 3]> {
@@ -210,11 +210,19 @@ impl Utils {
     }
   
     if lod == 1 {
-      let keys = Utils::get_keys_by_dist(key, min + 1, max);
+      let tile_min = min;
+      let tile_max = min + 1;
+      let tile_keys = Utils::get_keys_by_tile_dist(key, tile_min, tile_max);
+
+      let mut keys = Utils::get_keys_by_dist(key, min + 1, max);
+      keys.append(&mut tile_keys.clone());
+
       let mut res = Vec::new();
       for k in keys.iter() {
         if Utils::get_tile_range(key, k) > min {
-          res.push(*k);
+          if !res.contains(k) {
+            res.push(*k);
+          }
         }
       }
       return res;

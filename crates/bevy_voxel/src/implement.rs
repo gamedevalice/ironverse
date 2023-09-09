@@ -23,7 +23,7 @@ impl BevyVoxelResource {
     voxel_scale: f32, 
     range: u8,
     colors: Vec<[f32; 3]>,
-    ranges: Vec<u8>,
+    ranges: Vec<u32>,
   ) -> Self {
     Self {
       chunk_manager: ChunkManager::new(

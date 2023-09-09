@@ -53,7 +53,7 @@ pub struct BevyVoxelResource {
   colliders_cache: Vec<ColliderHandle>,
   shape_state: ShapeState,
   edit_state: EditState,
-  pub ranges: Vec<u8>,
+  pub ranges: Vec<u32>,
 }
 
 impl Default for BevyVoxelResource {

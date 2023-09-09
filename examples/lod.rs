@@ -22,6 +22,7 @@ fn main() {
       ..default()
     }))
     .add_plugin(EguiPlugin)
+    .insert_resource(LocalResource::default())
     .add_startup_system(startup)
     .add_startup_system(startup_lod)
     .add_system(show_diagnostic_texts)
@@ -82,8 +83,9 @@ fn startup_lod(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
+  local_res: Res<LocalResource>,
 ) {
-  let ranges = vec![0, 1, 3, 5, 7];
+  let ranges = local_res.ranges.clone();
   let key = [0, 0, 0];
 
   let total_lod = 2;
@@ -190,6 +192,21 @@ fn show_diagnostic_texts(
         }
       });
     });
+}
+
+
+
+#[derive(Resource)]
+struct LocalResource {
+  ranges: Vec<u32>,
+}
+
+impl Default for LocalResource {
+  fn default() -> Self {
+    Self {
+      ranges: vec![0, 2, 6, 10, 14]
+    }
+  }
 }
 
 
