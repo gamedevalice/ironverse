@@ -38,8 +38,8 @@ pub struct BevyVoxelResource {
   pub chunk_manager: ChunkManager,
   pub physics: Physics,
 
-  pub send_key: Sender<([i64; 3], u8)>,
-  pub recv_key: Receiver<([i64; 3], u8)>,
+  pub send_key: Sender<([i64; 3], usize)>,
+  pub recv_key: Receiver<([i64; 3], usize)>,
 
   pub send_chunk: Sender<Chunk>,
   pub recv_chunk: Receiver<Chunk>,

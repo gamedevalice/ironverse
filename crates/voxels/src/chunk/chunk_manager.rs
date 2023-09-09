@@ -34,7 +34,7 @@ pub enum Deployment {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Chunk {
   pub key: [i64; 3],
-  pub lod: u8,
+  pub lod: usize,
   pub octree: VoxelOctree,
   pub mode: ChunkMode,
   pub is_default: bool,
@@ -130,7 +130,7 @@ impl ChunkManager {
       colors: colors,
     }
   }
-
+/* 
   /* TODO: Remove later */
   pub fn set_voxel1(&mut self, pos: &[i64; 3], voxel: u8) -> Vec<[i64; 3]> {
     let mut keys = Vec::new();
@@ -138,8 +138,6 @@ impl ChunkManager {
 
     let w_key = world_pos_to_key(pos, seamless_size);
     // let w_key = voxel_pos_to_key(pos, seamless_size);
-   
-
     for x in -1..1 {
       for y in -1..1 {
         for z in -1..1 {
@@ -196,7 +194,7 @@ impl ChunkManager {
     }
     return keys;
   }
-
+ */
   pub fn set_voxel2(&mut self, pos: &[i64; 3], voxel: u8) -> Vec<([i64; 3], Chunk)> {
     let mut chunks = Vec::new();
     let chunk_size = self.chunk_size;
@@ -213,7 +211,9 @@ impl ChunkManager {
         chunk.octree.set_voxel(local[0], local[1], local[2], voxel);
         chunks.push((key.clone(), chunk.clone()));
       } else {
-        let mut chunk = self.new_chunk3(&key, self.depth as u8);
+        let mut chunk = ChunkManager::new_chunk(
+          &key, self.depth as u8, 0, self.noise
+        );
         chunk.octree.set_voxel(local[0], local[1], local[2], voxel);
         self.set_chunk(key, &chunk);
         chunks.push((key.clone(), chunk.clone()));
@@ -287,7 +287,9 @@ impl ChunkManager {
     TODO: Deprecate later, in favor of using world coord instead of region coord
           We just have to do coord conversion when it is needed in the future
   */
-  pub fn new_chunk(key: &[i64; 3], depth: u8, lod_level: u8, noise: OpenSimplex) -> Chunk {
+  pub fn new_chunk(
+    key: &[i64; 3], depth: u8, lod: usize, noise: OpenSimplex
+  ) -> Chunk {
     let size = 2_i32.pow(depth as u32) as u32;
     // if lod_level > depth {
     //   panic!("lod_level: {} cannot be higher than depth: {}", lod_level, depth);
@@ -303,7 +305,7 @@ impl ChunkManager {
     let new_octree = VoxelOctree::new(0, depth);
     let mut chunk = Chunk {
       key: key.clone(),
-      lod: lod_level,
+      lod: lod,
       octree: new_octree,
       mode: ChunkMode::None,
       is_default: true,
@@ -313,14 +315,8 @@ impl ChunkManager {
     let mut has_value = false;
     let mut data = Vec::new();
 
-    let diff = depth - lod_level;
-    let step = diff as usize + 1;
-
     let start = 0;
     let end = size;
-    // for octree_x in (start..end).step_by(step) {
-    //   for octree_y in (start..end).step_by(step) {
-    //     for octree_z in (start..end).step_by(step) {
     for octree_x in start..end {
       for octree_y in start..end {
         for octree_z in start..end {
@@ -383,13 +379,13 @@ impl ChunkManager {
     chunk
   }
 
-  pub fn new_chunk2(key: &[i64; 3], depth: u32, lod_level: u8, noise: OpenSimplex) -> Chunk {
-    ChunkManager::new_chunk(key, depth as u8, lod_level, noise)
-  }
+  // pub fn new_chunk2(key: &[i64; 3], depth: u32, lod_level: u8, noise: OpenSimplex) -> Chunk {
+  //   ChunkManager::new_chunk(key, depth as u8, lod_level, noise)
+  // }
 
-  pub fn new_chunk3(&self, key: &[i64; 3], lod_level: u8) -> Chunk {
-    ChunkManager::new_chunk(key, self.depth as u8, lod_level, self.noise)
-  }
+  // pub fn new_chunk3(&self, key: &[i64; 3], lod_level: u8) -> Chunk {
+  //   ChunkManager::new_chunk(key, self.depth as u8, lod_level, self.noise)
+  // }
 
   pub fn chunk_mode(self: &Self, key: &[i64; 3]) -> ChunkMode {
     let chunk = self.chunks.get(key);
@@ -448,7 +444,9 @@ impl ChunkManager {
       }
 
       if res.is_none() {
-        let c = self.new_chunk3(key, self.depth as u8);
+        let c = ChunkManager::new_chunk(
+          key, self.depth as u8, 0, self.noise
+        );
         chunks.push(c.clone());
         self.chunks.insert(*key, c);
       }

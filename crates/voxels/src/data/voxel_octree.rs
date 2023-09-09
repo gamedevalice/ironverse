@@ -29,7 +29,7 @@ pub struct VoxelOctree {
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default, Clone)]
 pub struct MeshData {
   pub key: [i64; 3],
-  pub lod: u8,
+  pub lod: usize,
   pub positions: Vec<[f32; 3]>,
   pub normals: Vec<[f32; 3]>,
   pub uvs: Vec<[f32; 2]>,
@@ -407,7 +407,7 @@ impl VoxelOctree {
     colors: &Vec<[f32; 3]>,
     scale: f32,
     key: [i64; 3],
-    lod: u8,
+    lod: usize,
   ) -> MeshData {
     match mode {
       VoxelMode::SurfaceNets => get_surface_nets(

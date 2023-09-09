@@ -31,11 +31,11 @@ impl Plugin for CustomPlugin {
       .add_system(update)
       .add_system(detect_selected_voxel_position)
       .add_system(load_main_chunks)
-      .add_system(load_lod_chunks.after(load_main_chunks))
-      // .add_system(center_changed)
+      // .add_system(load_lod_chunks)
+      .add_system(center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
-      .add_system(load_lod_center_changed)
+      // .add_system(load_lod_center_changed)
       .add_system(shape_state_changed);
 
     // cfg_if! {
@@ -97,20 +97,21 @@ fn load_main_chunks(
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut chunks {
-    // let lod = res.chunk_manager.depth as u8;
-    // let keys = res.get_keys_by_lod(center.key, lod);
-    // let tmp_c = res.load_chunks(&keys);
-    // for c in tmp_c.iter() {
-    //   chunks.data.insert(c.key, c.clone());
-    // }
-    // chunks.added_keys.append(&mut keys.clone());
-    
-    // mesh_comp.added.clear();
-    // let data = res.load_mesh_data(&tmp_c);
-    // for d in data.iter() {
-    //   mesh_comp.data.insert(d.key, d.clone());
-    //   mesh_comp.added.push(d.clone());
-    // }
+    let lod = 0;
+    let keys = res.get_keys_by_lod(center.key, lod);
+
+    let tmp_c = res.load_chunks(&keys, lod);
+    for c in tmp_c.iter() {
+      chunks.data.insert(c.key, c.clone());
+    }
+    chunks.added_keys.append(&mut keys.clone());
+
+
+    let data = res.load_mesh_data(&tmp_c);
+    for d in data.iter() {
+      mesh_comp.data.insert(d.key, d.clone());
+      mesh_comp.added.push(d.clone());
+    }
   }
 }
 
@@ -119,10 +120,13 @@ fn load_lod_chunks(
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut chunks {
-    let lod = res.chunk_manager.depth as u8;
+    for lod in 1..res.ranges.len() - 3 {
+      println!("lod {}", lod);
+      let keys = res.get_keys_by_lod(center.key, lod);
+      request_load_chunk(&keys, &mut res, lod);
+    }
 
-    let keys = res.get_keys_by_lod(center.key, 1);
-    request_load_chunk(&keys, &mut res, 1);
+    
   }
 }
 
@@ -130,27 +134,27 @@ fn center_changed(
   mut res: ResMut<BevyVoxelResource>,
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
-  // for (center, mut chunks, mut mesh_comp) in &mut centers {
-  //   let lod = res.chunk_manager.depth as u8;
-  //   let keys = res.get_delta_keys_by_lod(
-  //     center.prev_key, center.key, lod
-  //   );
+  for (center, mut chunks, mut mesh_comp) in &mut centers {
+    let lod = 0;
+    let keys = res.get_delta_keys_by_lod(
+      &center.prev_key, &center.key, lod
+    );
 
-  //   let tmp_c = res.load_chunks(&keys);
-  //   for c in tmp_c.iter() {
-  //     chunks.data.insert(c.key, c.clone());
-  //   }
-  //   chunks.added_keys.clear();
-  //   chunks.added_keys.append(&mut keys.clone());
+    let tmp_c = res.load_chunks(&keys, lod);
+    for c in tmp_c.iter() {
+      chunks.data.insert(c.key, c.clone());
+    }
+    chunks.added_keys.clear();
+    chunks.added_keys.append(&mut keys.clone());
 
 
-  //   mesh_comp.added.clear();
-  //   let data = res.load_mesh_data(&tmp_c);
-  //   for d in data.iter() {
-  //     mesh_comp.data.insert(d.key, d.clone());
-  //     mesh_comp.added.push(d.clone());
-  //   }
-  // }
+    mesh_comp.added.clear();
+    let data = res.load_mesh_data(&tmp_c);
+    for d in data.iter() {
+      mesh_comp.data.insert(d.key, d.clone());
+      mesh_comp.added.push(d.clone());
+    }
+  }
 }
 
 fn load_lod_center_changed(
@@ -158,13 +162,9 @@ fn load_lod_center_changed(
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut centers {
-    let lod = res.chunk_manager.depth as u8;
+    for lod in 1..res.ranges.len() - 1{
 
-    let cur_lod = lod - 1;
-    let keys = res.get_delta_keys_by_lod(
-      &center.prev_key, &center.key, 1
-    );
-    request_load_chunk(&keys, &mut res, cur_lod);
+    }
 
     mesh_comp.added.clear();
   }
@@ -203,7 +203,7 @@ fn shape_state_changed(
 fn request_load_chunk(
   keys: &Vec<[i64; 3]>, 
   bevy_voxel_res: &mut BevyVoxelResource,
-  lod: u8
+  lod: usize
 ) {
   for key in keys.iter() {
     let _ = bevy_voxel_res.send_key.send((*key, lod));
@@ -240,12 +240,6 @@ fn receive_mesh(
 
     }
   }
-}
-
-
-#[derive(Resource)]
-struct LocalResource {
-
 }
 
 

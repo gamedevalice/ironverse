@@ -29,7 +29,7 @@ fn recv_keys(
   for (key, lod) in bevy_voxel_res.recv_key.drain() {
     let key = key.clone();
     let task = thread_pool.spawn(async move {
-      let chunk = ChunkManager::new_chunk(&key, depth, lod as u8, noise);
+      let chunk = ChunkManager::new_chunk(&key, depth, lod, noise);
       chunk
     });
   

@@ -7,6 +7,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
+      .insert_resource(LocalResource::default())
       .add_system(add)
       .add_system(remove);
   }
@@ -40,7 +41,7 @@ fn add(
           transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics { key: data.key, lod: data.lod });
+        .insert(ChunkGraphics { key: data.key, lod: data.lod as usize });
 
       // println!("data.lod {}", data.lod);
     }
@@ -57,17 +58,29 @@ fn remove(
   bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
 
-  let max_lod = bevy_voxel_res.chunk_manager.depth as u8;
   let ranges = bevy_voxel_res.ranges.clone();
   for (_, center) in &chunk_query {
     for (entity, graphics) in &chunk_graphics {
 
-      if graphics.lod == max_lod - 1 {
-        if !bevy_voxel_res.in_lod_range(&center.key, &graphics.key, 1) {
-          commands.entity(entity).despawn_recursive();
-        }
+      if !bevy_voxel_res.in_lod_range(&center.key, &graphics.key, graphics.lod) {
+        commands.entity(entity).despawn_recursive();
       }
       
+    }
+  }
+}
+
+#[derive(Resource)]
+struct LocalResource {
+  total_keys: usize,  // For testing
+  total_mesh: usize,  // For testing
+}
+
+impl Default for LocalResource {
+  fn default() -> Self {
+    Self {
+      total_keys: 0,
+      total_mesh: 0,
     }
   }
 }

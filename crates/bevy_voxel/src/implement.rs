@@ -54,7 +54,7 @@ impl BevyVoxelResource {
 
     let keys = adjacent_keys(&key, self.chunk_manager.range as i64, true);
     for key in keys.iter() {
-      chunks.push(load_chunk(self, *key));
+      chunks.push(load_chunk(self, *key, 0));
       
     }
 
@@ -618,7 +618,7 @@ impl BevyVoxelResource {
 
     let keys = self.get_keys_by_lod(key, lod);
     for k in keys.iter() {
-      let chunk = load_chunk_with_lod(self, *k, lod as u8);
+      let chunk = load_chunk_with_lod(self, *k, lod);
       let data = self.compute_mesh(VoxelMode::SurfaceNets, &chunk);
       if data.positions.len() == 0 {
         continue;
@@ -635,10 +635,14 @@ impl BevyVoxelResource {
     Utils::get_keys_by_lod(&self.ranges, &key, lod)
   }
 
-  pub fn load_chunks(&mut self, keys: &Vec<[i64; 3]>) -> Vec<Chunk> {
+  pub fn load_chunks(
+    &mut self, 
+    keys: &Vec<[i64; 3]>,
+    lod: usize,
+  ) -> Vec<Chunk> {
     let mut chunks = Vec::new();
     for key in keys.iter() {
-      chunks.push(load_chunk(self, *key));
+      chunks.push(load_chunk(self, *key, lod));
     }
     chunks
   }
@@ -686,6 +690,7 @@ impl BevyVoxelResource {
     key2: &[i64; 3],
     lod: usize,
   ) -> bool {
+    assert!(lod <= self.ranges.len() - 2);
     Utils::in_range_by_lod(key1, key2, &self.ranges, lod)
   }
 

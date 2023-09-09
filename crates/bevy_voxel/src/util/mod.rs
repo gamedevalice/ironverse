@@ -28,10 +28,18 @@ pub fn set_voxel_default(
 }
 
 
-pub fn load_chunk(resource: &mut BevyVoxelResource, key: [i64; 3]) -> Chunk {
+pub fn load_chunk(
+  resource: &mut BevyVoxelResource, 
+  key: [i64; 3],
+  lod: usize,
+) -> Chunk {
   let res = resource.chunk_manager.get_chunk(&key);
   if res.is_none() {
-    let chunk = resource.chunk_manager.new_chunk3(&key, resource.chunk_manager.depth as u8);
+    let chunk = ChunkManager::new_chunk(
+      &key, resource.chunk_manager.depth as u8,
+      lod,
+      resource.chunk_manager.noise,
+    );
     resource.chunk_manager.set_chunk(&key, &chunk);
     return chunk;
   }
@@ -42,9 +50,11 @@ pub fn load_chunk(resource: &mut BevyVoxelResource, key: [i64; 3]) -> Chunk {
 pub fn load_chunk_with_lod(
   resource: &mut BevyVoxelResource, 
   key: [i64; 3], 
-  lod: u8,
+  lod: usize,
 ) -> Chunk {
-  resource.chunk_manager.new_chunk3(&key, lod)
+  ChunkManager::new_chunk(
+    &key, resource.chunk_manager.depth as u8, lod, resource.chunk_manager.noise
+  )
 }
 
 
