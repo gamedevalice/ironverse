@@ -135,38 +135,6 @@ pub fn get_sphere_coords(size: f32) -> Vec<[i64; 3]> {
 }
 
 
-pub fn get_keys_by_lod(
-  ranges: Vec<u8>,
-  key: [i64; 3], 
-  max_lod: u8,
-  lod: u8, 
-) -> Vec<[i64; 3]> {
-  // Add level restriction later on
-  let level = max_lod - lod;
-  
-  let index = level as usize;
-  let min = ranges[index] as i64;
-  let max = ranges[index + 1] as i64;
-
-  if index == 0 {
-    return Utils::get_keys_by_tile_dist(&key, min, max);
-  }
-
-  if index == 1 {
-    let mut keys = Utils::get_keys_by_dist(&key, min + 1, max);
-    let mut res = Vec::new();
-    let len = keys.len();
-    for k in keys.iter() {
-      if Utils::get_tile_range(&key, k) > min {
-        res.push(*k);
-      }
-    }
-    return res;
-  }
-
-  Utils::get_keys_by_dist(&key, min + 1, max)
-}
-
 
 
 #[cfg(test)]
@@ -347,74 +315,6 @@ mod tests {
       let key = get_key(*p, voxel_scale, manager.seamless_size());
       assert_eq!(key, expected[i]);
     }
-    Ok(())
-  }
-
-  #[test]
-  fn test_get_keys_by_lod() -> Result<(), String> {
-    let key = [0, 0, 0];
-    let lod = 4;
-    let max_lod = 4;
-    let range = 1;
-
-    let ranges = vec![0, range, 4, 8, 12];
-
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    assert_eq!(keys.len(), 27);
-
-    for k in keys.iter() {
-      assert!(k[0] >= -1);
-      assert!(k[0] <=  1);
-
-      assert!(k[1] >= -1);
-      assert!(k[1] <=  1);
-
-      assert!(k[2] >= -1);
-      assert!(k[2] <=  1);
-    }
-
-    let lod = 3;
-    let max = ranges[2];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
-
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
-
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
-    }
-
-    let lod = 2;
-    let max = ranges[3];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
-
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
-
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
-    }
-
-    let lod = 1;
-    let max = ranges[4];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
-
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
-
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
-    }
-
     Ok(())
   }
 

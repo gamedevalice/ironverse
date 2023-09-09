@@ -612,13 +612,13 @@ impl BevyVoxelResource {
 
 
 
-  pub fn load_lod_meshes(&mut self, key: [i64; 3], lod: u8) -> Vec<ChunkMesh> {
+  pub fn load_lod_meshes(&mut self, key: [i64; 3], lod: usize) -> Vec<ChunkMesh> {
     let mut chunk_meshes = Vec::new();
     let max_lod = self.chunk_manager.depth as u8;
 
-    let keys = get_keys_by_lod(self.ranges.clone(), key, max_lod, lod);
+    let keys = self.get_keys_by_lod(key, lod);
     for k in keys.iter() {
-      let chunk = load_chunk_with_lod(self, *k, lod);
+      let chunk = load_chunk_with_lod(self, *k, lod as u8);
       let data = self.compute_mesh(VoxelMode::SurfaceNets, &chunk);
       if data.positions.len() == 0 {
         continue;
@@ -631,21 +631,8 @@ impl BevyVoxelResource {
     chunk_meshes
   }
 
-  pub fn request_chunks(&self, player_key: [i64; 3], lod: u8) {
-    let max_lod = self.chunk_manager.depth as u8;
-
-    let keys = get_keys_by_lod(self.ranges.clone(), player_key, max_lod, lod);
-    for key in keys.iter() {
-      // send_key(*key);
-    }
-  }
-
-
-
-
-  pub fn get_keys_by_lod(&self, key: [i64; 3], lod: u8) -> Vec<[i64; 3]> {
-    let max_lod = self.chunk_manager.depth as u8;
-    get_keys_by_lod(self.ranges.clone(), key, max_lod, lod)
+  pub fn get_keys_by_lod(&self, key: [i64; 3], lod: usize) -> Vec<[i64; 3]> {
+    Utils::get_keys_by_lod(&self.ranges, key, lod)
   }
 
   pub fn load_chunks(&mut self, keys: &Vec<[i64; 3]>) -> Vec<Chunk> {

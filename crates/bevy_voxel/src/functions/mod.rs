@@ -121,9 +121,8 @@ fn load_lod_chunks(
   for (center, mut chunks, mut mesh_comp) in &mut chunks {
     let lod = res.chunk_manager.depth as u8;
 
-    let cur_lod = lod - 1;
-    let keys = res.get_keys_by_lod(center.key, cur_lod);
-    request_load_chunk(&keys, &mut res, cur_lod);
+    let keys = res.get_keys_by_lod(center.key, 1);
+    request_load_chunk(&keys, &mut res, 1);
   }
 }
 
