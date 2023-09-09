@@ -684,9 +684,9 @@ impl BevyVoxelResource {
     &self, 
     key1: &[i64; 3], 
     key2: &[i64; 3],
-    lod_index: usize,
+    lod: usize,
   ) -> bool {
-    Utils::in_lod_range(key1, key2, &self.ranges, lod_index)
+    Utils::in_range_by_lod(key1, key2, &self.ranges, lod)
   }
 
 }

@@ -168,7 +168,7 @@ impl Utils {
       let keys = Utils::get_keys_by_dist(&key, min + 1, max);
       let mut res = Vec::new();
       for k in keys.iter() {
-        if Utils::in_lod_range(&key, k, &ranges, lod) {
+        if Utils::in_range_by_lod(&key, k, &ranges, lod) {
           res.push(*k);
         }
       }
@@ -178,23 +178,25 @@ impl Utils {
     Utils::get_keys_by_dist(&key, min + 1, max)
   }
 
-
-
-  pub fn in_lod_range(
+  pub fn in_range_by_lod(
     key1: &[i64; 3], 
     key2: &[i64; 3],
     ranges: &Vec<u32>,
-    lod_index: usize
+    lod: usize
   ) -> bool {
-    let min = ranges[lod_index] as i64;
-    let max = ranges[lod_index + 1] as i64;
+    let min = ranges[lod] as i64;
+    let max = ranges[lod + 1] as i64;
 
-    if lod_index == 1 {
+    if lod == 0 {
+      return Utils::get_tile_range(key1, key2) <= max
+    }
+
+    if lod == 1 {
       return Utils::get_tile_range(key1, key2) > min &&
       Utils::in_range(key1, key2, max)
     }
 
-    false
+    Utils::in_range(key1, key2, max)
   }
 
   pub fn get_keys_by_lod(
@@ -216,7 +218,7 @@ impl Utils {
 
       let mut res = Vec::new();
       for k in keys.iter() {
-        if Utils::get_tile_range(key, k) > min {
+        if !Utils::in_range_by_lod(&key, k, &ranges, 0) {
           if !res.contains(k) {
             res.push(*k);
           }
@@ -225,7 +227,7 @@ impl Utils {
       return res;
     }
   
-    Utils::get_keys_by_dist(&key, min + 1, max)
+    Utils::get_keys_by_dist(&key, min, max)
   }
 }
 
@@ -498,7 +500,6 @@ mod tests {
     let keys = Utils::get_keys_by_tile_dist(&start_key, min, max);
 
     for key in keys.iter() {
-      println!("{:?}", key);
       let range = Utils::get_tile_range(&start_key, key);
       assert!(range >= min && range <= max, "{:?} is out of range", key);
     }
@@ -522,6 +523,17 @@ mod tests {
 
     assert!(Utils::in_range(&[0, 0, 0], &[2, 2, 0], 3));
     assert!(!Utils::in_range(&[0, 0, 0], &[2, 2, 0], 2));
+
+
+    let key = [0, 0, 0];
+    let ranges = vec![0, 1, 4, 8, 12];
+    for lod in 0..ranges.len() - 1 {
+      let keys = Utils::get_keys_by_lod(&ranges, &key, lod);
+      for k in keys.iter() {
+        assert!(Utils::in_range_by_lod(&key, k, &ranges, lod));
+      }
+    }
+    
 
     Ok(())
   }
@@ -553,17 +565,11 @@ mod tests {
     Ok(())
   }
 
+  /// TODO: Add each lod index total keys if needed
   #[test]
   fn test_get_keys_by_lod() -> Result<(), String> {
     let key = [0, 0, 0];
     let ranges = vec![0, 1, 4, 8, 12];
-    let total_lod = 3;
-    let color_indices = vec![
-      [1.0, 1.0, 1.0],
-      [1.0, 0.0, 0.0],
-      [0.0, 1.0, 0.0],
-      [0.0, 0.0, 1.0],
-    ];
 
     let mut all_keys = Vec::new();
     for lod in 0..ranges.len() - 1 {
@@ -576,33 +582,8 @@ mod tests {
         }
       }
     }
-    println!("total_keys {}", all_keys.len());
 
-    // let keys = Utils::get_keys_by_lod(&ranges, &key, 0);
-    // assert_eq!(keys.len(), 27);
-
-    // for k in keys.iter() {
-    //   assert!(k[0] >= -1);
-    //   assert!(k[0] <=  1);
-
-    //   assert!(k[1] >= -1);
-    //   assert!(k[1] <=  1);
-
-    //   assert!(k[2] >= -1);
-    //   assert!(k[2] <=  1);
-    // }
-
-    // let min = ranges[1] as i64;
-    // let max = ranges[2] as i64;
-    // let keys = Utils::get_keys_by_lod(&ranges, &key, 1);
-    // for k in keys.iter() {
-    //   assert!(Utils::get_tile_range(&key, k) > min);
-    //   assert!(Utils::in_range(&key, k, max));
-    // }
-
-
-
-
+    assert_eq!(all_keys.len(), 7153); // Set based on visual check
     Ok(())
   }
 
