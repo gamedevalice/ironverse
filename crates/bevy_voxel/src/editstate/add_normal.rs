@@ -30,21 +30,34 @@ fn add_voxel_cube(
       continue;
     }
 
-    chunks.data.clear();
+    // chunks.data.clear();
     let p = preview.pos.unwrap();
-    bevy_voxel_res.set_voxel_cube(p, preview);
+    let res = bevy_voxel_res.set_voxel_cube(p, preview);
 
-    let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
-    for chunk in all_chunks.iter() {
-      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-      if data.positions.len() == 0 {
-        continue;
-      }
-      
-      chunks.data.insert(chunk.key, chunk.clone());
-      mesh_comp.data.insert(chunk.key, data.clone());
-      // mesh_comp.added.push(data.clone());
+    let mut all_chunks = Vec::new();
+    for (key, chunk) in res.iter() {
+      all_chunks.push(chunk.clone());
+      chunks.data.insert(*key, chunk.clone());
     }
+
+    let data = bevy_voxel_res.load_mesh_data(&all_chunks);
+    for (mesh_data, handle) in data.iter() {
+      
+      mesh_comp.data.insert(mesh_data.key.clone(), mesh_data.clone());
+      mesh_comp.added.push((mesh_data.clone(), *handle));
+    }
+
+    // let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
+    // for chunk in all_chunks.iter() {
+    //   let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
+    //   if data.positions.len() == 0 {
+    //     continue;
+    //   }
+      
+    //   chunks.data.insert(chunk.key, chunk.clone());
+    //   mesh_comp.data.insert(chunk.key, data.clone());
+    //   mesh_comp.added.push(data.clone());
+    // }
   }
 }
 

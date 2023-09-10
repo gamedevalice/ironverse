@@ -20,14 +20,16 @@ fn add(
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 
   mut chunk_query: Query<(Entity, &mut MeshComponent), Changed<MeshComponent>>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
 
   for (_, mut mesh_comp) in &mut chunk_query {
     for (data, collider_handle) in mesh_comp.added.iter() {
-      for (entity, graphics) in &chunk_graphics {
+      'graphics: for (entity, graphics) in &chunk_graphics {
         if graphics.key == data.key {
           commands.entity(entity).despawn();
+          bevy_voxel_res.physics.remove_collider(graphics.collider);
+          continue 'graphics;
         }
       }
 

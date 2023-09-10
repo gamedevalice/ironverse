@@ -308,11 +308,16 @@ impl BevyVoxelResource {
     self.chunk_manager.set_voxel2(&p, voxel);
   }
 
-  pub fn set_voxel_default(&mut self, coord: [i64; 3], voxel: u8) {
-    self.chunk_manager.set_voxel2(&coord, voxel);
+  pub fn set_voxel_default(
+    &mut self, coord: [i64; 3], voxel: u8
+  ) -> Vec<([i64; 3], Chunk)> {
+    self.chunk_manager.set_voxel2(&coord, voxel)
   }
 
-  pub fn set_voxel_cube(&mut self, pos: Vec3, preview: &Preview) {
+  pub fn set_voxel_cube(
+    &mut self, pos: Vec3, preview: &Preview
+  ) -> HashMap<[i64; 3], Chunk> {
+    let mut res = HashMap::new();
     let scale = self.chunk_manager.voxel_scale;
 
     let s = preview.size as i64;
@@ -335,10 +340,15 @@ impl BevyVoxelResource {
             p[2] as i64 + z,
           ];
 
-          self.set_voxel_default(tmp, preview.voxel);
+          let chunks = self.set_voxel_default(tmp, preview.voxel);
+
+          for (key, chunk) in chunks.iter() {
+            res.insert(*key, chunk.clone());
+          }
         }
       }
     }
+    res
   }
 
   pub fn set_voxel_cube_default(
