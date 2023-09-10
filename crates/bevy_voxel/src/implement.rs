@@ -642,32 +642,32 @@ impl BevyVoxelResource {
     lod: usize,
   ) -> Vec<Chunk> {
     let mut chunks = Vec::new();
-    // for key in keys.iter() {
-    //   let d = data.get(key);
-    //   if d.is_none() {
-    //     chunks.push(load_chunk(self, *key, lod));
-    //   }
-    //   if d.is_some() {
-    //     chunks.push(d.unwrap().clone());
-    //   }
-    // }
     for key in keys.iter() {
-      chunks.push(load_chunk(self, *key, lod));
+      let d = data.get(key);
+      if d.is_none() {
+        chunks.push(load_chunk(self, *key, lod));
+      }
+      if d.is_some() {
+        chunks.push(d.unwrap().clone());
+      }
     }
+    // for key in keys.iter() {
+    //   chunks.push(load_chunk(self, *key, lod));
+    // }
     chunks
   }
 
   pub fn load_mesh_data(
     &mut self, 
     chunks: &Vec<Chunk>,
-  ) -> Vec<MeshData> {
+  ) -> Vec<(MeshData, ColliderHandle)> {
 
     let mut mesh_data = Vec::new();
-    for _ in 0..self.colliders_cache.len() {
-      let h = self.colliders_cache.pop().unwrap();
-      self.remove_collider(h);
-    }
-    self.colliders_cache.clear();
+    // for _ in 0..self.colliders_cache.len() {
+    //   let h = self.colliders_cache.pop().unwrap();
+    //   self.remove_collider(h);
+    // }
+    // self.colliders_cache.clear();
 
     for chunk in chunks.iter() {
       let data = self.compute_mesh(VoxelMode::SurfaceNets, chunk);
@@ -677,8 +677,8 @@ impl BevyVoxelResource {
 
       let pos = self.get_pos(chunk.key);
       let c = self.add_collider(pos, &data);
-      self.colliders_cache.push(c);
-      mesh_data.push(data);
+      // self.colliders_cache.push(c);
+      mesh_data.push((data, c));
     }
 
     mesh_data

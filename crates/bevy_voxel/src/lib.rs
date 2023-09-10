@@ -159,7 +159,7 @@ pub struct ChunkData {
 #[derive(Component, Debug, Clone, Default)]
 pub struct MeshComponent {
   pub data: HashMap<[i64; 3], MeshData>,
-  pub added: Vec<MeshData>,
+  pub added: Vec<(MeshData, ColliderHandle)>,
 }
 
 #[derive(Component, Debug, Clone)]

@@ -86,7 +86,7 @@ fn main() {
 
   cfg_if! {
     if #[cfg(feature = "core")] {
-      let range = 1;
+      let range = 2;
       app
         .add_plugin(BevyVoxelPlugin)
         .insert_resource(BevyVoxelResource::new(

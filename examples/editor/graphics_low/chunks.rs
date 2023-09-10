@@ -24,7 +24,7 @@ fn add(
 ) {
 
   for (_, mut mesh_comp) in &mut chunk_query {
-    for data in mesh_comp.added.iter() {
+    for (data, collider_handle) in mesh_comp.added.iter() {
       for (entity, graphics) in &chunk_graphics {
         if graphics.key == data.key {
           commands.entity(entity).despawn();
@@ -47,7 +47,11 @@ fn add(
           transform: Transform::from_translation(pos),
           ..default()
         })
-        .insert(ChunkGraphics { key: data.key, lod: data.lod as usize });
+        .insert(ChunkGraphics { 
+          key: data.key, 
+          lod: data.lod as usize,
+          collider: *collider_handle,
+        });
 
       // println!("data.lod {}", data.lod);
     }
@@ -62,7 +66,7 @@ fn remove(
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 
   chunk_query: Query<(Entity, &Center)>,
-  bevy_voxel_res: Res<BevyVoxelResource>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
 
   let ranges = bevy_voxel_res.ranges.clone();
@@ -71,6 +75,7 @@ fn remove(
 
       if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
         commands.entity(entity).despawn_recursive();
+        bevy_voxel_res.physics.remove_collider(graphics.collider);
       }
       
     }

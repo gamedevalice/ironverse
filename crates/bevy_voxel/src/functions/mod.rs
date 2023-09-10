@@ -3,6 +3,7 @@ mod cube;
 
 
 use bevy::{prelude::*, utils::HashMap};
+use rapier3d::prelude::ColliderHandle;
 use utils::Utils;
 use voxels::data::voxel_octree::MeshData;
 use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState, EditState, MeshComponent};
@@ -32,9 +33,9 @@ impl Plugin for CustomPlugin {
       .add_system(update)
       .add_system(detect_selected_voxel_position)
       .add_system(load_main_chunks)
-      .add_system(load_lod_chunks)
+      // .add_system(load_lod_chunks)
       .add_system(load_main_delta_chunks)
-      .add_system(load_lod_center_changed)
+      // .add_system(load_lod_center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
       .add_system(shape_state_changed);
@@ -109,9 +110,9 @@ fn load_main_chunks(
 
 
     let data = res.load_mesh_data(&tmp_c);
-    for d in data.iter() {
+    for (d, handle) in data.iter() {
       mesh_comp.data.insert(d.key, d.clone());
-      mesh_comp.added.push(d.clone());
+      mesh_comp.added.push((d.clone(), *handle));
     }
   }
 }
@@ -133,40 +134,6 @@ fn load_main_delta_chunks(
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut centers {
-    /*
-      Check if there is a saved data
-      If yes:
-        Remove from keys to request
-        Send to render
-      If none:
-        Request key to load
-     */
-
-    /*
-      Priority:
-        Make editing of terrain work
-        Optimization later
-      
-      Requires:
-        Load the data instantaneously
-
-      Get the data to load from the added keys
-      Load the collider now
-        Multiple ways
-          Without data
-          With data
-          Without MeshData
-
-      Load potential keys
-      Iterate
-      If no data
-        Load
-      If there is data in MeshComponent
-        Load MeshData
-
-    */
-
-
     let lod = 0;
     let keys = res.get_delta_keys_by_lod(
       &center.prev_key, &center.key, lod
@@ -181,9 +148,9 @@ fn load_main_delta_chunks(
 
     mesh_comp.added.clear();
     let data = res.load_mesh_data(&tmp_c);
-    for d in data.iter() {
+    for (d, handle) in data.iter() {
       mesh_comp.data.insert(d.key, d.clone());
-      mesh_comp.added.push(d.clone());
+      mesh_comp.added.push((d.clone(), *handle));
     }
   }
 }
@@ -280,7 +247,7 @@ fn receive_mesh(
       mesh_comp.data.insert(d.key, d);
 
       if res.in_range_by_lod(&center.key, &data.key, data.lod) {
-        mesh_comp.added.push(data.clone());
+        mesh_comp.added.push((data.clone(), ColliderHandle::invalid()));
       }
     }
   }

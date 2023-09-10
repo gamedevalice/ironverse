@@ -43,7 +43,7 @@ fn add_voxel_cube(
       
       chunks.data.insert(chunk.key, chunk.clone());
       mesh_comp.data.insert(chunk.key, data.clone());
-      mesh_comp.added.push(data.clone());
+      // mesh_comp.added.push(data.clone());
     }
   }
 }
