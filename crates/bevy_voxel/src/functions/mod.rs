@@ -2,8 +2,9 @@ mod sphere;
 mod cube;
 
 
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use utils::Utils;
+use voxels::data::voxel_octree::MeshData;
 use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState, EditState, MeshComponent};
 
 use cfg_if::cfg_if;
@@ -31,9 +32,9 @@ impl Plugin for CustomPlugin {
       .add_system(update)
       .add_system(detect_selected_voxel_position)
       .add_system(load_main_chunks)
-      .add_system(load_lod_chunks)
-      .add_system(center_changed)
-      .add_system(load_lod_center_changed)
+      // .add_system(load_lod_chunks)
+      .add_system(load_main_delta_chunks)
+      // .add_system(load_lod_center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
       .add_system(shape_state_changed);
@@ -100,7 +101,7 @@ fn load_main_chunks(
     let lod = 0;
     let keys = res.get_keys_by_lod(center.key, lod);
 
-    let tmp_c = res.load_chunks(&keys, lod);
+    let tmp_c = res.load_chunks(&keys, &chunks.data, lod);
     for c in tmp_c.iter() {
       chunks.data.insert(c.key, c.clone());
     }
@@ -127,23 +128,56 @@ fn load_lod_chunks(
   }
 }
 
-fn center_changed(
+fn load_main_delta_chunks(
   mut res: ResMut<BevyVoxelResource>,
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut centers {
+    /*
+      Check if there is a saved data
+      If yes:
+        Remove from keys to request
+        Send to render
+      If none:
+        Request key to load
+     */
+
+    /*
+      Priority:
+        Make editing of terrain work
+        Optimization later
+      
+      Requires:
+        Load the data instantaneously
+
+      Get the data to load from the added keys
+      Load the collider now
+        Multiple ways
+          Without data
+          With data
+          Without MeshData
+
+      Load potential keys
+      Iterate
+      If no data
+        Load
+      If there is data in MeshComponent
+        Load MeshData
+
+    */
+
+
     let lod = 0;
     let keys = res.get_delta_keys_by_lod(
       &center.prev_key, &center.key, lod
     );
 
-    let tmp_c = res.load_chunks(&keys, lod);
+    let tmp_c = res.load_chunks(&keys, &chunks.data, lod);
     for c in tmp_c.iter() {
       chunks.data.insert(c.key, c.clone());
     }
     chunks.added_keys.clear();
     chunks.added_keys.append(&mut keys.clone());
-
 
     mesh_comp.added.clear();
     let data = res.load_mesh_data(&tmp_c);
@@ -239,5 +273,18 @@ fn receive_mesh(
 }
 
 
+
+fn get_keys_without_data(
+  keys: &Vec<[i64; 3]>,
+  data: &HashMap<[i64; 3], MeshData>
+) -> Vec<[i64; 3]> {
+  let mut filtered_keys = Vec::new();
+  for k in keys.iter() {
+    if !data.contains_key(k) {
+      filtered_keys.push(*k);
+    }
+  }
+  filtered_keys
+}
 
 

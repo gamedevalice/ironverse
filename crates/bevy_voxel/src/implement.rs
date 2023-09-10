@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 
 use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::{RayUtils, Utils};
@@ -638,12 +638,22 @@ impl BevyVoxelResource {
   pub fn load_chunks(
     &mut self, 
     keys: &Vec<[i64; 3]>,
+    data: &HashMap<[i64; 3], Chunk>,
     lod: usize,
   ) -> Vec<Chunk> {
     let mut chunks = Vec::new();
     for key in keys.iter() {
-      chunks.push(load_chunk(self, *key, lod));
+      let d = data.get(key);
+      if d.is_none() {
+        chunks.push(load_chunk(self, *key, lod));
+      }
+      if d.is_some() {
+        chunks.push(d.unwrap().clone());
+      }
     }
+    // for key in keys.iter() {
+    //   chunks.push(load_chunk(self, *key, lod));
+    // }
     chunks
   }
 

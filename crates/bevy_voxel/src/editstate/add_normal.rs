@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{EditState, Preview, BevyVoxelResource, Center, Chunks, PreviewGraphics, ChunkData, ShapeState};
+use crate::{EditState, Preview, BevyVoxelResource, Center, Chunks, PreviewGraphics, ChunkData, ShapeState, MeshComponent};
 
 
 pub struct CustomPlugin;
@@ -17,7 +17,7 @@ fn add_voxel_cube(
   mouse: Res<Input<MouseButton>>,
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 
-  mut chunks: Query<(&Preview, &Center, &mut Chunks)>,
+  mut chunks: Query<(&Preview, &Center, &mut Chunks, &mut MeshComponent)>,
   shape_state: Res<State<ShapeState>>,
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
@@ -25,7 +25,7 @@ fn add_voxel_cube(
     return;
   }
 
-  for (preview, center, mut chunks) in &mut chunks {
+  for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
     if preview.pos.is_none() {
       continue;
     }
@@ -42,6 +42,8 @@ fn add_voxel_cube(
       }
       
       chunks.data.insert(chunk.key, chunk.clone());
+      mesh_comp.data.insert(chunk.key, data.clone());
+      mesh_comp.added.push(data.clone());
     }
   }
 }

@@ -25,6 +25,12 @@ fn add(
 
   for (_, mut mesh_comp) in &mut chunk_query {
     for data in mesh_comp.added.iter() {
+      for (entity, graphics) in &chunk_graphics {
+        if graphics.key == data.key {
+          commands.entity(entity).despawn();
+        }
+      }
+
       let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
       render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());

@@ -328,8 +328,8 @@ impl ChunkManager {
           let mid_y = y as i64 - region_middle_pos;
 
           /* Uncomment this later, testing for now */
-          // let voxel = if mid_y < elevation { 1 } else { 0 };
-          let voxel = if mid_y < 0 { 1 } else { 0 };
+          let voxel = if mid_y < elevation { 1 } else { 0 };
+          // let voxel = if mid_y < 0 { 1 } else { 0 };
           data.push([octree_x, octree_y, octree_z, voxel]);
 
           /*
