@@ -32,9 +32,9 @@ impl Plugin for CustomPlugin {
       .add_system(update)
       .add_system(detect_selected_voxel_position)
       .add_system(load_main_chunks)
-      // .add_system(load_lod_chunks)
+      .add_system(load_lod_chunks)
       .add_system(load_main_delta_chunks)
-      // .add_system(load_lod_center_changed)
+      .add_system(load_lod_center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
       .add_system(shape_state_changed);
@@ -248,7 +248,10 @@ fn receive_chunks(
 ) {
   for c in res.recv_chunk.drain() {
     for (center, mut chunks, mut mesh_comp) in &mut queries {
-      chunks.data.insert(c.key, c.clone());
+      let mut chunk = c.clone();
+      chunk.lod = 0;
+      chunks.data.insert(c.key, chunk);
+      
       res.send_process_mesh.send(c.clone());
     }
   }

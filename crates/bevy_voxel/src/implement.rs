@@ -642,18 +642,18 @@ impl BevyVoxelResource {
     lod: usize,
   ) -> Vec<Chunk> {
     let mut chunks = Vec::new();
-    for key in keys.iter() {
-      let d = data.get(key);
-      if d.is_none() {
-        chunks.push(load_chunk(self, *key, lod));
-      }
-      if d.is_some() {
-        chunks.push(d.unwrap().clone());
-      }
-    }
     // for key in keys.iter() {
-    //   chunks.push(load_chunk(self, *key, lod));
+    //   let d = data.get(key);
+    //   if d.is_none() {
+    //     chunks.push(load_chunk(self, *key, lod));
+    //   }
+    //   if d.is_some() {
+    //     chunks.push(d.unwrap().clone());
+    //   }
     // }
+    for key in keys.iter() {
+      chunks.push(load_chunk(self, *key, lod));
+    }
     chunks
   }
 
