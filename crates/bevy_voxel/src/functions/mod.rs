@@ -197,7 +197,18 @@ fn load_lod_center_changed(
       let keys = res.get_delta_keys_by_lod(
         &center.prev_key, &center.key, lod
       );
-      request_load_chunk(&keys, &mut res, lod);
+
+      for key in keys.iter() {
+        let d = chunks.data.get(key);
+        if d.is_none() {
+          let _ = res.send_key.send((*key, lod));
+        }
+        if d.is_some() {
+          let mut data = d.unwrap().clone();
+          data.lod = lod;
+          res.send_process_mesh.send(data);
+        }
+      }
     }
   }
 }
@@ -233,7 +244,7 @@ fn shape_state_changed(
 
 
 fn request_load_chunk(
-  keys: &Vec<[i64; 3]>, 
+  keys: &Vec<[i64; 3]>,
   bevy_voxel_res: &mut BevyVoxelResource,
   lod: usize
 ) {
