@@ -33,9 +33,9 @@ impl Plugin for CustomPlugin {
       .add_system(update)
       .add_system(detect_selected_voxel_position)
       .add_system(load_main_chunks)
-      // .add_system(load_lod_chunks)
+      .add_system(load_lod_chunks)
       .add_system(load_main_delta_chunks)
-      // .add_system(load_lod_center_changed)
+      .add_system(load_lod_center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
       .add_system(shape_state_changed);
@@ -226,11 +226,11 @@ fn receive_chunks(
 ) {
   for c in res.recv_chunk.drain() {
     for (center, mut chunks, mut mesh_comp) in &mut queries {
-      let mut chunk = c.clone();
-      chunk.lod = 0;
-      chunks.data.insert(c.key, chunk);
-      
       res.send_process_mesh.send(c.clone());
+
+      // let mut chunk = c.clone();
+      // chunk.lod = 0;
+      // chunks.data.insert(c.key, chunk);
     }
   }
 }
@@ -244,9 +244,13 @@ fn receive_mesh(
   for data in res.recv_mesh.drain() {
     for (center, mut chunks, mut mesh_comp) in &mut queries {
       let d = data.clone();
-      mesh_comp.data.insert(d.key, d);
+      // mesh_comp.data.insert(d.key, d);
 
       if res.in_range_by_lod(&center.key, &data.key, data.lod) {
+        if data.lod == 0 {
+          // println!("Error: Lod 0 should not be loaded async");
+        }
+
         mesh_comp.added.push((data.clone(), ColliderHandle::invalid()));
       }
     }

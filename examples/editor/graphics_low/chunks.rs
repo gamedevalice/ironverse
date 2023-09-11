@@ -28,7 +28,11 @@ fn add(
       'graphics: for (entity, graphics) in &chunk_graphics {
         if graphics.key == data.key {
           commands.entity(entity).despawn();
-          bevy_voxel_res.physics.remove_collider(graphics.collider);
+
+          if graphics.lod == 0 {
+            bevy_voxel_res.physics.remove_collider(graphics.collider);
+            // println!("remove collider 1");
+          }
           continue 'graphics;
         }
       }
@@ -77,7 +81,11 @@ fn remove(
 
       if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
         commands.entity(entity).despawn_recursive();
-        bevy_voxel_res.physics.remove_collider(graphics.collider);
+
+        if graphics.lod == 0 {
+          bevy_voxel_res.physics.remove_collider(graphics.collider);
+          // println!("remove collider 2");
+        }
       }
       
     }

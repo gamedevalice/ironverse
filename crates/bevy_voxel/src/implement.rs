@@ -412,7 +412,10 @@ impl BevyVoxelResource {
     }
   }
 
-  pub fn set_voxel_sphere(&mut self, pos: Vec3, preview: &Preview) {
+  pub fn set_voxel_sphere(
+    &mut self, pos: Vec3, preview: &Preview
+  ) -> HashMap<[i64; 3], Chunk> {
+    let mut res = HashMap::new();
     let scale = self.chunk_manager.voxel_scale;
     let mul = 1.0 / scale;
     let p = [
@@ -430,8 +433,13 @@ impl BevyVoxelResource {
         p[2] as i64 + c[2],
       ];
       
-      self.set_voxel_default(tmp, preview.voxel);
+      let chunks = self.set_voxel_default(tmp, preview.voxel);
+
+      for (key, chunk) in chunks.iter() {
+        res.insert(*key, chunk.clone());
+      }
     }
+    res
   }
 
 
