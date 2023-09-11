@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow, diagnostic::{FrameTimeDiagnosticsPlugin, Diagnostics}};
 use bevy_egui::{EguiContexts, egui::{self, Frame, Color32, Style, Rect, Vec2, Pos2, RichText}};
-use crate::components::{player::Player, chunk_edit::ChunkEdit};
+use crate::{components::{player::Player, chunk_edit::ChunkEdit}, graphics::ChunkGraphics};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -23,6 +23,7 @@ fn show_texts(
 
   players: Query<&Transform, With<Player>>,
   chunk_edits: Query<&ChunkEdit>,
+  chunks: Query<&ChunkGraphics>,
 ) {
   let res = windows.get_single();
   if res.is_err() {
@@ -72,6 +73,7 @@ fn show_texts(
     }
   }
 
+  let total_meshes = chunks.iter().len();
   egui::Window::new("DebuggerTexts")
     .title_bar(false)
     .frame(frame)
@@ -105,6 +107,12 @@ fn show_texts(
 
         ui.label(
           RichText::new(format!("forward: {:?}", forward))
+            .color(Color32::WHITE)
+            .size(20.0)
+        );
+
+        ui.label(
+          RichText::new(format!("Total Meshes: {}", total_meshes))
             .color(Color32::WHITE)
             .size(20.0)
         );

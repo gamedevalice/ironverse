@@ -1,5 +1,5 @@
 use bevy::{prelude::*, input::mouse::MouseWheel};
-use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics, Center, Chunks, EditState, ShapeState};
+use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics, Center, Chunks, EditState, ShapeState, MeshComponent};
 use rapier3d::prelude::ColliderHandle;
 use voxels::{chunk::chunk_manager::Chunk, data::voxel_octree::VoxelMode};
 use crate::{input::hotbar::HotbarResource, graphics::ChunkGraphics};
@@ -29,6 +29,7 @@ fn add_to_player(
       .insert(ChunkEditParams::default())
       .insert(Selected::default())
       .insert(Chunks::default())
+      .insert(MeshComponent::default())
       .insert(Preview::default());
 
     commands

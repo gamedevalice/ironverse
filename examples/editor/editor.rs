@@ -86,12 +86,13 @@ fn main() {
 
   cfg_if! {
     if #[cfg(feature = "core")] {
-      let range = 1;
+      let range = 2;
       app
         .add_plugin(BevyVoxelPlugin)
         .insert_resource(BevyVoxelResource::new(
           4, 
-          0.5, 
+          // 0.5,
+          1.0, 
           range, 
           vec![
             [1.0, 0.0, 0.0], 
@@ -107,7 +108,7 @@ fn main() {
             [0.0, 0.2, 0.0],
             [0.0, 0.4, 0.0],
           ],
-          vec![0, range, 4, 8, 12],
+          vec![0, range as u32, 4, 8, 12],
         ))
         .add_plugin(data::CustomPlugin)
         // .add_plugin(physics::CustomPlugin)

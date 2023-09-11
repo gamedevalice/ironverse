@@ -30,8 +30,6 @@ bevy_voxel = { path = "crates/bevy_voxel", optional = true }
 voxels = { path = "crates/voxels", optional = true }
 utils = { path = "crates/utils", optional = true }
 
-
-
 [dependencies.web-sys]
 version = "0.3.61"
 features = [
@@ -50,14 +48,15 @@ flume = "0.10.14"
 js-sys = "0.3"
 wasm-bindgen = "0.2.87"
 wasm-bindgen-futures = "0.4.19"
+multithread = { path = "crates/multithread" }
 
 [features]
 default = [
   "core",
   "player",
   "utils",
-  # "graphics_low",
-  "graphics_normal",  # Either graphics_low or graphics_normal
+  "graphics_low",
+  # "graphics_normal",  # Either graphics_low or graphics_normal
   "ui",
   # "ui_prompt",
 ]
@@ -90,6 +89,10 @@ test_voxel_size_config = []
 test_raycast = []
 
 
+[[example]]
+name = "editor"
+path = "examples/editor/editor.rs"
+
 
 [[example]]
 name = "add_voxel"
@@ -118,6 +121,10 @@ path = "examples/chunk_depth_voxel_scale_range.rs"
 [[example]]
 name = "size_comparison"
 path = "examples/size_comparison.rs"
+
+[[example]]
+name = "lod"
+path = "examples/lod.rs"
 
 
 

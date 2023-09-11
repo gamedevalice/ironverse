@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use voxels::data::voxel_octree::VoxelMode;
-use crate::{EditState, Preview, BevyVoxelResource, PreviewGraphics, Chunks, Center, ChunkData, ShapeState};
+use crate::{EditState, Preview, BevyVoxelResource, PreviewGraphics, Chunks, Center, ChunkData, ShapeState, MeshComponent};
+
+use super::{EditEvents, EditEvent};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -14,72 +16,44 @@ impl Plugin for CustomPlugin {
 
 fn add_voxel_cube(
   mouse: Res<Input<MouseButton>>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-
-  mut chunks: Query<(&Preview, &Center, &mut Chunks)>,
+  mut chunks: Query<&Preview>,
   shape_state: Res<State<ShapeState>>,
+  
+  mut edit_event_writer: EventWriter<EditEvents>
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
   shape_state.0 != ShapeState::Cube {
     return;
   }
-  for (preview, center, mut chunks) in &mut chunks {
+
+  for preview in &mut chunks {
     if preview.pos.is_none() {
       continue;
     }
-
-    chunks.data.clear();
-    let p = preview.pos.unwrap();
-    bevy_voxel_res.set_voxel_cube(p, preview);
-
-    let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
-    for chunk in all_chunks.iter() {
-      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-      if data.positions.len() == 0 {
-        continue;
-      }
-      
-      chunks.data.push(ChunkData {
-        data: data.clone(),
-        key: chunk.key,
-      });
-    }
+    edit_event_writer.send(EditEvents {
+      event: EditEvent::AddCube
+    });
   }
 }
 
 fn add_voxel_sphere(
   mouse: Res<Input<MouseButton>>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-
-  mut chunks: Query<(&Preview, &Center, &mut Chunks)>,
+  mut chunks: Query<&Preview>,
   shape_state: Res<State<ShapeState>>,
+  mut edit_event_writer: EventWriter<EditEvents>
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
   shape_state.0 != ShapeState::Sphere {
     return;
   }
 
-  for (preview, center, mut chunks) in &mut chunks {
+  for preview in &mut chunks {
     if preview.pos.is_none() {
       continue;
     }
-
-    chunks.data.clear();
-    let p = preview.pos.unwrap();
-    bevy_voxel_res.set_voxel_sphere(p, preview);
-
-    let all_chunks = bevy_voxel_res.load_adj_chunks_with_collider(center.key);
-    for chunk in all_chunks.iter() {
-      let data = bevy_voxel_res.compute_mesh(VoxelMode::SurfaceNets, chunk);
-      if data.positions.len() == 0 {
-        continue;
-      }
-      
-      chunks.data.push(ChunkData {
-        data: data.clone(),
-        key: chunk.key,
-      });
-    }
+    edit_event_writer.send(EditEvents {
+      event: EditEvent::AddSphere
+    });
   }
 }
 

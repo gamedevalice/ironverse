@@ -1,6 +1,6 @@
 <html>
   <head>
-    <meta charset="UTF-8" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <style>
       body {
         background: linear-gradient(
@@ -18,13 +18,39 @@
       canvas {
         background-color: white;
       }
+
+
+      #scene {
+        height: 100%;
+        width: 500px;
+        float: left;
+      }
+
+      #render, .concurrency, .timing {
+        padding: 20px;
+        margin: 20px;
+        float: left;
+      }
+
+      .concurrency {
+        display: none;
+      }
     </style>
   </head>
   <script type="module">
-    import init from './assets/wasm/ironverse-editor.js'
+    import init from './assets/wasm/wasm_multithread.js'
     init()
   </script>
   <body>
     <a id="download"></a>
+    
+    <script type="module">
+      import startApp from '/crates/multithread/index.js';
+      startApp('multithread');
+    </script>
+
+    <div class='concurrency'>
+      <input type="range" id="concurrency" value="6" />
+    </div>
   </body>
 </html>

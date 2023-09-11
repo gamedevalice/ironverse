@@ -90,7 +90,7 @@ fn cursor_locked(
   window.cursor.grab_mode = CursorGrabMode::Locked;
 
   move_setting_res.sensitivity = 0.00012;
-  // move_setting_res.speed = 12.0;
-  move_setting_res.speed = 6.0;
+  move_setting_res.speed = 24.0;
+  // move_setting_res.speed = 6.0;
 }
 

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use utils::Utils;
 use voxels::chunk::chunk_manager::{ChunkManager, Chunk};
 use crate::BevyVoxelResource;
 
@@ -27,10 +28,18 @@ pub fn set_voxel_default(
 }
 
 
-pub fn load_chunk(resource: &mut BevyVoxelResource, key: [i64; 3]) -> Chunk {
+pub fn load_chunk(
+  resource: &mut BevyVoxelResource, 
+  key: [i64; 3],
+  lod: usize,
+) -> Chunk {
   let res = resource.chunk_manager.get_chunk(&key);
   if res.is_none() {
-    let chunk = resource.chunk_manager.new_chunk3(&key, resource.chunk_manager.depth as u8);
+    let chunk = ChunkManager::new_chunk(
+      &key, resource.chunk_manager.depth as u8,
+      lod,
+      resource.chunk_manager.noise,
+    );
     resource.chunk_manager.set_chunk(&key, &chunk);
     return chunk;
   }
@@ -41,9 +50,11 @@ pub fn load_chunk(resource: &mut BevyVoxelResource, key: [i64; 3]) -> Chunk {
 pub fn load_chunk_with_lod(
   resource: &mut BevyVoxelResource, 
   key: [i64; 3], 
-  lod: u8,
+  lod: usize,
 ) -> Chunk {
-  resource.chunk_manager.new_chunk3(&key, lod)
+  ChunkManager::new_chunk(
+    &key, resource.chunk_manager.depth as u8, lod, resource.chunk_manager.noise
+  )
 }
 
 
@@ -133,40 +144,6 @@ pub fn get_sphere_coords(size: f32) -> Vec<[i64; 3]> {
   coords
 }
 
-
-pub fn get_keys_by_lod(
-  ranges: Vec<u8>,
-  key: [i64; 3], 
-  max_lod: u8,
-  lod: u8, 
-) -> Vec<[i64; 3]> {
-  // Add level restriction later on
-  let level = max_lod - lod;
-  
-  let index = level as usize;
-  let m0 = ranges[index] as i64;
-  let m1 = ranges[index + 1] as i64;
-  let min = -m1;
-  let max = m1 + 1;
-
-  let mut res = Vec::new();
-  for x in min..max {
-    for y in min..max {
-      for z in min..max {
-        if index == 0 {
-          res.push([key[0] + x, key[1] + y, key[2] + z]);
-        }
-        
-        if index > 0 {
-          if x.abs() > m0 || y.abs() > m0 || z.abs() > m0 {
-            res.push([key[0] + x, key[1] + y, key[2] + z]);
-          }
-        }
-      }
-    }
-  }
-  res
-}
 
 
 
@@ -348,74 +325,6 @@ mod tests {
       let key = get_key(*p, voxel_scale, manager.seamless_size());
       assert_eq!(key, expected[i]);
     }
-    Ok(())
-  }
-
-  #[test]
-  fn test_get_keys_by_lod() -> Result<(), String> {
-    let key = [0, 0, 0];
-    let lod = 4;
-    let max_lod = 4;
-    let range = 1;
-
-    let ranges = vec![0, range, 4, 8, 12];
-
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    assert_eq!(keys.len(), 27);
-
-    for k in keys.iter() {
-      assert!(k[0] >= -1);
-      assert!(k[0] <=  1);
-
-      assert!(k[1] >= -1);
-      assert!(k[1] <=  1);
-
-      assert!(k[2] >= -1);
-      assert!(k[2] <=  1);
-    }
-
-    let lod = 3;
-    let max = ranges[2];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
-
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
-
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
-    }
-
-    let lod = 2;
-    let max = ranges[3];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
-
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
-
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
-    }
-
-    let lod = 1;
-    let max = ranges[4];
-    let keys = get_keys_by_lod(ranges.clone(), key, max_lod, lod);
-    for k in keys.iter() {
-      assert!(k[0] < range || k[0] > range);
-      assert!(k[0] <= max);
-
-      assert!(k[1] < range || k[1] > range);
-      assert!(k[1] <= max);
-
-      assert!(k[2] < range || k[2] > range);
-      assert!(k[2] <= max);
-    }
-
     Ok(())
   }
 
