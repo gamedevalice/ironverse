@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{BevyVoxelResource, Preview, Chunks, MeshComponent, Center};
+use crate::{BevyVoxelResource, Preview, Center, Chunks, MeshComponent};
 
 mod add_normal;
 mod add_dist;
@@ -28,25 +28,26 @@ impl Plugin for CustomPlugin {
 
       .add_plugin(normal_common::CustomPlugin)
       .add_plugin(dist_common::CustomPlugin)
-      .add_system(modify_voxels1);
+      .add_system(modify_voxels);
   }
 }
 
-fn modify_voxels1(
+
+fn modify_voxels(
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
   mut chunks: Query<(&Preview, &Center, &mut Chunks, &mut MeshComponent)>,
 
   mut edit_event_reader: EventReader<EditEvents>,
 ) {
   for e in edit_event_reader.iter() {
-    if e.event == EditEvent::AddCube {
+    if e.event == EditEvent::RemoveCube {
       for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
         if preview.pos.is_none() {
           continue;
         }
 
         let p = preview.pos.unwrap();
-        let res = bevy_voxel_res.set_voxel_cube(p, preview);
+        let res = bevy_voxel_res.set_voxel_cube_default(p, preview.size, 0);
 
         let mut all_chunks = Vec::new();
         for (key, chunk) in res.iter() {
@@ -63,30 +64,32 @@ fn modify_voxels1(
       }
     }
 
-    if e.event == EditEvent::AddSphere {
-      for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
-        if preview.pos.is_none() {
-          continue;
-        }
+    // if e.event == EditEvent::RemoveSphere {
+    //   for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
+    //     if preview.pos.is_none() {
+    //       continue;
+    //     }
 
-        let p = preview.pos.unwrap();
-        let res = bevy_voxel_res.set_voxel_sphere(p, preview);
+    //     let p = preview.pos.unwrap();
+    //     let res = bevy_voxel_res.set_voxel_sphere(p, preview);
 
-        let mut all_chunks = Vec::new();
-        for (key, chunk) in res.iter() {
-          all_chunks.push(chunk.clone());
-          chunks.data.insert(*key, chunk.clone());
-        }
+    //     let mut all_chunks = Vec::new();
+    //     for (key, chunk) in res.iter() {
+    //       all_chunks.push(chunk.clone());
+    //       chunks.data.insert(*key, chunk.clone());
+    //     }
 
-        let data = bevy_voxel_res.load_mesh_data(&all_chunks);
-        for (mesh_data, handle) in data.iter() {
-          mesh_comp.data.insert(mesh_data.key.clone(), mesh_data.clone());
-          mesh_comp.added.push((mesh_data.clone(), *handle));
-        }
-      }
-    }
+    //     let data = bevy_voxel_res.load_mesh_data(&all_chunks);
+    //     for (mesh_data, handle) in data.iter() {
+    //       mesh_comp.data.insert(mesh_data.key.clone(), mesh_data.clone());
+    //       mesh_comp.added.push((mesh_data.clone(), *handle));
+    //     }
+    //   }
+    // }
   }
 }
+
+
 
 
 struct EditEvents {
@@ -100,3 +103,5 @@ enum EditEvent {
   RemoveCube,
   RemoveSphere,
 }
+
+

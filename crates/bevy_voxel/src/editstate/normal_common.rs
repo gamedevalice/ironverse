@@ -1,12 +1,15 @@
 use bevy::prelude::*;
 
-use crate::{EditState, Preview, BevyVoxelResource};
+use crate::{EditState, Preview, BevyVoxelResource, Center, Chunks, MeshComponent};
+
+use super::{EditEvents, EditEvent};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(preview_position.run_if(normal_state));
+      .add_system(preview_position.run_if(normal_state))
+      .add_system(modify_voxels);
   }
 }
 
@@ -45,3 +48,61 @@ fn preview_position(
     }
   }
 }
+
+
+fn modify_voxels(
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  mut chunks: Query<(&Preview, &Center, &mut Chunks, &mut MeshComponent)>,
+
+  mut edit_event_reader: EventReader<EditEvents>,
+) {
+  for e in edit_event_reader.iter() {
+    if e.event == EditEvent::AddCube {
+      for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
+        if preview.pos.is_none() {
+          continue;
+        }
+
+        let p = preview.pos.unwrap();
+        let res = bevy_voxel_res.set_voxel_cube(p, preview);
+
+        let mut all_chunks = Vec::new();
+        for (key, chunk) in res.iter() {
+          all_chunks.push(chunk.clone());
+          chunks.data.insert(*key, chunk.clone());
+        }
+
+        let data = bevy_voxel_res.load_mesh_data(&all_chunks);
+        for (mesh_data, handle) in data.iter() {
+          
+          mesh_comp.data.insert(mesh_data.key.clone(), mesh_data.clone());
+          mesh_comp.added.push((mesh_data.clone(), *handle));
+        }
+      }
+    }
+
+    if e.event == EditEvent::AddSphere {
+      for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
+        if preview.pos.is_none() {
+          continue;
+        }
+
+        let p = preview.pos.unwrap();
+        let res = bevy_voxel_res.set_voxel_sphere(p, preview);
+
+        let mut all_chunks = Vec::new();
+        for (key, chunk) in res.iter() {
+          all_chunks.push(chunk.clone());
+          chunks.data.insert(*key, chunk.clone());
+        }
+
+        let data = bevy_voxel_res.load_mesh_data(&all_chunks);
+        for (mesh_data, handle) in data.iter() {
+          mesh_comp.data.insert(mesh_data.key.clone(), mesh_data.clone());
+          mesh_comp.added.push((mesh_data.clone(), *handle));
+        }
+      }
+    }
+  }
+}
+
