@@ -64,28 +64,28 @@ fn modify_voxels(
       }
     }
 
-    // if e.event == EditEvent::RemoveSphere {
-    //   for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
-    //     if preview.pos.is_none() {
-    //       continue;
-    //     }
+    if e.event == EditEvent::RemoveSphere {
+      for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
+        if preview.pos.is_none() {
+          continue;
+        }
 
-    //     let p = preview.pos.unwrap();
-    //     let res = bevy_voxel_res.set_voxel_sphere(p, preview);
+        let p = preview.pos.unwrap();
+        let res = bevy_voxel_res.set_voxel_sphere_default(p, preview.sphere_size, 0);
 
-    //     let mut all_chunks = Vec::new();
-    //     for (key, chunk) in res.iter() {
-    //       all_chunks.push(chunk.clone());
-    //       chunks.data.insert(*key, chunk.clone());
-    //     }
+        let mut all_chunks = Vec::new();
+        for (key, chunk) in res.iter() {
+          all_chunks.push(chunk.clone());
+          chunks.data.insert(*key, chunk.clone());
+        }
 
-    //     let data = bevy_voxel_res.load_mesh_data(&all_chunks);
-    //     for (mesh_data, handle) in data.iter() {
-    //       mesh_comp.data.insert(mesh_data.key.clone(), mesh_data.clone());
-    //       mesh_comp.added.push((mesh_data.clone(), *handle));
-    //     }
-    //   }
-    // }
+        let data = bevy_voxel_res.load_mesh_data(&all_chunks);
+        for (mesh_data, handle) in data.iter() {
+          mesh_comp.data.insert(mesh_data.key.clone(), mesh_data.clone());
+          mesh_comp.added.push((mesh_data.clone(), *handle));
+        }
+      }
+    }
   }
 }
 
