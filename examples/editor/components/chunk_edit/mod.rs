@@ -30,7 +30,8 @@ fn add_to_player(
       .insert(Selected::default())
       .insert(Chunks::default())
       .insert(MeshComponent::default())
-      .insert(Preview::default());
+      .insert(Preview::default())
+      ;
 
     commands
       .spawn(SelectedGraphics)

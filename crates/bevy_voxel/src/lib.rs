@@ -136,7 +136,7 @@ impl Default for Preview {
       voxel: 1,
 
       sphere_size: 1.0,
-      dist: 3.0,
+      dist: 8.0,
     }
   }
 }
