@@ -9,7 +9,9 @@ impl Plugin for CustomPlugin {
     app
       .add_plugin(MaterialPlugin::<CustomMaterial>::default())
       .add_system(add)
-      .add_system(remove);
+      // .add_system(remove)
+      .add_system(remove1)
+      ;
   }
 }
 
@@ -66,38 +68,45 @@ fn add(
     }
     mesh_comp.added.clear();
   }
-
-
-  // for (_, chunks) in &chunk_query {
-  //   for (entity, graphics) in &chunk_graphics {
-  //     commands.entity(entity).despawn_recursive();
-  //   }
-
-  //   for mesh in &chunks.data {
-
-  //     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-  //     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, mesh.positions.clone());
-  //     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, mesh.normals.clone());
-  //     render_mesh.set_indices(Some(Indices::U32(mesh.indices.clone())));
-  //     render_mesh.insert_attribute(VOXEL_COLOR, mesh.colors.clone());
-
-  //     let mesh_handle = meshes.add(render_mesh);
-  //     let material_handle = custom_materials.add(CustomMaterial {
-  //       base_color: Color::rgb(1.0, 1.0, 1.0),
-  //     });
-
-  //     let mut pos = bevy_voxel_res.get_pos(mesh.key);
-  //     commands
-  //       .spawn(MaterialMeshBundle {
-  //         mesh: mesh_handle,
-  //         material: material_handle,
-  //         transform: Transform::from_translation(pos),
-  //         ..default()
-  //       })
-  //       .insert(ChunkGraphics);
-  //   }
-  // }
 }
+
+fn remove1(
+  mut commands: Commands,
+
+  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
+  mesh_comps: Query<(Entity, &Center, &MeshComponent), Changed<MeshComponent>>,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+) {
+  
+  /*
+    Detect keys to delete
+   */
+  // let mut remove_keys = 
+
+  let max_lod = bevy_voxel_res.chunk_manager.depth as usize - 1;
+  for (entity, center, mesh_comp) in &mesh_comps {
+    for (entity, graphics) in &chunk_graphics {
+      
+
+
+
+
+
+      if graphics.lod == 0 &&
+      !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
+        bevy_voxel_res.physics.remove_collider(graphics.collider);
+      }
+
+      if graphics.lod == max_lod {
+        if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
+          commands.entity(entity).despawn_recursive();
+        }
+      }
+    }
+  }
+}
+
+
 
 fn remove(
   mut commands: Commands,
@@ -109,19 +118,45 @@ fn remove(
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
 
-  let ranges = bevy_voxel_res.ranges.clone();
+  /**
+   * Don't dispose when there is no replacement
+   *  Identify duplicate
+   *  Straight deletion of lowest LOD
+   */
+
+  // let mut key = [0; 3];
+  // for c in &center {
+  //   key = c.key;
+  // }
+
+  
+
+  let max_lod = bevy_voxel_res.chunk_manager.depth as usize - 1;
   for (_, center) in &chunk_query {
     for (entity, graphics) in &chunk_graphics {
 
-      if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-        commands.entity(entity).despawn_recursive();
-
-        if graphics.lod == 0 {
-          bevy_voxel_res.physics.remove_collider(graphics.collider);
-          // println!("remove collider 2");
+      if graphics.lod == max_lod {
+        if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
+          commands.entity(entity).despawn_recursive();
         }
       }
-      
+
+      if graphics.lod == 0 &&
+      !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
+        bevy_voxel_res.physics.remove_collider(graphics.collider);
+      }
+    }
+  }
+
+  for (_, center) in &chunk_query {
+    for (entity, graphics) in &chunk_graphics {
+      if graphics.lod == 0 && graphics.lod == max_lod {
+        continue;
+      }
+
+      if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
+        commands.entity(entity).despawn_recursive();
+      }
     }
   }
 }
