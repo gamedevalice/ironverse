@@ -88,20 +88,24 @@ fn remove1(
     for (entity, graphics) in &chunk_graphics {
       
 
+      for (entity, graphics) in &chunk_graphics {
 
-
-
-
-      if graphics.lod == 0 &&
-      !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-        bevy_voxel_res.physics.remove_collider(graphics.collider);
       }
 
-      if graphics.lod == max_lod {
-        if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-          commands.entity(entity).despawn_recursive();
-        }
-      }
+
+
+
+
+      // if graphics.lod == 0 &&
+      // !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
+      //   bevy_voxel_res.physics.remove_collider(graphics.collider);
+      // }
+
+      // if graphics.lod == max_lod {
+      //   if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
+      //     commands.entity(entity).despawn_recursive();
+      //   }
+      // }
     }
   }
 }

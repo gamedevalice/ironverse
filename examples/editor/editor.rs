@@ -64,7 +64,7 @@ cfg_if! {
 
 cfg_if! {
   if #[cfg(feature = "tests")] {
-    mod tests;
+    // mod tests;
     use bevy_flycam::NoCameraPlayerPlugin;
   }
 }
@@ -108,7 +108,7 @@ fn main() {
             [0.0, 0.2, 0.0],
             [0.0, 0.4, 0.0],
           ],
-          vec![0, range as u32, 4, 8, 12],
+          vec![0, range as u32, 3, 5, 7],
         ))
         .add_plugin(data::CustomPlugin)
         // .add_plugin(physics::CustomPlugin)
@@ -183,7 +183,7 @@ fn main() {
         .add_plugin(native_ui::CustomPlugin);
     }
   }
-
+/* 
   cfg_if! {
     if #[cfg(feature = "tests")] {
       app
@@ -191,6 +191,6 @@ fn main() {
         .add_plugin(tests::ChunkPlugin);
     }
   }
-  
+   */
   app.run();
 }

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::tasks::AsyncComputeTaskPool;
 use bevy::tasks::Task;
-use crate::components::chunk::Chunks;
+// use crate::components::chunk::Chunks;
 use crate::components::player::Player;
 use crate::data::CursorState;
 use crate::data::Data;
@@ -18,7 +18,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(track_modified_chunks)
+      // .add_system(track_modified_chunks)
       .add_system(enter.in_schedule(OnEnter(GameState::SaveGame)))
       .add_system(export_obj)
       .add_system(handle_obj_export);
@@ -63,7 +63,7 @@ fn enter(
   data_file.write(str.as_bytes()).expect("write failed");
 }
 
-
+/* 
 fn track_modified_chunks(
   mut chunks_query: Query<&Chunks, Changed<Chunks>>,
   mut game_res: ResMut<GameResource>,
@@ -79,7 +79,7 @@ fn track_modified_chunks(
   }
 }
 
-
+ */
 fn export_obj(
   mut commands: Commands,
   mut game_res: ResMut<GameResource>,
