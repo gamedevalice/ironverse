@@ -1,7 +1,9 @@
 use std::f32::consts::PI;
 
 use bevy::{prelude::*, pbr::CascadeShadowConfigBuilder};
+use bevy_voxel::{MeshComponent, BevyVoxelResource, Center};
 use rapier3d::prelude::ColliderHandle;
+use utils::Utils;
 
 pub mod chunk_preview;
 mod player;
@@ -14,7 +16,8 @@ impl Plugin for CustomPlugin {
       .add_plugin(player::CustomPlugin)
       .add_plugin(chunk_preview::CustomPlugin)
       .add_startup_system(startup)
-      .add_system(toggle_showhide);
+      .add_system(toggle_showhide)
+      .add_system(remove);
   }
 }
 
@@ -77,6 +80,38 @@ fn toggle_showhide(
   }
 }
 
+fn remove(
+  mut commands: Commands,
+
+  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
+  mesh_comps: Query<(&Center, &MeshComponent)>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
+) {
+  let max_lod = bevy_voxel_res.chunk_manager.depth as usize;
+  for (center, mesh_comp) in &mesh_comps {
+    for (entity, graphics) in &chunk_graphics {
+      for lod in 0..max_lod {
+        if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, lod) {
+          if graphics.lod != lod {
+            for (_, g2) in &chunk_graphics {
+              if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, lod) {
+                if g2.lod == lod && graphics.key == g2.key {
+                  commands.entity(entity).despawn_recursive();
+                }
+              }
+            }
+          }
+        }
+      }
+
+      let r = bevy_voxel_res.ranges.clone();
+      let max_range = r[r.len() - 1] as i64;
+      if !Utils::in_range(&center.key, &graphics.key, max_range) {
+        commands.entity(entity).despawn_recursive();
+      }
+    }
+  }
+}
 
 #[derive(Resource)]
 pub struct GraphicsResource {

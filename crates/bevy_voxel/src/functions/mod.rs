@@ -124,37 +124,9 @@ fn load_lod_chunks(
   for (center, mut chunks, mut mesh_comp) in &mut chunks {
     for lod in 1..res.ranges.len() - 1 {
       let keys = res.get_keys_by_lod(center.key, lod);
-
-      // Filter out not rendered keys
-
-      println!("lod_chunks.len() {} lod {}", keys.len(), lod);
-      // for k in keys.iter() {
-      //   println!("k {:?}", k);
-      // }
       request_load_chunk(&keys, &mut res, lod);
     }
   }
-
-  // Filter out not rendered keys
-  // for (center, mut chunks, mut mesh_comp) in &mut chunks {
-  //   for lod in 1..res.ranges.len() - 3 {
-  //     let keys = res.get_keys_by_lod(center.key, lod);
-  //     let mut filtered = Vec::new();
-  //     for k in keys.iter() {
-  //       if k[1] == -1 {
-  //         filtered.push(k.clone());
-  //       }
-  //     }
-
-  //     println!("lod_chunks.len() {} lod {}", filtered.len(), lod);
-  //     // for k in keys.iter() {
-  //     //   println!("k {:?}", k);
-  //     // }
-  //     request_load_chunk(&filtered, &mut res, lod);
-  //   }
-  // }
-
-
 }
 
 fn load_main_delta_chunks(
@@ -207,34 +179,6 @@ fn load_lod_center_changed(
       }
     }
   }
-
-
-  // for (center, mut chunks, mut mesh_comp) in &mut centers {
-  //   for lod in 1..res.ranges.len() - 3 {
-  //     let keys = res.get_delta_keys_by_lod(
-  //       &center.prev_key, &center.key, lod
-  //     );
-
-  //     let mut filtered = Vec::new();
-  //     for k in keys.iter() {
-  //       if k[1] == -1 {
-  //         filtered.push(k.clone());
-  //       }
-  //     }
-
-  //     for key in filtered.iter() {
-  //       let d = chunks.data.get(key);
-  //       if d.is_none() {
-  //         let _ = res.send_key.send((*key, lod));
-  //       }
-  //       if d.is_some() {
-  //         let mut data = d.unwrap().clone();
-  //         data.lod = lod;
-  //         res.send_process_mesh.send(data);
-  //       }
-  //     }
-  //   }
-  // }
 }
 
 

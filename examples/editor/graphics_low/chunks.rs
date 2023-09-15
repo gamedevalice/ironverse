@@ -8,8 +8,7 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(LocalResource::default())
-      .add_system(add)
-      .add_system(remove1);
+      .add_system(add);
   }
 }
 
@@ -24,27 +23,15 @@ fn add(
 ) {
 
   for (_, mut mesh_comp) in &mut chunk_query {
-
-    // println!("added {}", mesh_comp.added.iter().len());
-
     for (data, collider_handle) in mesh_comp.added.iter() {
-      // println!("data.indices.len() {}", data.indices.len());
-
       'graphics: for (entity, graphics) in &chunk_graphics {
         if graphics.key == data.key && graphics.lod == data.lod {
           commands.entity(entity).despawn();
-
-          if graphics.lod == 0 {
-            bevy_voxel_res.physics.remove_collider(graphics.collider);
-            // println!("remove collider 1");
-          }
-          // continue 'graphics;
         }
 
         if graphics.key == data.key {
           if graphics.lod == 0 {
             bevy_voxel_res.physics.remove_collider(graphics.collider);
-            // println!("remove collider 1");
           }
         }
       }
@@ -82,179 +69,6 @@ fn add(
   }
 }
 
-fn remove1(
-  mut commands: Commands,
-
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-  mesh_comps: Query<(&Center, &MeshComponent)>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-  mut local_res: ResMut<LocalResource>,
-) {
-
-  let mut total = 0;
-  for (_, g) in &chunk_graphics {
-    if g.lod == 1 {
-      total += 1;
-    }
-  }
-  if local_res.lod1_total_keys != total {
-    local_res.lod1_total_keys = total;
-    println!("lod1.len() {}", local_res.lod1_total_keys);
-  }
-  
-  /*
-    Detect keys to delete
-   */
-  // let mut remove_keys = 
-
-  let max_lod = bevy_voxel_res.chunk_manager.depth as usize;
-  for (center, mesh_comp) in &mesh_comps {
-    // println!("changed12");
-    for (entity, graphics) in &chunk_graphics {
-
-      // for lod in 0..max_lod {
-      //   if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, lod) {
-      //     if graphics.lod != lod {
-      //       // If there is duplicate, remove the chunk
-      //       for (_, g2) in &chunk_graphics {
-      //         if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, lod) {
-      //           if g2.lod == lod && graphics.key == g2.key {
-      //             commands.entity(entity).despawn_recursive();
-
-      //             println!("Despawned");
-      //           }
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
-
-
-
-
-      for lod in 0..max_lod {
-        // println!("lod {}", lod);
-        if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, lod) {
-          if graphics.lod != lod {
-            for (_, g2) in &chunk_graphics {
-              if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, lod) {
-                if g2.lod == lod && graphics.key == g2.key {
-                  commands.entity(entity).despawn_recursive();
-                }
-              }
-            }
-          }
-        }
-      }
-
-      let r = bevy_voxel_res.ranges.clone();
-      let max_range = r[r.len() - 1] as i64;
-      if !Utils::in_range(&center.key, &graphics.key, max_range) {
-        commands.entity(entity).despawn_recursive();
-      }
-
-
-
-
-      // if !Utils::in_range(&center.key, &graphics.key, bevy_voxel_res.ranges[2] as i64) {
-      //   commands.entity(entity).despawn_recursive();
-      //   // println!("disposed outside");
-      // } 
-
-
-      // println!("dispose---------");
-      // if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 0) {
-      //   if graphics.lod != 0 {
-      //     for (_, g2) in &chunk_graphics {
-      //       if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, 0) {
-      //         if g2.lod == 0 && graphics.key == g2.key {
-      //           commands.entity(entity).despawn_recursive();
-
-      //           // println!("dispose lod0 {:?}", g2.key);
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
-
-      // if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 1) {
-      //   if graphics.lod != 1 {
-      //     for (_, g2) in &chunk_graphics {
-      //       if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, 1) {
-      //         if g2.lod == 1 && graphics.key == g2.key {
-      //           commands.entity(entity).despawn_recursive();
-
-      //           // println!("dispose lod1 {:?}", g2.key);
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
-
-      // println!("bevy_voxel_res.ranges[2] {}", bevy_voxel_res.ranges[2]);
-      // if !Utils::in_range(&center.key, &graphics.key, bevy_voxel_res.ranges[2] as i64) {
-      //   commands.entity(entity).despawn_recursive();
-      // }
-
-      // if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 1) {
-      //   if graphics.lod != 1 {
-      //     for (_, g2) in &chunk_graphics {
-      //       if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 1) {
-      //         if g2.lod == 1 && graphics.key == g2.key {
-      //           commands.entity(entity).despawn_recursive();
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
-
-
-      
-
-
-      // if graphics.lod == 0 &&
-      // !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-      //   bevy_voxel_res.physics.remove_collider(graphics.collider);
-      // }
-
-      // if graphics.lod == max_lod {
-      //   if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-      //     commands.entity(entity).despawn_recursive();
-      //   }
-      // }
-    }
-  }
-}
-
-
-
-
-/* fn remove(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-
-  chunk_query: Query<(Entity, &Center)>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-) {
-
-  let ranges = bevy_voxel_res.ranges.clone();
-  for (_, center) in &chunk_query {
-    for (entity, graphics) in &chunk_graphics {
-
-      if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-        commands.entity(entity).despawn_recursive();
-
-        if graphics.lod == 0 {
-          bevy_voxel_res.physics.remove_collider(graphics.collider);
-          // println!("remove collider 2");
-        }
-      }
-      
-    }
-  }
-} */
 
 #[derive(Resource)]
 struct LocalResource {

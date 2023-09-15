@@ -8,10 +8,7 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_plugin(MaterialPlugin::<CustomMaterial>::default())
-      .add_system(add)
-      // .add_system(remove)
-      .add_system(remove1)
-      ;
+      .add_system(add);
   }
 }
 
@@ -69,102 +66,6 @@ fn add(
     mesh_comp.added.clear();
   }
 }
-
-fn remove1(
-  mut commands: Commands,
-
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-  mesh_comps: Query<(Entity, &Center, &MeshComponent), Changed<MeshComponent>>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-) {
-  
-  /*
-    Detect keys to delete
-   */
-  // let mut remove_keys = 
-
-  let max_lod = bevy_voxel_res.chunk_manager.depth as usize - 1;
-  for (entity, center, mesh_comp) in &mesh_comps {
-    for (entity, graphics) in &chunk_graphics {
-      
-
-      for (entity, graphics) in &chunk_graphics {
-
-      }
-
-
-
-
-
-      // if graphics.lod == 0 &&
-      // !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-      //   bevy_voxel_res.physics.remove_collider(graphics.collider);
-      // }
-
-      // if graphics.lod == max_lod {
-      //   if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-      //     commands.entity(entity).despawn_recursive();
-      //   }
-      // }
-    }
-  }
-}
-
-
-
-fn remove(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-
-  chunk_query: Query<(Entity, &Center)>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-) {
-
-  /**
-   * Don't dispose when there is no replacement
-   *  Identify duplicate
-   *  Straight deletion of lowest LOD
-   */
-
-  // let mut key = [0; 3];
-  // for c in &center {
-  //   key = c.key;
-  // }
-
-  
-
-  let max_lod = bevy_voxel_res.chunk_manager.depth as usize - 1;
-  for (_, center) in &chunk_query {
-    for (entity, graphics) in &chunk_graphics {
-
-      if graphics.lod == max_lod {
-        if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-          commands.entity(entity).despawn_recursive();
-        }
-      }
-
-      if graphics.lod == 0 &&
-      !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-        bevy_voxel_res.physics.remove_collider(graphics.collider);
-      }
-    }
-  }
-
-  for (_, center) in &chunk_query {
-    for (entity, graphics) in &chunk_graphics {
-      if graphics.lod == 0 && graphics.lod == max_lod {
-        continue;
-      }
-
-      if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, graphics.lod) {
-        commands.entity(entity).despawn_recursive();
-      }
-    }
-  }
-}
-
 
 pub const VOXEL_COLOR: MeshVertexAttribute =
   MeshVertexAttribute::new("VOXEL_COLOR", 988540918, VertexFormat::Float32x3);
