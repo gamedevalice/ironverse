@@ -70,6 +70,9 @@ fn detect_selected_voxel_position(
   for (cam_trans, mut selected) in &mut cam {
     let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
     if hit.is_none() {
+      if selected.pos.is_some() {
+        selected.pos = None;
+      }
       continue;
     }
 
