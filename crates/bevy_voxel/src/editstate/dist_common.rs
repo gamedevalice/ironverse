@@ -78,6 +78,8 @@ fn set_distance(
       if params.dist < min {
         params.dist = min;
       }
+
+      println!("dist {}", params.dist);
     }
   }
     

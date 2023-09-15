@@ -303,8 +303,8 @@ struct LocalResource {
 impl Default for LocalResource {
   fn default() -> Self {
     Self {
-      // ranges: vec![0, 2, 6, 10, 14],
-      ranges: vec![0, 1, 4, 8, 12],
+      ranges: vec![0, 1, 3, 5, 7],
+      // ranges: vec![0, 1, 4, 8, 12],
       colors: vec![
         [1.0, 1.0, 1.0],
         [1.0, 0.0, 0.0],

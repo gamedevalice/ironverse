@@ -33,8 +33,8 @@ impl Plugin for CustomPlugin {
       .add_system(update)
       .add_system(detect_selected_voxel_position)
       .add_system(load_main_chunks)
-      .add_system(load_lod_chunks)
       .add_system(load_main_delta_chunks)
+      .add_system(load_lod_chunks)
       .add_system(load_lod_center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
@@ -70,6 +70,9 @@ fn detect_selected_voxel_position(
   for (cam_trans, mut selected) in &mut cam {
     let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
     if hit.is_none() {
+      if selected.pos.is_some() {
+        selected.pos = None;
+      }
       continue;
     }
 
@@ -159,8 +162,9 @@ fn load_lod_center_changed(
   mut res: ResMut<BevyVoxelResource>,
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
+  
   for (center, mut chunks, mut mesh_comp) in &mut centers {
-    for lod in 1..res.ranges.len() - 1{
+    for lod in 1..res.ranges.len() - 1 {
       let keys = res.get_delta_keys_by_lod(
         &center.prev_key, &center.key, lod
       );
@@ -251,7 +255,9 @@ fn receive_mesh(
           // println!("Error: Lod 0 should not be loaded async");
         }
 
-        mesh_comp.added.push((data.clone(), ColliderHandle::invalid()));
+        if data.indices.len() > 0 {
+          mesh_comp.added.push((data.clone(), ColliderHandle::invalid()));
+        }
       }
     }
   }

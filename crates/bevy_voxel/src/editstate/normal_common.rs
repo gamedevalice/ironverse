@@ -24,7 +24,11 @@ fn preview_position(
 ) {
   for (cam_trans, mut preview) in &mut cam {
     let hit = bevy_voxel_res.get_raycast_hit(cam_trans);
+
     if hit.is_none() {
+      if preview.pos.is_some() {
+        preview.pos = None;
+      }
       continue;
     }
     let point = hit.unwrap();
