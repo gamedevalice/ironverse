@@ -1,10 +1,20 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
+
 use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
-use utils::RayUtils;
+use utils::{RayUtils, Utils};
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use voxels::utils::key_to_world_coord_f32;
-use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState};
+use crate::{BevyVoxelResource, physics::Physics, Preview, ShapeState, EditState, ChunkMesh};
 use crate::util::*;
+
+use cfg_if::cfg_if;
+
+cfg_if! {
+  if #[cfg(target_arch = "wasm32")] {
+    use multithread::plugin::send_key;
+  }
+}
+
 
 impl BevyVoxelResource {
 
@@ -12,7 +22,8 @@ impl BevyVoxelResource {
     depth: u32, 
     voxel_scale: f32, 
     range: u8,
-    colors: Vec<[f32; 3]>,  
+    colors: Vec<[f32; 3]>,
+    ranges: Vec<u32>,
   ) -> Self {
     Self {
       chunk_manager: ChunkManager::new(
@@ -25,6 +36,8 @@ impl BevyVoxelResource {
       colliders_cache: Vec::new(),
       shape_state: ShapeState::Cube,
       edit_state: EditState::AddNormal,
+      ranges: ranges,
+      ..Default::default()
     }
   }
 
@@ -41,7 +54,7 @@ impl BevyVoxelResource {
 
     let keys = adjacent_keys(&key, self.chunk_manager.range as i64, true);
     for key in keys.iter() {
-      chunks.push(load_chunk(self, *key));
+      chunks.push(load_chunk(self, *key, 0));
       
     }
 
@@ -56,7 +69,9 @@ impl BevyVoxelResource {
         mode, 
         &mut VoxelReuse::new(self.chunk_manager.depth, 3),
         &self.chunk_manager.colors,
-        self.chunk_manager.voxel_scale
+        self.chunk_manager.voxel_scale,
+        chunk.key,
+        chunk.lod
       )
   }
 
@@ -197,9 +212,6 @@ impl BevyVoxelResource {
     pos
   }
 
-
-
-
   pub fn get_preview(&self, pos: Vec3, preview: &Preview) -> Chunk {
 
     match self.edit_state {
@@ -272,9 +284,6 @@ impl BevyVoxelResource {
     chunk
   }
 
-  
-
-  
   /// Get preview chunk pos converted to world pos considering the size of chunk
   /// and positioned visually correct
   pub fn get_preview_pos(&self, calc_pos: Vec3) -> Vec3 {
@@ -299,11 +308,16 @@ impl BevyVoxelResource {
     self.chunk_manager.set_voxel2(&p, voxel);
   }
 
-  pub fn set_voxel_default(&mut self, coord: [i64; 3], voxel: u8) {
-    self.chunk_manager.set_voxel2(&coord, voxel);
+  pub fn set_voxel_default(
+    &mut self, coord: [i64; 3], voxel: u8
+  ) -> Vec<([i64; 3], Chunk)> {
+    self.chunk_manager.set_voxel2(&coord, voxel)
   }
 
-  pub fn set_voxel_cube(&mut self, pos: Vec3, preview: &Preview) {
+  pub fn set_voxel_cube(
+    &mut self, pos: Vec3, preview: &Preview
+  ) -> HashMap<[i64; 3], Chunk> {
+    let mut res = HashMap::new();
     let scale = self.chunk_manager.voxel_scale;
 
     let s = preview.size as i64;
@@ -326,10 +340,15 @@ impl BevyVoxelResource {
             p[2] as i64 + z,
           ];
 
-          self.set_voxel_default(tmp, preview.voxel);
+          let chunks = self.set_voxel_default(tmp, preview.voxel);
+
+          for (key, chunk) in chunks.iter() {
+            res.insert(*key, chunk.clone());
+          }
         }
       }
     }
+    res
   }
 
   pub fn set_voxel_cube_default(
@@ -337,7 +356,8 @@ impl BevyVoxelResource {
     pos: Vec3, 
     size: u8,
     voxel: u8,
-  ) {
+  ) -> HashMap<[i64; 3], Chunk> {
+    let mut res = HashMap::new();
     let scale = self.chunk_manager.voxel_scale;
 
     let s = size as i64;
@@ -361,20 +381,24 @@ impl BevyVoxelResource {
             p[2] as i64 + z,
           ];
 
-          self.set_voxel_default(tmp, voxel);
+          let chunks = self.set_voxel_default(tmp, voxel);
+
+          for (key, chunk) in chunks.iter() {
+            res.insert(*key, chunk.clone());
+          }
         }
       }
     }
+    res
   }
-
-
 
   pub fn set_voxel_sphere_default(
     &mut self, 
     pos: Vec3, 
     size: f32,
     voxel: u8,
-  ) {
+  ) -> HashMap<[i64; 3], Chunk> {
+    let mut res = HashMap::new();
     let scale = self.chunk_manager.voxel_scale;
     let mul = 1.0 / scale;
     let p = [
@@ -391,11 +415,19 @@ impl BevyVoxelResource {
         p[2] as i64 + c[2],
       ];
       
-      self.set_voxel_default(tmp, voxel);
+      let chunks = self.set_voxel_default(tmp, voxel);
+
+      for (key, chunk) in chunks.iter() {
+        res.insert(*key, chunk.clone());
+      }
     }
+    res
   }
 
-  pub fn set_voxel_sphere(&mut self, pos: Vec3, preview: &Preview) {
+  pub fn set_voxel_sphere(
+    &mut self, pos: Vec3, preview: &Preview
+  ) -> HashMap<[i64; 3], Chunk> {
+    let mut res = HashMap::new();
     let scale = self.chunk_manager.voxel_scale;
     let mul = 1.0 / scale;
     let p = [
@@ -413,8 +445,13 @@ impl BevyVoxelResource {
         p[2] as i64 + c[2],
       ];
       
-      self.set_voxel_default(tmp, preview.voxel);
+      let chunks = self.set_voxel_default(tmp, preview.voxel);
+
+      for (key, chunk) in chunks.iter() {
+        res.insert(*key, chunk.clone());
+      }
     }
+    res
   }
 
 
@@ -483,8 +520,6 @@ impl BevyVoxelResource {
   pub fn remove_collider(&mut self, handle: ColliderHandle) {
     self.physics.remove_collider(handle);
   }
-
-
 
 
   /// - calc_pos should be the calculated position based on edit mode
@@ -605,14 +640,104 @@ impl BevyVoxelResource {
     chunk
   }
 
-  /*
-    Editable sphere
-      Mid position set by distance/raycast
-
-   */
 
 
+  pub fn load_lod_meshes(&mut self, key: [i64; 3], lod: usize) -> Vec<ChunkMesh> {
+    let mut chunk_meshes = Vec::new();
+    let max_lod = self.chunk_manager.depth as u8;
+
+    let keys = self.get_keys_by_lod(key, lod);
+    for k in keys.iter() {
+      let chunk = load_chunk_with_lod(self, *k, lod);
+      let data = self.compute_mesh(VoxelMode::SurfaceNets, &chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+
+      
+      chunk_meshes.push(ChunkMesh { key: *k, mesh: data });
+    }
+
+    chunk_meshes
+  }
+
+  pub fn get_keys_by_lod(&self, key: [i64; 3], lod: usize) -> Vec<[i64; 3]> {
+    Utils::get_keys_by_lod(&self.ranges, &key, lod)
+  }
+
+  pub fn load_chunks(
+    &mut self, 
+    keys: &Vec<[i64; 3]>,
+    data: &HashMap<[i64; 3], Chunk>,
+    lod: usize,
+  ) -> Vec<Chunk> {
+    let mut chunks = Vec::new();
+    for key in keys.iter() {
+      let d = data.get(key);
+      if d.is_none() {
+        chunks.push(load_chunk(self, *key, lod));
+      }
+      if d.is_some() {
+        chunks.push(d.unwrap().clone());
+      }
+    }
+    // for key in keys.iter() {
+    //   chunks.push(load_chunk(self, *key, lod));
+    // }
+    chunks
+  }
+
+  pub fn load_mesh_data(
+    &mut self, 
+    chunks: &Vec<Chunk>,
+  ) -> Vec<(MeshData, ColliderHandle)> {
+
+    let mut mesh_data = Vec::new();
+    // for _ in 0..self.colliders_cache.len() {
+    //   let h = self.colliders_cache.pop().unwrap();
+    //   self.remove_collider(h);
+    // }
+    // self.colliders_cache.clear();
+
+    for chunk in chunks.iter() {
+      let data = self.compute_mesh(VoxelMode::SurfaceNets, chunk);
+      if data.positions.len() == 0 {
+        continue;
+      }
+
+      let pos = self.get_pos(chunk.key);
+      let c = self.add_collider(pos, &data);
+      // self.colliders_cache.push(c);
+      mesh_data.push((data, c));
+    }
+
+    mesh_data
+  }
 
 
-  
+  pub fn get_delta_keys_by_lod(
+    &self, prev_key: &[i64; 3], key: &[i64; 3], lod: usize
+  ) -> Vec<[i64; 3]> {
+    Utils::get_delta_keys_by_lod(
+      &self.ranges, prev_key, key, lod
+    )
+  }
+
+
+  pub fn in_range_by_lod(
+    &self, 
+    key1: &[i64; 3], 
+    key2: &[i64; 3],
+    lod: usize,
+  ) -> bool {
+    assert!(lod <= self.ranges.len() - 2);
+    Utils::in_range_by_lod(key1, key2, &self.ranges, lod)
+  }
+
 }
+
+/*
+  TODO
+    Categorize the functions later
+
+*/

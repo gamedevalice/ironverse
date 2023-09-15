@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use utils::Utils;
 use voxels::chunk::chunk_manager::{ChunkManager, Chunk};
 use crate::BevyVoxelResource;
 
@@ -27,15 +28,33 @@ pub fn set_voxel_default(
 }
 
 
-pub fn load_chunk(resource: &mut BevyVoxelResource, key: [i64; 3]) -> Chunk {
+pub fn load_chunk(
+  resource: &mut BevyVoxelResource, 
+  key: [i64; 3],
+  lod: usize,
+) -> Chunk {
   let res = resource.chunk_manager.get_chunk(&key);
   if res.is_none() {
-    let chunk = resource.chunk_manager.new_chunk3(&key, resource.chunk_manager.depth as u8);
+    let chunk = ChunkManager::new_chunk(
+      &key, resource.chunk_manager.depth as u8,
+      lod,
+      resource.chunk_manager.noise,
+    );
     resource.chunk_manager.set_chunk(&key, &chunk);
     return chunk;
   }
 
   res.unwrap().clone()
+}
+
+pub fn load_chunk_with_lod(
+  resource: &mut BevyVoxelResource, 
+  key: [i64; 3], 
+  lod: usize,
+) -> Chunk {
+  ChunkManager::new_chunk(
+    &key, resource.chunk_manager.depth as u8, lod, resource.chunk_manager.noise
+  )
 }
 
 
@@ -126,12 +145,14 @@ pub fn get_sphere_coords(size: f32) -> Vec<[i64; 3]> {
 }
 
 
+
+
 #[cfg(test)]
 mod tests {
   use bevy::prelude::Vec3;
   use voxels::chunk::chunk_manager::ChunkManager;
   use crate::util::get_key;
-  use super::{get_near_positions, get_sphere_coords};
+  use super::{get_near_positions, get_sphere_coords, get_keys_by_lod};
 
   #[test]
   fn test_near_positions_1_0() -> Result<(), String> {
@@ -307,16 +328,16 @@ mod tests {
     Ok(())
   }
 
+  /// TODO: Implement later
   #[test]
   fn test_sphere_coords() -> Result<(), String> {
-    let coords = get_sphere_coords(4);
+    let coords = get_sphere_coords(1.0);
 
     for c in coords.iter() {
-      println!("{:?}", c);
+      // println!("{:?}", c);
     }
 
     Ok(())
   }
-
 
 }

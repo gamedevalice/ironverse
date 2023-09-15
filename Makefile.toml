@@ -4,7 +4,7 @@ dependencies = ["clear", "web-wasm-bindgen-cli", "compile", "client"]
 [tasks.compile]
 script = '''
 cargo build --release --target wasm32-unknown-unknown
-wasm-bindgen --out-name ironverse-editor --out-dir assets/wasm --target web target/wasm32-unknown-unknown/release/ironverse-editor.wasm
+wasm-bindgen --out-name wasm-multithread --out-dir assets/wasm --target web target/wasm32-unknown-unknown/release/wasm_multithread.wasm
 '''
 
 [tasks.web_low]
@@ -13,9 +13,8 @@ dependencies = ["clear", "web-wasm-bindgen-cli", "compile_low", "client"]
 [tasks.compile_low]
 script = '''
 cargo build --release --target wasm32-unknown-unknown --features low --no-default-features
-wasm-bindgen --out-name ironverse-editor --out-dir assets/wasm --target web target/wasm32-unknown-unknown/release/ironverse-editor.wasm
+wasm-bindgen --out-name ironverse-editor --out-dir assets/wasm --target web target/wasm32-unknown-unknown/release/wasm_multithread.wasm
 '''
-
 
 [tasks.client]
 script = '''
@@ -42,7 +41,7 @@ cargo run --features tests --no-default-features
 script = '''
 clear
 clear
-cargo run
+cargo run --release --example ${@}
 '''
 
 [tasks.run_low]
@@ -51,3 +50,23 @@ clear
 clear
 cargo run --features low --no-default-features
 '''
+
+
+[tasks.wasm]
+script = '''
+cargo build --release --example ${@} --target wasm32-unknown-unknown
+wasm-bindgen --out-name wasm_multithread --out-dir assets/wasm --target web target/wasm32-unknown-unknown/release/examples/${@}.wasm
+basic-http-server .
+'''
+
+[tasks.wasm_full]
+script = '''
+cd crates/multithread/
+./build.sh
+cd ../../
+cargo build --release --example ${@} --target wasm32-unknown-unknown
+wasm-bindgen --out-name wasm_multithread --out-dir assets/wasm --target web target/wasm32-unknown-unknown/release/examples/${@}.wasm
+basic-http-server .
+'''
+
+
