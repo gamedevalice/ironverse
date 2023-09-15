@@ -33,8 +33,8 @@ impl Plugin for CustomPlugin {
       .add_system(update)
       .add_system(detect_selected_voxel_position)
       .add_system(load_main_chunks)
-      .add_system(load_lod_chunks)
       .add_system(load_main_delta_chunks)
+      .add_system(load_lod_chunks)
       .add_system(load_lod_center_changed)
       .add_system(receive_chunks)
       .add_system(receive_mesh)
@@ -122,13 +122,39 @@ fn load_lod_chunks(
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
   for (center, mut chunks, mut mesh_comp) in &mut chunks {
-    for lod in 1..res.ranges.len() - 3 {
-
-      println!("lod {}", lod);
+    for lod in 1..res.ranges.len() - 1 {
       let keys = res.get_keys_by_lod(center.key, lod);
+
+      // Filter out not rendered keys
+
+      println!("lod_chunks.len() {} lod {}", keys.len(), lod);
+      // for k in keys.iter() {
+      //   println!("k {:?}", k);
+      // }
       request_load_chunk(&keys, &mut res, lod);
     }
   }
+
+  // Filter out not rendered keys
+  // for (center, mut chunks, mut mesh_comp) in &mut chunks {
+  //   for lod in 1..res.ranges.len() - 3 {
+  //     let keys = res.get_keys_by_lod(center.key, lod);
+  //     let mut filtered = Vec::new();
+  //     for k in keys.iter() {
+  //       if k[1] == -1 {
+  //         filtered.push(k.clone());
+  //       }
+  //     }
+
+  //     println!("lod_chunks.len() {} lod {}", filtered.len(), lod);
+  //     // for k in keys.iter() {
+  //     //   println!("k {:?}", k);
+  //     // }
+  //     request_load_chunk(&filtered, &mut res, lod);
+  //   }
+  // }
+
+
 }
 
 fn load_main_delta_chunks(
@@ -161,8 +187,9 @@ fn load_lod_center_changed(
   mut res: ResMut<BevyVoxelResource>,
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
+  
   for (center, mut chunks, mut mesh_comp) in &mut centers {
-    for lod in 1..res.ranges.len() - 3 {
+    for lod in 1..res.ranges.len() - 1 {
       let keys = res.get_delta_keys_by_lod(
         &center.prev_key, &center.key, lod
       );
@@ -180,6 +207,34 @@ fn load_lod_center_changed(
       }
     }
   }
+
+
+  // for (center, mut chunks, mut mesh_comp) in &mut centers {
+  //   for lod in 1..res.ranges.len() - 3 {
+  //     let keys = res.get_delta_keys_by_lod(
+  //       &center.prev_key, &center.key, lod
+  //     );
+
+  //     let mut filtered = Vec::new();
+  //     for k in keys.iter() {
+  //       if k[1] == -1 {
+  //         filtered.push(k.clone());
+  //       }
+  //     }
+
+  //     for key in filtered.iter() {
+  //       let d = chunks.data.get(key);
+  //       if d.is_none() {
+  //         let _ = res.send_key.send((*key, lod));
+  //       }
+  //       if d.is_some() {
+  //         let mut data = d.unwrap().clone();
+  //         data.lod = lod;
+  //         res.send_process_mesh.send(data);
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 
@@ -253,7 +308,9 @@ fn receive_mesh(
           // println!("Error: Lod 0 should not be loaded async");
         }
 
-        mesh_comp.added.push((data.clone(), ColliderHandle::invalid()));
+        if data.indices.len() > 0 {
+          mesh_comp.added.push((data.clone(), ColliderHandle::invalid()));
+        }
       }
     }
   }

@@ -24,18 +24,28 @@ fn add(
 ) {
 
   for (_, mut mesh_comp) in &mut chunk_query {
+
+    // println!("added {}", mesh_comp.added.iter().len());
+
     for (data, collider_handle) in mesh_comp.added.iter() {
+      // println!("data.indices.len() {}", data.indices.len());
+
       'graphics: for (entity, graphics) in &chunk_graphics {
-        if graphics.key == data.key {
-          // commands.entity(entity).despawn();
+        if graphics.key == data.key && graphics.lod == data.lod {
+          commands.entity(entity).despawn();
 
           if graphics.lod == 0 {
             bevy_voxel_res.physics.remove_collider(graphics.collider);
             // println!("remove collider 1");
-
-            continue 'graphics;
           }
-          
+          // continue 'graphics;
+        }
+
+        if graphics.key == data.key {
+          if graphics.lod == 0 {
+            bevy_voxel_res.physics.remove_collider(graphics.collider);
+            // println!("remove collider 1");
+          }
         }
       }
 
@@ -47,7 +57,12 @@ fn add(
       let mesh_handle = meshes.add(render_mesh);
       let mut pos = bevy_voxel_res.get_pos(data.key);
 
-      let mat = materials.add(Color::rgb(0.7, 0.7, 0.7).into());
+      let mut color = Color::rgba(0.7, 0.7, 0.7, 0.5);
+      if data.lod == 1 {
+        color = Color::rgba(0.0, 0.0, 1.0, 0.5);
+      }
+
+      let mat = materials.add(color.into());
       commands
         .spawn(MaterialMeshBundle {
           mesh: mesh_handle,
@@ -71,16 +86,28 @@ fn remove1(
   mut commands: Commands,
 
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-  mesh_comps: Query<(&Center, &MeshComponent), Changed<MeshComponent>>,
+  mesh_comps: Query<(&Center, &MeshComponent)>,
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  mut local_res: ResMut<LocalResource>,
 ) {
+
+  let mut total = 0;
+  for (_, g) in &chunk_graphics {
+    if g.lod == 1 {
+      total += 1;
+    }
+  }
+  if local_res.lod1_total_keys != total {
+    local_res.lod1_total_keys = total;
+    println!("lod1.len() {}", local_res.lod1_total_keys);
+  }
   
   /*
     Detect keys to delete
    */
   // let mut remove_keys = 
 
-  let max_lod = bevy_voxel_res.chunk_manager.depth as usize - 1;
+  let max_lod = bevy_voxel_res.chunk_manager.depth as usize;
   for (center, mesh_comp) in &mesh_comps {
     // println!("changed12");
     for (entity, graphics) in &chunk_graphics {
@@ -101,39 +128,73 @@ fn remove1(
       //     }
       //   }
       // }
-      
-      if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 0) {
-        if graphics.lod != 0 {
-          for (_, g2) in &chunk_graphics {
-            if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, 0) {
-              if g2.lod == 0 && graphics.key == g2.key {
-                commands.entity(entity).despawn_recursive();
 
-                println!("dispose lod0 {:?}", g2.key);
+
+
+
+      for lod in 0..max_lod {
+        // println!("lod {}", lod);
+        if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, lod) {
+          if graphics.lod != lod {
+            for (_, g2) in &chunk_graphics {
+              if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, lod) {
+                if g2.lod == lod && graphics.key == g2.key {
+                  commands.entity(entity).despawn_recursive();
+                }
               }
             }
           }
         }
       }
 
-      if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 1) {
-        if graphics.lod != 1 {
-          for (_, g2) in &chunk_graphics {
-            if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, 1) {
-              if g2.lod == 1 && graphics.key == g2.key {
-                commands.entity(entity).despawn_recursive();
-
-                println!("dispose lod1 {:?}", g2.key);
-              }
-            }
-          }
-        }
-      }
-
-      // println!("bevy_voxel_res.ranges[2] {}", bevy_voxel_res.ranges[2]);
-      if !Utils::in_range(&center.key, &graphics.key, bevy_voxel_res.ranges[2] as i64) {
+      let r = bevy_voxel_res.ranges.clone();
+      let max_range = r[r.len() - 1] as i64;
+      if !Utils::in_range(&center.key, &graphics.key, max_range) {
         commands.entity(entity).despawn_recursive();
       }
+
+
+
+
+      // if !Utils::in_range(&center.key, &graphics.key, bevy_voxel_res.ranges[2] as i64) {
+      //   commands.entity(entity).despawn_recursive();
+      //   // println!("disposed outside");
+      // } 
+
+
+      // println!("dispose---------");
+      // if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 0) {
+      //   if graphics.lod != 0 {
+      //     for (_, g2) in &chunk_graphics {
+      //       if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, 0) {
+      //         if g2.lod == 0 && graphics.key == g2.key {
+      //           commands.entity(entity).despawn_recursive();
+
+      //           // println!("dispose lod0 {:?}", g2.key);
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
+
+      // if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 1) {
+      //   if graphics.lod != 1 {
+      //     for (_, g2) in &chunk_graphics {
+      //       if bevy_voxel_res.in_range_by_lod(&center.key, &g2.key, 1) {
+      //         if g2.lod == 1 && graphics.key == g2.key {
+      //           commands.entity(entity).despawn_recursive();
+
+      //           // println!("dispose lod1 {:?}", g2.key);
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
+
+      // println!("bevy_voxel_res.ranges[2] {}", bevy_voxel_res.ranges[2]);
+      // if !Utils::in_range(&center.key, &graphics.key, bevy_voxel_res.ranges[2] as i64) {
+      //   commands.entity(entity).despawn_recursive();
+      // }
 
       // if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 1) {
       //   if graphics.lod != 1 {
@@ -199,6 +260,8 @@ fn remove1(
 struct LocalResource {
   total_keys: usize,  // For testing
   total_mesh: usize,  // For testing
+
+  lod1_total_keys: usize,
 }
 
 impl Default for LocalResource {
@@ -206,6 +269,7 @@ impl Default for LocalResource {
     Self {
       total_keys: 0,
       total_mesh: 0,
+      lod1_total_keys: 0,
     }
   }
 }
