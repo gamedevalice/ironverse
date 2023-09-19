@@ -10,21 +10,21 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(update.run_if(edit_add))
-      .add_system(update_remove.run_if(edit_remove));
+      .add_systems(Update, update.run_if(edit_add))
+      .add_systems(Update, update_remove.run_if(edit_remove));
   }
 }
 
 fn edit_add(edit_state: Res<State<EditState>>,) -> bool {
-  edit_state.0 == EditState::AddNormal ||
-  edit_state.0 == EditState::AddDist ||
-  edit_state.0 == EditState::AddSnap
+  *State::get(&edit_state) == EditState::AddNormal ||
+  *State::get(&edit_state) == EditState::AddDist ||
+  *State::get(&edit_state) == EditState::AddSnap
 }
 
 fn edit_remove(edit_state: Res<State<EditState>>,) -> bool {
-  edit_state.0 == EditState::RemoveNormal ||
-  edit_state.0 == EditState::RemoveDist ||
-  edit_state.0 == EditState::RemoveSnap
+  *State::get(&edit_state) == EditState::RemoveNormal ||
+  *State::get(&edit_state) == EditState::RemoveDist ||
+  *State::get(&edit_state) == EditState::RemoveSnap
 }
 
 

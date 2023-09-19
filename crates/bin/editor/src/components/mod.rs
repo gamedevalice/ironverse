@@ -9,6 +9,6 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_plugin(chunk_edit::CustomPlugin);
+      .add_plugins(chunk_edit::CustomPlugin);
   }
 }

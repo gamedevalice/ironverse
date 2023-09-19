@@ -5,7 +5,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-    .add_system(modify_preview.in_set(OnUpdate(ShapeState::Cube)));
+    .add_systems(Update, modify_preview.run_if(in_state(ShapeState::Cube)));
   }
 }
 

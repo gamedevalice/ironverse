@@ -26,24 +26,24 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_plugin(sphere::CustomPlugin)
-      .add_plugin(cube::CustomPlugin)
+      .add_plugins(sphere::CustomPlugin)
+      .add_plugins(cube::CustomPlugin)
       .insert_resource(BevyVoxelResource::default())
-      .add_startup_system(startup)
-      .add_system(update)
-      .add_system(detect_selected_voxel_position)
-      .add_system(load_main_chunks)
-      .add_system(load_main_delta_chunks)
-      .add_system(load_lod_chunks)
-      .add_system(load_lod_center_changed)
-      .add_system(receive_chunks)
-      .add_system(receive_mesh)
-      .add_system(shape_state_changed);
+      .add_systems(Startup, startup)
+      .add_systems(Update, update)
+      .add_systems(Update, detect_selected_voxel_position)
+      .add_systems(Update, load_main_chunks)
+      .add_systems(Update, load_main_delta_chunks)
+      .add_systems(Update, load_lod_chunks)
+      .add_systems(Update, load_lod_center_changed)
+      .add_systems(Update, receive_chunks)
+      .add_systems(Update, receive_mesh)
+      .add_systems(Update, shape_state_changed);
 
     // cfg_if! {
     //   if #[cfg(not(target_arch = "wasm32"))] {
         app
-          .add_plugin(async_loading::CustomPlugin);
+          .add_plugins(async_loading::CustomPlugin);
     //   }
     // }
   }
@@ -59,8 +59,8 @@ fn update(
   edit_state: Res<State<EditState>>,
 ) {
   res.physics.step();
-  res.shape_state = shape_state.0;
-  res.edit_state = edit_state.0;
+  res.shape_state = *State::get(&shape_state);
+  res.edit_state = *State::get(&edit_state);
 }
 
 fn detect_selected_voxel_position(
@@ -196,15 +196,15 @@ fn shape_state_changed(
   edit_state: Res<State<EditState>>,
   mut local1: Local<EditState>,
 ) {
-  if *local != shape_state.0 {
-    *local = shape_state.0;
+  if *local != *State::get(&shape_state) {
+    *local = *State::get(&shape_state);
     for mut preview in &mut previews {
       preview.size = preview.size;
     }
   }
 
-  if *local1 != edit_state.0 {
-    *local1 = edit_state.0;
+  if *local1 != *State::get(&edit_state) {
+    *local1 = *State::get(&edit_state);
     for mut preview in &mut previews {
       preview.size = preview.size;
     }

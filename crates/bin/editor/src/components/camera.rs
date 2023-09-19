@@ -6,7 +6,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(add);
+      .add_systems(Update, add);
   }
 }
 

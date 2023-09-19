@@ -6,7 +6,7 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(Physics::default())
-      .add_system(update);
+      .add_systems(Update, update);
   }
 }
 

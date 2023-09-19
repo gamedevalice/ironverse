@@ -10,11 +10,11 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(preview_position.in_set(OnUpdate(EditState::RemoveSnap)))
-      .add_system(set_distance.in_set(OnUpdate(EditState::RemoveSnap)))
-      .add_system(remove_voxel_cube.in_set(OnUpdate(EditState::RemoveSnap)))
-      .add_system(remove_voxel_sphere.in_set(OnUpdate(EditState::RemoveSnap)))
-      .add_system(remove.in_schedule(OnExit(EditState::RemoveSnap)))
+      .add_systems(Update, preview_position.run_if(in_state(EditState::RemoveSnap)))
+      .add_systems(Update, set_distance.run_if(in_state(EditState::RemoveSnap)))
+      .add_systems(Update, remove_voxel_cube.run_if(in_state(EditState::RemoveSnap)))
+      .add_systems(Update, remove_voxel_sphere.run_if(in_state(EditState::RemoveSnap)))
+      .add_systems(OnExit(EditState::RemoveSnap), remove)
       ;
   }
 }
@@ -29,7 +29,7 @@ fn preview_position(
     (cam_trans.forward() * preview.dist);
 
     let mut snap_dist = bevy_voxel_res.chunk_manager.voxel_scale * preview.size as f32;
-    if shape_state.0 == ShapeState::Sphere {
+    if *State::get(&shape_state) == ShapeState::Sphere {
 
       let size = preview.sphere_size as i64;
       snap_dist = 
@@ -106,7 +106,7 @@ fn remove_voxel_cube(
   mut edit_event_writer: EventWriter<EditEvents>
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
-  shape_state.0 != ShapeState::Cube {
+  *State::get(&shape_state) != ShapeState::Cube {
     return;
   }
 
@@ -128,7 +128,7 @@ fn remove_voxel_sphere(
   mut edit_event_writer: EventWriter<EditEvents>,
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
-  shape_state.0 != ShapeState::Sphere {
+  *State::get(&shape_state) != ShapeState::Sphere {
     return;
   }
 

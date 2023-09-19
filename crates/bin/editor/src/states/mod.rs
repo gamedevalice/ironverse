@@ -9,9 +9,9 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_plugin(start::CustomPlugin)
-      .add_plugin(new::CustomPlugin)
-      .add_plugin(load::CustomPlugin);
+      .add_plugins(start::CustomPlugin)
+      .add_plugins(new::CustomPlugin)
+      .add_plugins(load::CustomPlugin);
   }
 }
 

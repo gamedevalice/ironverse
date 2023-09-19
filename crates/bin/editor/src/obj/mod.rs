@@ -1,6 +1,5 @@
-use std::fs::File;
-use bevy::{prelude::*, utils::HashMap};
-use voxels::{chunk::{chunk_manager::ChunkManager, adjacent_keys}, data::voxel_octree::VoxelMode};
+use bevy::prelude::*;
+use voxels::chunk::chunk_manager::ChunkManager;
 use obj_exporter::*;
 use crate::{data::GameResource, components::player::Player};
 
@@ -8,7 +7,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(export);
+      .add_systems(Update, export);
   }
 }
 

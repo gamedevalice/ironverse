@@ -10,8 +10,8 @@ impl Plugin for CustomPlugin {
       .insert_resource(UIMenuResource::default());
 
     app
-      .add_system(toggle_show)
-      .add_system(render.in_set(OnUpdate(UIState::Menu)));
+      .add_systems(Update, toggle_show)
+      .add_systems(Update, render.run_if(in_state(UIState::Menu)));
   }
 }
 
@@ -22,8 +22,8 @@ fn toggle_show(
   mut ui_state_next: ResMut<NextState<UIState>>,
   ui_state: Res<State<UIState>>,
 ) {
-  if key.just_pressed(KeyCode::LControl) {
-    match ui_state.0 {
+  if key.just_pressed(KeyCode::ControlLeft) {
+    match *State::get(&ui_state) {
       UIState::Default => {
         ui_state_next.set(UIState::Menu);
         cursor_state_next.set(CursorState::None);

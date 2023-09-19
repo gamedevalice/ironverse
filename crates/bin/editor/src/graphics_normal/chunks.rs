@@ -7,8 +7,8 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_plugin(MaterialPlugin::<CustomMaterial>::default())
-      .add_system(add);
+      .add_plugins(MaterialPlugin::<CustomMaterial>::default())
+      .add_systems(Update, add);
   }
 }
 
@@ -70,7 +70,7 @@ fn add(
 pub const VOXEL_COLOR: MeshVertexAttribute =
   MeshVertexAttribute::new("VOXEL_COLOR", 988540918, VertexFormat::Float32x3);
 
-#[derive(AsBindGroup, Reflect, FromReflect, Debug, Clone, TypeUuid)]
+#[derive(AsBindGroup, Reflect, Debug, Clone, TypeUuid)]
 #[uuid = "2f3d7f74-4bf7-4f32-98cd-858edafa5ca2"]
 pub struct CustomMaterial {
   pub base_color: Color,

@@ -7,7 +7,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_systems(
+      .add_systems(Update, 
         (preview_position_by_dist, set_distance)
         .distributive_run_if(dist_state)
       );
@@ -15,8 +15,8 @@ impl Plugin for CustomPlugin {
 }
 
 fn dist_state(edit_state: Res<State<EditState>>,) -> bool {
-  edit_state.0 == EditState::AddDist ||
-  edit_state.0 == EditState::RemoveDist
+  *State::get(&edit_state) == EditState::AddDist ||
+  *State::get(&edit_state) == EditState::RemoveDist
 }
 
 fn preview_position_by_dist(

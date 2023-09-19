@@ -26,7 +26,7 @@ rand = { version = "0.7", features = ["wasm-bindgen"] }
 humantime = "1"
 
 
-bevy = "0.10.1"
+bevy = "0.11.2"
 flume = "0.11.0"
 voxels = { path = "../voxels" }
 array-bytes = "6.1.0"

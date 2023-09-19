@@ -1,6 +1,7 @@
 #import bevy_pbr::mesh_view_bindings
-#import bevy_pbr::mesh_bindings
-#import bevy_pbr::mesh_functions
+#import bevy_pbr::mesh_bindings mesh
+#import bevy_pbr::mesh_functions mesh_position_local_to_world
+#import bevy_pbr::mesh_functions mesh_position_local_to_clip
 
 
 

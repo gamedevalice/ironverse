@@ -9,8 +9,8 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(HotbarUIResource::default())
-      .add_system(render)
-      .add_system(render_items.after(render))
+      .add_systems(Update, render)
+      .add_systems(Update, render_items.after(render))
       ;
   }
 }

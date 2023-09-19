@@ -88,7 +88,7 @@ fn main() {
     if #[cfg(feature = "core")] {
       let range = 2;
       app
-        .add_plugin(BevyVoxelPlugin)
+        .add_plugins(BevyVoxelPlugin)
         .insert_resource(BevyVoxelResource::new(
           4, 
           // 0.5,
@@ -110,13 +110,13 @@ fn main() {
           ],
           vec![0, range as u32, 4, 6, 8],
         ))
-        .add_plugin(data::CustomPlugin)
-        // .add_plugin(physics::CustomPlugin)
-        .add_plugin(input::CustomPlugin)
-        .add_plugin(components::CustomPlugin)
-        .add_plugin(graphics::CustomPlugin)
-        .add_plugin(states::CustomPlugin)
-        .add_plugin(obj::CustomPlugin);
+        .add_plugins(data::CustomPlugin)
+        // .add_plugins(physics::CustomPlugin)
+        .add_plugins(input::CustomPlugin)
+        .add_plugins(components::CustomPlugin)
+        .add_plugins(graphics::CustomPlugin)
+        .add_plugins(states::CustomPlugin)
+        .add_plugins(obj::CustomPlugin);
     }
   }
 
@@ -125,16 +125,16 @@ fn main() {
     if #[cfg(feature = "player")] {
       use bevy_flycam::NoCameraAndGrabPlugin;
       app
-        .add_plugin(NoCameraAndGrabPlugin)
-        .add_plugin(components::camera::CustomPlugin)
-        .add_plugin(components::player::CustomPlugin);
+        .add_plugins(NoCameraAndGrabPlugin)
+        .add_plugins(components::camera::CustomPlugin)
+        .add_plugins(components::player::CustomPlugin);
     }
   }
   cfg_if! {
     if #[cfg(feature = "graphics_low")] {
       app
-        .add_plugin(graphics_low::chunks::CustomPlugin)
-        .add_plugin(graphics_low::chunk_preview::CustomPlugin)
+        .add_plugins(graphics_low::chunks::CustomPlugin)
+        .add_plugins(graphics_low::chunk_preview::CustomPlugin)
         ;
     }
   }
@@ -142,16 +142,16 @@ fn main() {
   cfg_if! {
     if #[cfg(feature = "graphics_normal")] {
       app
-        .add_plugin(graphics_normal::chunks::CustomPlugin)
-        .add_plugin(graphics_normal::chunk_preview::CustomPlugin);
+        .add_plugins(graphics_normal::chunks::CustomPlugin)
+        .add_plugins(graphics_normal::chunk_preview::CustomPlugin);
     }
   }
 
   cfg_if! {
     if #[cfg(feature = "ui")] {
       app
-        .add_plugin(ui::CustomPlugin)
-        .add_plugin(debugger::CustomPlugin)
+        .add_plugins(ui::CustomPlugin)
+        .add_plugins(debugger::CustomPlugin)
         ;
     }
   }
@@ -159,28 +159,28 @@ fn main() {
   cfg_if! {
     if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
       app
-        .add_plugin(wasm::CustomPlugin);
+        .add_plugins(wasm::CustomPlugin);
     }
   }
 
   cfg_if! {
     if #[cfg(all(feature = "ui_prompt", target_arch = "wasm32") )] {
       app
-        .add_plugin(wasm_ui::CustomPlugin);
+        .add_plugins(wasm_ui::CustomPlugin);
     }
   }
 
   cfg_if! {
     if #[cfg(all(not(feature = "tests"), not(target_arch = "wasm32") ))] {
       app
-        .add_plugin(native::CustomPlugin);
+        .add_plugins(native::CustomPlugin);
     }
   }
 
   cfg_if! {
     if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
       app
-        .add_plugin(native_ui::CustomPlugin);
+        .add_plugins(native_ui::CustomPlugin);
     }
   }
 /* 

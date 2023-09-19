@@ -9,9 +9,9 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(remove_voxel_cube.in_set(OnUpdate(EditState::RemoveDist)))
-      .add_system(remove_voxel_sphere.in_set(OnUpdate(EditState::RemoveDist)))
-      .add_system(remove.in_schedule(OnExit(EditState::RemoveDist)));
+      .add_systems(Update, remove_voxel_cube.run_if(in_state(EditState::RemoveDist)))
+      .add_systems(Update, remove_voxel_sphere.run_if(in_state(EditState::RemoveDist)))
+      .add_systems(OnExit(EditState::RemoveDist), remove);
   }
 }
 
@@ -24,7 +24,7 @@ fn remove_voxel_cube(
   mut edit_event_writer: EventWriter<EditEvents>
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
-  shape_state.0 != ShapeState::Cube {
+  *State::get(&shape_state) != ShapeState::Cube {
     return;
   }
 
@@ -47,7 +47,7 @@ fn remove_voxel_sphere(
   mut edit_event_writer: EventWriter<EditEvents>,
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
-  shape_state.0 != ShapeState::Sphere {
+  *State::get(&shape_state) != ShapeState::Sphere {
     return;
   }
 

@@ -6,10 +6,10 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(update)
-      .add_system(toggle_mouse_grab.in_base_set(CoreSet::PostUpdate))
-      .add_system(cursor_free.in_schedule(OnEnter(CursorState::None)))
-      .add_system(cursor_locked.in_schedule(OnEnter(CursorState::Locked)))
+      .add_systems(Update, update)
+      .add_systems(PostUpdate, toggle_mouse_grab)
+      .add_systems(OnEnter(CursorState::None), cursor_free)
+      .add_systems(OnEnter(CursorState::Locked), cursor_locked)
       ;
   }
 }
@@ -20,7 +20,7 @@ fn update(
   cursor_state: Res<State<CursorState>>,
 ) {
   for event in mouse_events.iter() {
-    if cursor_state.0 == CursorState::None {
+    if *State::get(&cursor_state) == CursorState::None {
       return;
     }
 
@@ -43,12 +43,12 @@ fn toggle_mouse_grab(
     return;
   }
 
-  if ui_state.0 != UIState::Default {
+  if *State::get(&ui_state) != UIState::Default {
     return;
   }
 
   if mouse.just_pressed(MouseButton::Left) {
-    match cursor_state.0 {
+    match *State::get(&cursor_state) {
       CursorState::None => {
         cursor_state_next.set(CursorState::Locked);
       },
@@ -57,7 +57,7 @@ fn toggle_mouse_grab(
   }
 
   if key.just_pressed(KeyCode::Escape) {
-    match cursor_state.0 {
+    match *State::get(&cursor_state) {
       CursorState::None => {
         cursor_state_next.set(CursorState::Locked);
       },

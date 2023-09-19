@@ -9,10 +9,10 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(recv_keys)
-      .add_system(recv_chunk)
-      .add_system(recv_process_mesh)
-      .add_system(recv_mesh);
+      .add_systems(Update, recv_keys)
+      .add_systems(Update, recv_chunk)
+      .add_systems(Update, recv_process_mesh)
+      .add_systems(Update, recv_mesh);
   }
 }
 

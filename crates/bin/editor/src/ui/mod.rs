@@ -1,5 +1,5 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_egui::{egui::{self, Frame, Ui, Rect, Color32}, EguiPlugin, EguiContexts};
+use bevy_egui::{egui::{self, Frame, Rect, Color32}, EguiPlugin, EguiContexts};
 
 pub mod hotbar;
 pub mod inventory;
@@ -9,11 +9,11 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_plugin(EguiPlugin)
-      .add_plugin(hotbar::CustomPlugin)
-      .add_plugin(inventory::CustomPlugin)
-      .add_plugin(menu::CustomPlugin)
-      .add_system(crosshair);
+      .add_plugins(EguiPlugin)
+      .add_plugins(hotbar::CustomPlugin)
+      .add_plugins(inventory::CustomPlugin)
+      .add_plugins(menu::CustomPlugin)
+      .add_systems(Update, crosshair);
   }
 }
 

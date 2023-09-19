@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PrimaryWindow, diagnostic::{FrameTimeDiagnosticsPlugin, Diagnostics}};
+use bevy::{prelude::*, window::PrimaryWindow, diagnostic::{FrameTimeDiagnosticsPlugin, DiagnosticsStore}};
 use bevy_egui::{EguiContexts, egui::{self, Frame, Color32, Style, Rect, Vec2, Pos2, RichText}};
 use crate::{components::{player::Player, chunk_edit::ChunkEdit}, graphics::ChunkGraphics};
 
@@ -7,8 +7,8 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(LocalResource::default())
-      .add_plugin(FrameTimeDiagnosticsPlugin::default())
-      .add_system(show_texts)
+      .add_plugins(FrameTimeDiagnosticsPlugin::default())
+      .add_systems(Update, show_texts)
       ;
   }
 }
@@ -16,7 +16,7 @@ impl Plugin for CustomPlugin {
 fn show_texts(
   mut ctx: EguiContexts,
   windows: Query<&Window, With<PrimaryWindow>>,
-  diagnostics: Res<Diagnostics>,
+  diagnostics: Res<DiagnosticsStore>,
 
   time: Res<Time>,
   mut local_res: ResMut<LocalResource>,

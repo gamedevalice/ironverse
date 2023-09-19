@@ -8,7 +8,7 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(enter.in_schedule(OnEnter(GameState::Load)));
+      .add_systems(OnEnter(GameState::Load), enter);
   }
 }
 
