@@ -8,13 +8,13 @@ pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
-      .add_system(preview_position.run_if(normal_state))
-      .add_system(modify_voxels);
+      .add_systems(Update, preview_position.run_if(normal_state))
+      .add_systems(Update, modify_voxels);
   }
 }
 
 fn normal_state(edit_state: Res<State<EditState>>,) -> bool {
-  edit_state.0 == EditState::AddNormal
+  *State::get(&edit_state) == EditState::AddNormal
   // edit_state.0 == EditState::RemoveNormal
 }
 

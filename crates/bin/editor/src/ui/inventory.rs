@@ -9,12 +9,12 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(LocalResource::default())
-      .add_startup_system(startup)
-      .add_system(prepare_texture)
-      .add_system(toggle_show)
-      .add_systems(
+      .add_systems(Startup, startup)
+      .add_systems(Update, prepare_texture)
+      .add_systems(Update, toggle_show)
+      .add_systems(Update, 
         (render, render_dragging.after(render))
-          .in_set(OnUpdate(UIState::Inventory))
+          .run_if(in_state(UIState::Inventory))
       );
   }
 }
@@ -56,7 +56,7 @@ fn toggle_show(
   mut input_res: ResMut<InputResource>,
 ) {
   if key.just_pressed(KeyCode::I) {
-    match ui_state.0 {
+    match *State::get(&ui_state) {
       UIState::Default => {
         next_state.set(UIState::Inventory);
         cursor_state_next.set(CursorState::None);
@@ -73,7 +73,7 @@ fn toggle_show(
   }
 
   if key.just_pressed(KeyCode::Escape) {
-    match ui_state.0 {
+    match *State::get(&ui_state) {
       UIState::Default => {},
       UIState::Inventory |
       UIState::Menu => {

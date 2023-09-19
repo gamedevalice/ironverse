@@ -13,11 +13,11 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(GraphicsResource::default())
-      .add_plugin(player::CustomPlugin)
-      .add_plugin(chunk_preview::CustomPlugin)
-      .add_startup_system(startup)
-      .add_system(toggle_showhide)
-      .add_system(remove);
+      .add_plugins(player::CustomPlugin)
+      .add_plugins(chunk_preview::CustomPlugin)
+      .add_systems(Startup, startup)
+      .add_systems(Update, toggle_showhide)
+      .add_systems(Update, remove);
   }
 }
 

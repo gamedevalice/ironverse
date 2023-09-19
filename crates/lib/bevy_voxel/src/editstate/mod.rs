@@ -18,17 +18,17 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .add_event::<EditEvents>()
-      .add_plugin(add_normal::CustomPlugin)
-      .add_plugin(add_dist::CustomPlugin)
-      .add_plugin(add_snap::CustomPlugin)
+      .add_plugins(add_normal::CustomPlugin)
+      .add_plugins(add_dist::CustomPlugin)
+      .add_plugins(add_snap::CustomPlugin)
       
-      .add_plugin(remove_normal::CustomPlugin)
-      .add_plugin(remove_dist::CustomPlugin)
-      .add_plugin(remove_snap::CustomPlugin)
+      .add_plugins(remove_normal::CustomPlugin)
+      .add_plugins(remove_dist::CustomPlugin)
+      .add_plugins(remove_snap::CustomPlugin)
 
-      .add_plugin(normal_common::CustomPlugin)
-      .add_plugin(dist_common::CustomPlugin)
-      .add_system(modify_voxels);
+      .add_plugins(normal_common::CustomPlugin)
+      .add_plugins(dist_common::CustomPlugin)
+      .add_systems(Update, modify_voxels);
   }
 }
 
@@ -91,7 +91,7 @@ fn modify_voxels(
 
 
 
-
+#[derive(Event)]
 struct EditEvents {
   event: EditEvent
 }

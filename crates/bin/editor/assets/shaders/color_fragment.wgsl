@@ -1,15 +1,11 @@
-#import bevy_pbr::mesh_view_bindings
-#import bevy_pbr::mesh_bindings
-#import bevy_pbr::mesh_functions
-
-#import bevy_pbr::pbr_types
-#import bevy_pbr::utils
-#import bevy_pbr::clustered_forward
-#import bevy_pbr::lighting
-#import bevy_pbr::shadows
-#import bevy_pbr::fog
-#import bevy_pbr::pbr_functions
-#import bevy_pbr::pbr_ambient
+#import bevy_pbr::pbr_functions pbr
+#import bevy_pbr::pbr_functions pbr_input_new
+#import bevy_pbr::pbr_functions PbrInput
+#import bevy_pbr::pbr_functions prepare_world_normal
+#import bevy_pbr::pbr_functions calculate_view
+#import bevy_core_pipeline::tonemapping tone_mapping
+#import bevy_pbr::mesh_vertex_output MeshVertexOutput
+#import bevy_pbr::mesh_view_bindings view
 
 struct CustomMaterial {
   base_color: vec4<f32>,
@@ -43,8 +39,8 @@ fn fragment(input: FragmentInput) -> @location(0) vec4<f32> {
   pbr_input.N = normalize(input.world_normal);
   pbr_input.V = calculate_view(input.world_position, pbr_input.is_orthographic);
 
-  return tone_mapping(pbr(pbr_input));
-  // return vec4<f32>(input.color, 1.0);
+  return tone_mapping(pbr(pbr_input), view.color_grading);
+  //return vec4<f32>(input.color, 1.0);
 }
 
 

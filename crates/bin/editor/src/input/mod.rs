@@ -8,11 +8,12 @@ impl Plugin for CustomPlugin {
     app
       .insert_resource(InputResource::default())
       .add_event::<MouseInput>()
-      .add_plugin(hotbar::CustomPlugin);
+      .add_plugins(hotbar::CustomPlugin);
       
   }
 }
 
+#[derive(Event)]
 pub struct MouseInput {
   pub mouse_button_input: MouseButtonInput,
 }

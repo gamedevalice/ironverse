@@ -20,9 +20,9 @@ impl Plugin for BevyVoxelPlugin {
     app
       .add_state::<EditState>()
       .add_state::<ShapeState>()
-      .add_plugin(functions::CustomPlugin)
-      .add_plugin(editstate::CustomPlugin)
-      .add_plugin(lod::CustomPlugin);
+      .add_plugins(functions::CustomPlugin)
+      .add_plugins(editstate::CustomPlugin)
+      .add_plugins(lod::CustomPlugin);
 
     cfg_if! {
       if #[cfg(target_arch = "wasm32")] {

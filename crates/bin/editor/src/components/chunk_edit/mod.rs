@@ -12,9 +12,9 @@ impl Plugin for CustomPlugin {
     app
       // .add_plugin(voxel_add::CustomPlugin)
       // .add_plugin(voxel_remove::CustomPlugin)
-      .add_system(add_to_player)
+      .add_systems(Update, add_to_player)
       // .add_system(update_edit_params)
-      .add_system(switch_state);
+      .add_systems(Update, switch_state);
   }
 }
 
