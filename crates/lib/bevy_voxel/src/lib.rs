@@ -2,7 +2,7 @@ mod physics;
 mod util;
 mod functions;
 mod implement;
-mod editstate;
+pub mod editstate;
 mod lod;
 
 use bevy::{prelude::*, utils::HashMap};
