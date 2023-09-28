@@ -92,12 +92,12 @@ fn modify_voxels(
 
 
 #[derive(Event)]
-struct EditEvents {
-  event: EditEvent
+pub struct EditEvents {
+  pub event: EditEvent
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-enum EditEvent {
+pub enum EditEvent {
   AddCube,
   AddSphere,
   RemoveCube,
