@@ -30,9 +30,9 @@ fn add_voxel_cube(
     if preview.pos.is_none() {
       continue;
     }
-    edit_event_writer.send(EditEvents {
-      event: EditEvent::AddCube
-    });
+    // edit_event_writer.send(EditEvents {
+    //   event: EditEvent::AddCube
+    // });
   }
 }
 
@@ -51,9 +51,9 @@ fn add_voxel_sphere(
     if preview.pos.is_none() {
       continue;
     }
-    edit_event_writer.send(EditEvents {
-      event: EditEvent::AddSphere
-    });
+    // edit_event_writer.send(EditEvents {
+    //   event: EditEvent::AddSphere
+    // });
   }
 }
 

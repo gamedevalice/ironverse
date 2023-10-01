@@ -58,9 +58,9 @@ fn remove_voxel_cube(
     if selected.pos.is_none() {
       continue;
     }
-    edit_event_writer.send(EditEvents {
-      event: EditEvent::RemoveCube
-    });
+    // edit_event_writer.send(EditEvents {
+    //   event: EditEvent::RemoveCube
+    // });
   }
 }
 
@@ -79,9 +79,9 @@ fn remove_voxel_sphere(
     if preview.pos.is_none() {
       continue;
     }
-    edit_event_writer.send(EditEvents {
-      event: EditEvent::RemoveSphere
-    });
+    // edit_event_writer.send(EditEvents {
+    //   event: EditEvent::RemoveSphere
+    // });
   }
 }
 
