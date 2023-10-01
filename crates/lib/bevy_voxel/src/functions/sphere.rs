@@ -15,23 +15,23 @@ fn modify_preview(
   mut previews: Query<&mut Preview>,
 ) {
   let speed = 1.0;
-  if key_input.pressed(KeyCode::Equals) {
-    for mut preview in previews.iter_mut() {
-      if preview.sphere_size < 8.0 {
-        preview.sphere_size += time.delta_seconds() * speed;
+  // if key_input.pressed(KeyCode::Equals) {
+  //   for mut preview in previews.iter_mut() {
+  //     if preview.sphere_size < 8.0 {
+  //       preview.sphere_size += time.delta_seconds() * speed;
 
-        println!("sphere_size {}", preview.sphere_size);
-      }
-    }
-  }
+  //       println!("sphere_size {}", preview.sphere_size);
+  //     }
+  //   }
+  // }
 
-  if key_input.pressed(KeyCode::Minus) {
-    for mut preview in previews.iter_mut() {
-      if preview.sphere_size > 1.0 {
-        preview.sphere_size -= time.delta_seconds() * speed;
+  // if key_input.pressed(KeyCode::Minus) {
+  //   for mut preview in previews.iter_mut() {
+  //     if preview.sphere_size > 1.0 {
+  //       preview.sphere_size -= time.delta_seconds() * speed;
 
-        println!("sphere_size {}", preview.sphere_size);
-      }
-    }
-  }
+  //       println!("sphere_size {}", preview.sphere_size);
+  //     }
+  //   }
+  // }
 }
