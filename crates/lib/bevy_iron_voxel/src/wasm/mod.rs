@@ -13,15 +13,15 @@ impl Plugin for CustomPlugin {
       .add_event::<PointerLockEvent>()
       .add_event::<MouseMoveEvent>()
       .add_event::<WasmInputEvent>()
-      .add_system(update_fullscreen)
-      .add_system(grab_mouse)
-      .add_system(cursor_free.in_schedule(OnEnter(CursorState::None)))
-      .add_system(cursor_locked.in_schedule(OnEnter(CursorState::Locked)))
+      .add_systems(Update, update_fullscreen)
+      .add_systems(Update, grab_mouse)
+      .add_systems(OnEnter(CursorState::None), cursor_free)
+      .add_systems(OnEnter(CursorState::Locked), cursor_locked)
       ;
 
     app
       .add_startup_system(startup)
-      .add_system(send_mouse_events);
+      .add_systems(Update, send_mouse_events);
   }
 }
 
@@ -64,18 +64,18 @@ fn send_mouse_events(
     }
     
     // Defer: Improve getting mouse events from WASM
-    if e == 0 {
-      mouse_inputs.send(MouseInput { mouse_button_input: MouseButtonInput {
-        button: MouseButton::Left,
-        state: ButtonState::Pressed,
-      }});
-    }
-    if e == 2 {
-      mouse_inputs.send(MouseInput { mouse_button_input: MouseButtonInput {
-        button: MouseButton::Right,
-        state: ButtonState::Pressed,
-      }});
-    }
+    // if e == 0 {
+    //   mouse_inputs.send(MouseInput { mouse_button_input: MouseButtonInput {
+    //     button: MouseButton::Left,
+    //     state: ButtonState::Pressed,
+    //   }});
+    // }
+    // if e == 2 {
+    //   mouse_inputs.send(MouseInput { mouse_button_input: MouseButtonInput {
+    //     button: MouseButton::Right,
+    //     state: ButtonState::Pressed,
+    //   }});
+    // }
   }
 }
 
@@ -109,24 +109,24 @@ fn cursor_free(
   mut windows: Query<&mut Window>,
   mut move_setting_res: ResMut<MovementSettings>,
 ) {
-  let mut window = windows.single_mut();
-  window.cursor.visible = true;
-  window.cursor.grab_mode = CursorGrabMode::None;
+  // let mut window = windows.single_mut();
+  // window.cursor.visible = true;
+  // window.cursor.grab_mode = CursorGrabMode::None;
 
-  move_setting_res.sensitivity = 0.0;
-  move_setting_res.speed = 0.0;
+  // move_setting_res.sensitivity = 0.0;
+  // move_setting_res.speed = 0.0;
 }
 
 fn cursor_locked(
   mut windows: Query<&mut Window>,
   mut move_setting_res: ResMut<MovementSettings>,
 ) {
-  let mut window = windows.single_mut();
-  window.cursor.visible = false;
-  window.cursor.grab_mode = CursorGrabMode::Confined;
+  // let mut window = windows.single_mut();
+  // window.cursor.visible = false;
+  // window.cursor.grab_mode = CursorGrabMode::Confined;
 
-  move_setting_res.sensitivity = 0.00012;
-  move_setting_res.speed = 6.0;
+  // move_setting_res.sensitivity = 0.00012;
+  // move_setting_res.speed = 6.0;
 }
 
 
@@ -163,10 +163,13 @@ impl Default for LocalResource {
   }
 }
 
+#[derive(Event)]
 pub struct PointerLockEvent(pub bool);
 
+#[derive(Event)]
 pub struct MouseMoveEvent(bool);
 
+#[derive(Event)]
 pub struct WasmInputEvent {
   pub mouse: MouseButton,
 }
