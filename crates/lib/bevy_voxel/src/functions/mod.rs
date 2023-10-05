@@ -5,7 +5,7 @@ mod cube;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy::{prelude::*, utils::HashMap};
-use multithread::plugin::Key;
+
 use rapier3d::prelude::ColliderHandle;
 use utils::Utils;
 use voxels::chunk::adjacent_keys;
@@ -24,6 +24,7 @@ cfg_if! {
     use multithread::plugin::send_key;
     use multithread::plugin::send_chunk;
     use multithread::plugin::Octree;
+    use multithread::plugin::Key;
   }
 }
 
