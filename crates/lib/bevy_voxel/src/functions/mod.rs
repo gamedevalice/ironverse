@@ -1,32 +1,12 @@
 mod sphere;
 mod cube;
 
-
-use bevy::render::mesh::Indices;
-use bevy::render::render_resource::PrimitiveTopology;
 use bevy::{prelude::*, utils::HashMap};
-
 use rapier3d::prelude::ColliderHandle;
-use utils::Utils;
-use voxels::chunk::adjacent_keys;
-use voxels::chunk::chunk_manager::ChunkManager;
-use voxels::chunk::world_pos_to_key;
 use voxels::data::voxel_octree::MeshData;
-use voxels::data::voxel_octree::VoxelOctree;
-use voxels::utils::key_to_world_coord_f32;
-use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ChunkData, ShapeState, EditState, MeshComponent};
-use voxels::chunk::chunk_manager::Chunk;
+use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ShapeState, EditState, MeshComponent};
 
 use cfg_if::cfg_if;
-cfg_if! {
-  if #[cfg(target_arch = "wasm32")] {
-    use multithread::plugin::PluginResource;
-    use multithread::plugin::send_key;
-    use multithread::plugin::send_chunk;
-    use multithread::plugin::Octree;
-    use multithread::plugin::Key;
-  }
-}
 
 cfg_if! {
   if #[cfg(not(target_arch = "wasm32"))] {
@@ -59,101 +39,10 @@ impl Plugin for CustomPlugin {
           .add_plugins(async_loading::CustomPlugin);
       }
     }
-    
-    cfg_if! {
-      if #[cfg(target_arch = "wasm32")] {
-        app
-        .insert_resource(LocalResource::default())
-        .add_systems(Update, recv_keys)
-        .add_systems(Update, recv_chunk)
-        .add_systems(Update, load_mesh);
-      }
-    }
-    
   }
 }
 
-cfg_if! {
-  if #[cfg(target_arch = "wasm32")] {
 
-    #[derive(Resource)]
-    struct LocalResource {
-      duration: f32,
-      keys_count: usize,
-      keys_total: usize,
-      done: bool,
-      manager: ChunkManager,
-    }
-
-    impl Default for LocalResource {
-      fn default() -> Self {
-        Self {
-          duration: 0.0,
-          keys_count: 0,
-          keys_total: 0,
-          done: true,
-          manager: ChunkManager::default(),
-        }
-      }
-    }
-
-
-    #[derive(Component)]
-    pub struct ChunkGraphics;
-
-    fn recv_keys(
-      mut commands: Commands,
-      mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-    ) {
-      //let thread_pool = AsyncComputeTaskPool::get();
-
-      let depth = bevy_voxel_res.chunk_manager.depth as u8;
-      let noise = bevy_voxel_res.chunk_manager.noise;
-
-      for (key, lod) in bevy_voxel_res.recv_key.drain() {
-        let key = key.clone();
-        send_key(Key {
-          key: key,
-          lod: lod
-        });
-      } 
-    }
-
-    fn recv_chunk(
-      plugin_res: Res<PluginResource>,
-      mut commands: Commands,
-      mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-    ) {
-      for chunk in plugin_res.recv_chunk.drain() {
-        // info!("update() {:?}", bytes);
-        // info!("wasm_recv_data");
-        //local_res.keys_count += 1;
-        
-        // let octree: Octree = bincode::deserialize(&bytes[..]).unwrap();
-        // let chunk = Chunk {
-        //   key: octree.key,
-        //   octree: VoxelOctree::new_from_bytes(octree.data),
-        //   ..Default::default()
-        // };
-
-        send_chunk(chunk);
-      }
-      
-    }
-
-    fn load_mesh(
-      plugin_res: Res<PluginResource>,
-      mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-    ) {
-      for data in plugin_res.recv_mesh.drain() {
-        // info!("wasm_recv_mesh {:?}", data.key);
-
-        bevy_voxel_res.send_mesh.send(data);
-      }
-    }
-
-  }
-}
 
 fn startup() {
   println!("startup BevyVoxel");
