@@ -174,10 +174,29 @@ fn load_lod_delta_octrees(
         if d.is_some() {
           let mut data = d.unwrap().clone();
           data.lod = lod;
-          res.send_process_mesh.send(data);
+          let _ = res.send_process_mesh.send(data);
         }
       }
     }
+
+    // for lod in 1..2 {
+    //   let keys = res.get_delta_keys_by_lod(
+    //     &center.prev_key, &center.key, 1
+    //   );
+
+    //   for key in keys.iter() {
+    //     let d = chunks.data.get(key);
+    //     if d.is_none() {
+    //       let _ = res.send_key.send((*key, 1));
+    //     }
+    //     if d.is_some() {
+    //       let mut data = d.unwrap().clone();
+    //       data.lod = 1;
+    //       let _ = res.send_process_mesh.send(data);
+    //     }
+    //   }
+    // }
+
   }
 }
 

@@ -113,6 +113,7 @@ pub fn get_surface_nets(
   let mut data = MeshData::default();
   data.key = key;
   data.lod = lod;
+  // data.lod = 0;
 
   // Checking for each grid
   let start = 0;

@@ -48,7 +48,7 @@ fn recv_process_mesh(
 ) {
 
   for chunk in bevy_voxel_res.recv_process_mesh.drain() {
-    send_chunk(chunk)
+    send_chunk(chunk);
   }
   
 }

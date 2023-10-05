@@ -50,16 +50,6 @@ fn recv_data_key_from_wasm(send: Sender<WasmMessage>) {
     let bytes = array_bytes::hex2bytes(data).unwrap();
     let key: Key = bincode::deserialize(&bytes).unwrap();
 
-    // let bytes = array_bytes::hex2bytes(data).unwrap();
-    // let a: Vec<i64> = bytes
-    //   .chunks(8)
-    //   .map(|a| {
-    //     let a1: [u8; 8] = a[0..8].try_into().unwrap();
-    //     i64::from_be_bytes(a1)
-    //   })
-    //   .collect();
-    // let key: [i64; 3] = a[0..3].try_into().unwrap();
-
     let msg = WasmMessage {
       key: Some(key),
       ..Default::default()
@@ -92,8 +82,6 @@ fn recv_data_chunk_from_wasm(send: Sender<WasmMessage>) {
     };
 
     let _ = send.send(msg);
-
-
   }) as Box<dyn FnMut(CustomEvent)>);
 
   let window = web_sys::window().unwrap();
@@ -140,15 +128,20 @@ async fn load_data_from_wasm(
 
     if msg.chunk.is_some() {
       let chunk = msg.chunk.unwrap();
+      let c = chunk.clone();
       // console_ln!("load_chunk {:?}", chunk.clone().key);
 
       let cb = move |result: Result<JsValue, JsValue>| {
+        if result.is_err() {
+          let err = result.clone().err().unwrap();
+          console_ln!("Error {:?} {:?}", c.key, err);
+        }
         let r = result.unwrap();
         let ab = r.dyn_ref::<js_sys::ArrayBuffer>().unwrap();
         let vec = js_sys::Uint8Array::new(ab).to_vec();
         let str = array_bytes::bytes2hex("", vec);
   
-        // console_ln!("recv_chunk test");
+        
         let e = CustomEvent::new_with_event_init_dict(
           &EventType::ChunkRecv.to_string(), CustomEventInit::new().detail(&JsValue::from_str(&str))
         ).unwrap();
@@ -159,9 +152,14 @@ async fn load_data_from_wasm(
   
       pool_exec!(pool, move || {
         let mesh = compute_mesh(chunk);
-        let encoded: Vec<u8> = bincode::serialize(&mesh).unwrap();
+
+        let r = bincode::serialize(&mesh);
+        if r.is_err() {
+          console_ln!("Error encoding");
+        }
+        // let encoded: Vec<u8> = bincode::serialize(&mesh).unwrap();
   
-        Ok(wasm_mt::utils::u8arr_from_vec(&encoded).buffer().into())
+        Ok(wasm_mt::utils::u8arr_from_vec(&r.unwrap()).buffer().into())
       }, cb);
     }
 
@@ -175,10 +173,14 @@ fn compute_chunk(key: Key) -> Chunk {
 }
 
 fn compute_mesh(chunk: Chunk) -> MeshData {
+  let mut v = Vec::new();
+  for _ in 0..500 {
+    v.push([0.0, 0.0, 0.0]);
+  }
   chunk.octree.compute_mesh(
     VoxelMode::SurfaceNets, 
     &mut VoxelReuse::default(), 
-    &vec!([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 1.0, 1.0]), 
+    &v, 
     1.0, 
     chunk.key,
     chunk.lod
