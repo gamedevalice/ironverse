@@ -2,11 +2,12 @@
 
 use std::{cell::RefCell, rc::Rc, future::Future, task::{Context, Poll}};
 
+use plugin::Key;
 use wasm_mt_pool::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_mt::utils::{console_ln, fetch_as_arraybuffer, sleep};
-use voxels::{chunk::chunk_manager::*, data::{voxel_octree::{MeshData, VoxelMode}, surface_nets::VoxelReuse}};
+use voxels::{chunk::chunk_manager::*, data::{voxel_octree::{MeshData, VoxelMode, VoxelOctree}, surface_nets::VoxelReuse}};
 use flume::{Sender, Receiver};
 use web_sys::{CustomEvent, HtmlInputElement, CustomEventInit};
 use crate::plugin::Octree;
@@ -47,14 +48,17 @@ fn recv_data_key_from_wasm(send: Sender<WasmMessage>) {
   let callback = Closure::wrap(Box::new(move |event: CustomEvent | {
     let data = event.detail().as_string().unwrap();
     let bytes = array_bytes::hex2bytes(data).unwrap();
-    let a: Vec<i64> = bytes
-      .chunks(8)
-      .map(|a| {
-        let a1: [u8; 8] = a[0..8].try_into().unwrap();
-        i64::from_be_bytes(a1)
-      })
-      .collect();
-    let key: [i64; 3] = a[0..3].try_into().unwrap();
+    let key: Key = bincode::deserialize(&bytes).unwrap();
+
+    // let bytes = array_bytes::hex2bytes(data).unwrap();
+    // let a: Vec<i64> = bytes
+    //   .chunks(8)
+    //   .map(|a| {
+    //     let a1: [u8; 8] = a[0..8].try_into().unwrap();
+    //     i64::from_be_bytes(a1)
+    //   })
+    //   .collect();
+    // let key: [i64; 3] = a[0..3].try_into().unwrap();
 
     let msg = WasmMessage {
       key: Some(key),
@@ -63,7 +67,7 @@ fn recv_data_key_from_wasm(send: Sender<WasmMessage>) {
 
     let _ = send.send(msg);
 
-    console_ln!("from_wasm_key {:?}", key);
+    // console_ln!("from_wasm_key {:?}", key);
   }) as Box<dyn FnMut(CustomEvent)>);
 
   let window = web_sys::window().unwrap();
@@ -81,7 +85,7 @@ fn recv_data_chunk_from_wasm(send: Sender<WasmMessage>) {
     let bytes = array_bytes::hex2bytes(data).unwrap();
     let chunk: Chunk = bincode::deserialize(&bytes).unwrap();
 
-    console_ln!("from wasm chunk {:?}", chunk.key);
+    // console_ln!("from wasm chunk {:?}", chunk.key);
     let msg = WasmMessage {
       chunk: Some(chunk),
       ..Default::default()
@@ -111,21 +115,13 @@ async fn load_data_from_wasm(
 
     if msg.key.is_some() {
       let key = msg.key.unwrap();
-      console_ln!("load_data {:?}", key);
+      // console_ln!("load_data {:?}", key);
 
       let cb = move |result: Result<JsValue, JsValue>| {
         let r = result.unwrap();
         let ab = r.dyn_ref::<js_sys::ArrayBuffer>().unwrap();
-        let vec = js_sys::Uint8Array::new(ab);
-    
-        let bytes = vec.to_vec();
-        let octree = Octree {
-          key: key,
-          data: bytes,
-        };
-        
-        let encoded: Vec<u8> = bincode::serialize(&octree).unwrap();
-        let str = array_bytes::bytes2hex("", encoded);
+        let vec = js_sys::Uint8Array::new(ab).to_vec();
+        let str = array_bytes::bytes2hex("", vec);
   
         let e = CustomEvent::new_with_event_init_dict(
           &EventType::KeyRecv.to_string(), CustomEventInit::new().detail(&JsValue::from_str(&str))
@@ -136,14 +132,15 @@ async fn load_data_from_wasm(
       };
     
       pool_exec!(pool, move || {
-        let data = compute_voxel(key);
-        Ok(wasm_mt::utils::u8arr_from_vec(&data).buffer().into())
+        let chunk = compute_chunk(key);
+        let encoded: Vec<u8> = bincode::serialize(&chunk).unwrap();
+        Ok(wasm_mt::utils::u8arr_from_vec(&encoded).buffer().into())
       }, cb);
     }
 
     if msg.chunk.is_some() {
       let chunk = msg.chunk.unwrap();
-      console_ln!("load_chunk {:?}", chunk.clone().key);
+      // console_ln!("load_chunk {:?}", chunk.clone().key);
 
       let cb = move |result: Result<JsValue, JsValue>| {
         let r = result.unwrap();
@@ -151,7 +148,7 @@ async fn load_data_from_wasm(
         let vec = js_sys::Uint8Array::new(ab).to_vec();
         let str = array_bytes::bytes2hex("", vec);
   
-        console_ln!("recv_chunk test");
+        // console_ln!("recv_chunk test");
         let e = CustomEvent::new_with_event_init_dict(
           &EventType::ChunkRecv.to_string(), CustomEventInit::new().detail(&JsValue::from_str(&str))
         ).unwrap();
@@ -172,10 +169,9 @@ async fn load_data_from_wasm(
 
 }
 
-fn compute_voxel(key: [i64; 3]) -> Vec<u8> {
+fn compute_chunk(key: Key) -> Chunk {
   let manager = ChunkManager::default();
-  let chunk = ChunkManager::new_chunk(&key, 4, 4, manager.noise);
-  chunk.octree.data
+  ChunkManager::new_chunk(&key.key, 4, key.lod, manager.noise)
 }
 
 fn compute_mesh(chunk: Chunk) -> MeshData {
@@ -185,7 +181,7 @@ fn compute_mesh(chunk: Chunk) -> MeshData {
     &vec!([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 1.0, 1.0]), 
     1.0, 
     chunk.key,
-    0
+    chunk.lod
   )
 }
 
@@ -229,7 +225,7 @@ impl Future for ChannelFuture {
     // let recv = self.unit.borrow().recv.clone();
     // let recv_chunk = self.unit.borrow().recv_chunk.clone();
 
-    console_ln!("Testing");
+    // console_ln!("Testing");
 
     let recv = self.recv.clone();
     let recv_chunk = self.recv_chunk.clone();
@@ -268,6 +264,6 @@ struct Res {
 
 #[derive(Default)]
 struct WasmMessage {
-  key: Option<[i64; 3]>,
+  key: Option<Key>,
   chunk: Option<Chunk>,
 }

@@ -18,15 +18,18 @@ impl Plugin for CustomPlugin {
 fn init(
   local_res: ResMut<PluginResource>,
 ) {
-  receive_octree_data(local_res.send.clone());
+  receive_chunk(local_res.send_chunk.clone());
   receive_mesh(local_res.send_mesh.clone());
 }
 
 
-pub fn receive_octree_data(send: Sender<Vec<u8>>) {
+pub fn receive_chunk(send: Sender<Chunk>) {
   let callback = Closure::wrap(Box::new(move |event: CustomEvent | {
     let data = event.detail().as_string().unwrap();
-    let _ = send.send(array_bytes::hex2bytes(data).unwrap());
+    let bytes = array_bytes::hex2bytes(data).unwrap();
+    let chunk: Chunk = bincode::deserialize(&bytes).unwrap();
+
+    let _ = send.send(chunk);
   }) as Box<dyn FnMut(CustomEvent)>);
 
   let window = web_sys::window().unwrap();
@@ -40,7 +43,7 @@ pub fn receive_octree_data(send: Sender<Vec<u8>>) {
 
 pub fn receive_mesh(send: Sender<MeshData>) {
   let callback = Closure::wrap(Box::new(move |event: CustomEvent | {
-    info!("receive_mesh()");
+    // info!("receive_mesh()");
 
     let data = event.detail().as_string().unwrap();
     let bytes = array_bytes::hex2bytes(data).unwrap();
@@ -58,13 +61,16 @@ pub fn receive_mesh(send: Sender<MeshData>) {
 }
 
 
-pub fn send_key(key: [i64; 3]) {
-  let k: Vec<[u8; 8]> = key.iter().map(|a| a.to_be_bytes()).collect();
-  let mut bytes = Vec::new();
-  for k1 in k.iter() {
-    bytes.append(&mut k1.to_vec());
-  }
-  let str = array_bytes::bytes2hex("", &bytes);
+pub fn send_key(key: Key) {
+  // let k: Vec<[u8; 8]> = key.iter().map(|a| a.to_be_bytes()).collect();
+  // let mut bytes = Vec::new();
+  // for k1 in k.iter() {
+  //   bytes.append(&mut k1.to_vec());
+  // }
+  // let str = array_bytes::bytes2hex("", &bytes);
+
+  let encoded: Vec<u8> = bincode::serialize(&key).unwrap();
+  let str = array_bytes::bytes2hex("", &encoded);
 
   let e = CustomEvent::new_with_event_init_dict(
     &EventType::KeySend.to_string(), CustomEventInit::new().detail(&JsValue::from_str(&str))
@@ -90,8 +96,8 @@ pub fn send_chunk(chunk: Chunk) {
 #[derive(Resource)]
 pub struct PluginResource {
   timer: Timer,
-  send: Sender<Vec<u8>>,
-  pub recv: Receiver<Vec<u8>>,
+  send_chunk: Sender<Chunk>,
+  pub recv_chunk: Receiver<Chunk>,
 
   send_mesh: Sender<MeshData>,
   pub recv_mesh: Receiver<MeshData>,
@@ -99,13 +105,13 @@ pub struct PluginResource {
 
 impl Default for PluginResource {
   fn default() -> Self {
-    let (send, recv) = flume::unbounded();
+    let (send_chunk, recv_chunk) = flume::unbounded();
     let (send_mesh, recv_mesh) = flume::unbounded();
     Self {
       timer: Timer::from_seconds(100.0, TimerMode::Repeating),
 
-      send: send,
-      recv: recv,
+      send_chunk: send_chunk,
+      recv_chunk: recv_chunk,
       send_mesh: send_mesh,
       recv_mesh: recv_mesh,
     }
@@ -123,3 +129,8 @@ pub struct Octree {
   pub data: Vec<u8>,
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+pub struct Key {
+  pub key: [i64; 3],
+  pub lod: usize,
+}
