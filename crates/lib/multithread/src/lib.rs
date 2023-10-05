@@ -25,8 +25,8 @@ pub fn app() {
   recv_data_chunk_from_wasm(send.clone());
 
   spawn_local(async move {
-    let ab_js = fetch_as_arraybuffer("crates/lib/multithread/pkg/multithread.js").await.unwrap();
-    let ab_wasm = fetch_as_arraybuffer("crates/lib/multithread/pkg/multithread_bg.wasm").await.unwrap();
+    let ab_js = fetch_as_arraybuffer("./wasm/multithread/multithread.js").await.unwrap();
+    let ab_wasm = fetch_as_arraybuffer("./wasm/multithread/multithread_bg.wasm").await.unwrap();
     let window = web_sys::window().expect("no global `window` exists");
     let max_threads = window.navigator().hardware_concurrency() as usize;
 
