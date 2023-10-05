@@ -25,13 +25,15 @@ impl Plugin for CustomPlugin {
       .add_systems(Startup, startup)
       .add_systems(Update, update)
       .add_systems(Update, detect_selected_voxel_position)
-      .add_systems(Update, load_main_chunks)
-      .add_systems(Update, load_main_delta_chunks)
-      .add_systems(Update, load_lod_chunks)
-      .add_systems(Update, load_lod_center_changed)
       .add_systems(Update, receive_chunks)
       .add_systems(Update, receive_mesh)
-      .add_systems(Update, shape_state_changed);
+      .add_systems(Update, shape_state_changed)
+      .add_systems(Update, (
+        load_main_octrees,
+        load_main_delta_octrees,
+        load_lod_chunks,
+        load_lod_delta_octrees
+      ));
 
     cfg_if! {
       if #[cfg(not(target_arch = "wasm32"))] {
@@ -92,7 +94,7 @@ fn detect_selected_voxel_position(
   }
 }
 
-fn load_main_chunks(
+fn load_main_octrees(
   mut res: ResMut<BevyVoxelResource>,
   mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
 ) {
@@ -127,7 +129,7 @@ fn load_lod_chunks(
   }
 }
 
-fn load_main_delta_chunks(
+fn load_main_delta_octrees(
   mut res: ResMut<BevyVoxelResource>,
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
@@ -153,7 +155,7 @@ fn load_main_delta_chunks(
   }
 }
 
-fn load_lod_center_changed(
+fn load_lod_delta_octrees(
   mut res: ResMut<BevyVoxelResource>,
   mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
 ) {
@@ -179,10 +181,6 @@ fn load_lod_center_changed(
   }
 }
 
-
-
-
-
 fn shape_state_changed(
   shape_state: Res<State<ShapeState>>,
   mut local: Local<ShapeState>,
@@ -206,8 +204,6 @@ fn shape_state_changed(
   }
   
 }
-
-
 
 fn request_load_chunk(
   keys: &Vec<[i64; 3]>,
@@ -257,20 +253,4 @@ fn receive_mesh(
     }
   }
 }
-
-
-
-fn get_keys_without_data(
-  keys: &Vec<[i64; 3]>,
-  data: &HashMap<[i64; 3], MeshData>
-) -> Vec<[i64; 3]> {
-  let mut filtered_keys = Vec::new();
-  for k in keys.iter() {
-    if !data.contains_key(k) {
-      filtered_keys.push(*k);
-    }
-  }
-  filtered_keys
-}
-
 
