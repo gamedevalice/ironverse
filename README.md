@@ -1,7 +1,19 @@
-Installation
-
+## Setup
+Install rust-lang: https://www.rust-lang.org/
+Install cargo plugins:
 ```
-git clone https://github.com/chaoticgood1/ironverse.git
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-cargo run
+cargo install wasm-pack
+cargo install wasm-bindgen-cli
+cargo install cargo-make
+```
+
+## Build and Run
+
+### Desktop
+```
+cargo run --release
+```
+### Web
+```
+cargo make web
 ```

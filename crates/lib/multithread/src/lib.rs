@@ -6,7 +6,7 @@ use wasm_mt_pool::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_mt::utils::{console_ln, fetch_as_arraybuffer, sleep};
-use voxels::{chunk::chunk_manager::*, data::{voxel_octree::{MeshData, VoxelMode, VoxelOctree}, surface_nets::VoxelReuse}};
+use voxels::{chunk::chunk_manager::*, data::{voxel_octree::{MeshData, VoxelMode}, surface_nets::VoxelReuse}};
 use flume::{Sender, Receiver};
 use web_sys::{CustomEvent, HtmlInputElement, CustomEventInit};
 use crate::plugin::Octree;
@@ -25,8 +25,8 @@ pub fn app() {
   recv_data_chunk_from_wasm(send.clone());
 
   spawn_local(async move {
-    let ab_js = fetch_as_arraybuffer("crates/multithread/pkg/multithread.js").await.unwrap();
-    let ab_wasm = fetch_as_arraybuffer("crates/multithread/pkg/multithread_bg.wasm").await.unwrap();
+    let ab_js = fetch_as_arraybuffer("./wasm/multithread/multithread.js").await.unwrap();
+    let ab_wasm = fetch_as_arraybuffer("./wasm/multithread/multithread_bg.wasm").await.unwrap();
     let window = web_sys::window().expect("no global `window` exists");
     let max_threads = window.navigator().hardware_concurrency() as usize;
 
@@ -63,7 +63,7 @@ fn recv_data_key_from_wasm(send: Sender<WasmMessage>) {
 
     let _ = send.send(msg);
 
-    // console_ln!("from_wasm_key {:?}", key);
+    console_ln!("from_wasm_key {:?}", key);
   }) as Box<dyn FnMut(CustomEvent)>);
 
   let window = web_sys::window().unwrap();
@@ -81,7 +81,7 @@ fn recv_data_chunk_from_wasm(send: Sender<WasmMessage>) {
     let bytes = array_bytes::hex2bytes(data).unwrap();
     let chunk: Chunk = bincode::deserialize(&bytes).unwrap();
 
-    // console_ln!("from wasm chunk {:?}", chunk.key);
+    console_ln!("from wasm chunk {:?}", chunk.key);
     let msg = WasmMessage {
       chunk: Some(chunk),
       ..Default::default()
@@ -107,9 +107,11 @@ async fn load_data_from_wasm(
 ) {
 
   while let Ok(msg) = recv.recv_async().await {
+    // console_ln!("load_data_from_wasm {:?}", );
+
     if msg.key.is_some() {
       let key = msg.key.unwrap();
-      // console_ln!("load_data {:?}", key);
+      console_ln!("load_data {:?}", key);
 
       let cb = move |result: Result<JsValue, JsValue>| {
         let r = result.unwrap();
@@ -117,18 +119,12 @@ async fn load_data_from_wasm(
         let vec = js_sys::Uint8Array::new(ab);
     
         let bytes = vec.to_vec();
-        // let octree = Octree {
-        //   key: key,
-        //   data: bytes,
-        // };
-
-        let chunk = Chunk {
+        let octree = Octree {
           key: key,
-          octree: VoxelOctree::new_from_bytes(bytes),
-          ..Default::default()
+          data: bytes,
         };
         
-        let encoded: Vec<u8> = bincode::serialize(&chunk).unwrap();
+        let encoded: Vec<u8> = bincode::serialize(&octree).unwrap();
         let str = array_bytes::bytes2hex("", encoded);
   
         let e = CustomEvent::new_with_event_init_dict(
@@ -147,7 +143,7 @@ async fn load_data_from_wasm(
 
     if msg.chunk.is_some() {
       let chunk = msg.chunk.unwrap();
-      // console_ln!("load_chunk {:?}", chunk.clone().key);
+      console_ln!("load_chunk {:?}", chunk.clone().key);
 
       let cb = move |result: Result<JsValue, JsValue>| {
         let r = result.unwrap();
@@ -155,7 +151,7 @@ async fn load_data_from_wasm(
         let vec = js_sys::Uint8Array::new(ab).to_vec();
         let str = array_bytes::bytes2hex("", vec);
   
-        // console_ln!("recv_chunk test");
+        console_ln!("recv_chunk test");
         let e = CustomEvent::new_with_event_init_dict(
           &EventType::ChunkRecv.to_string(), CustomEventInit::new().detail(&JsValue::from_str(&str))
         ).unwrap();
@@ -189,7 +185,7 @@ fn compute_mesh(chunk: Chunk) -> MeshData {
     &vec!([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 1.0, 1.0]), 
     1.0, 
     chunk.key,
-    chunk.lod
+    0
   )
 }
 

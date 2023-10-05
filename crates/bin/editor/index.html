@@ -38,14 +38,14 @@
     </style>
   </head>
   <script type="module">
-    import init from './assets/wasm/wasm_multithread.js'
+    import init from './wasm/app.js'
     init()
   </script>
   <body>
     <a id="download"></a>
     
     <script type="module">
-      import startApp from '/crates/multithread/index.js';
+      import startApp from './multithread.js';
       startApp('multithread');
     </script>
 
