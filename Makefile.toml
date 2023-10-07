@@ -2,7 +2,7 @@
 default_to_workspace = false
 
 [tasks.web]
-dependencies = ["compile_wasm", "serve"]
+dependencies = ["clear", "compile_wasm", "serve"]
 
 [tasks.compile_wasm]
 script = '''
@@ -14,4 +14,20 @@ wasm-bindgen --out-name app --out-dir crates/bin/editor/wasm --target web target
 [tasks.serve]
 script = '''
 basic-http-server ./crates/bin/editor/
+'''
+
+[tasks.web_editor]
+dependencies = ["clear", "compile_editor", "serve"]
+
+[tasks.compile_editor]
+script = '''
+cargo build --release --target wasm32-unknown-unknown
+wasm-bindgen --out-name app --out-dir crates/bin/editor/wasm --target web target/wasm32-unknown-unknown/release/editor.wasm
+'''
+
+
+[tasks.clear]
+script = '''
+  clear
+  clear
 '''

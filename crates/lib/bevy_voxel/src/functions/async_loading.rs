@@ -50,7 +50,7 @@ fn recv_chunk(
 
       // Task is complete, so remove task component from entity
       commands.entity(entity).remove::<LoadChunk>();
-  }
+    }
   }
 }
 
@@ -95,7 +95,7 @@ fn recv_mesh(
 
       // Task is complete, so remove task component from entity
       commands.entity(entity).remove::<LoadMeshData>();
-  }
+    }
   }
 }
 

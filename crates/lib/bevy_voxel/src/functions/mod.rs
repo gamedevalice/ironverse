@@ -5,6 +5,7 @@ mod cube;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy::{prelude::*, utils::HashMap};
+
 use rapier3d::prelude::ColliderHandle;
 use utils::Utils;
 use voxels::chunk::adjacent_keys;
@@ -23,6 +24,7 @@ cfg_if! {
     use multithread::plugin::send_key;
     use multithread::plugin::send_chunk;
     use multithread::plugin::Octree;
+    use multithread::plugin::Key;
   }
 }
 
@@ -64,8 +66,6 @@ impl Plugin for CustomPlugin {
         .insert_resource(LocalResource::default())
         .add_systems(Update, recv_keys)
         .add_systems(Update, recv_chunk)
-        //.add_systems(Update, send_keys)
-        //.add_systems(Update, load_chunks)
         .add_systems(Update, load_mesh);
       }
     }
@@ -76,192 +76,83 @@ impl Plugin for CustomPlugin {
 cfg_if! {
   if #[cfg(target_arch = "wasm32")] {
 
-#[derive(Resource)]
-struct LocalResource {
-  duration: f32,
-  keys_count: usize,
-  keys_total: usize,
-  done: bool,
-  manager: ChunkManager,
-}
-
-impl Default for LocalResource {
-  fn default() -> Self {
-    Self {
-      duration: 0.0,
-      keys_count: 0,
-      keys_total: 0,
-      done: true,
-      manager: ChunkManager::default(),
+    #[derive(Resource)]
+    struct LocalResource {
+      duration: f32,
+      keys_count: usize,
+      keys_total: usize,
+      done: bool,
+      manager: ChunkManager,
     }
-  }
-}
 
-
-#[derive(Component)]
-pub struct ChunkGraphics;
-
-
-#[derive(Component, Debug, Clone)]
-pub struct Player {
-  pub prev_key: [i64; 3],
-  pub key: [i64; 3],
-}
-
-fn recv_keys(
-  mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-) {
-  //let thread_pool = AsyncComputeTaskPool::get();
-
-  let depth = bevy_voxel_res.chunk_manager.depth as u8;
-  let noise = bevy_voxel_res.chunk_manager.noise;
-
-  for (key, lod) in bevy_voxel_res.recv_key.drain() {
-    let key = key.clone();
-    // let task = thread_pool.spawn(async move {
-    //   let chunk = ChunkManager::new_chunk(&key, depth, lod, noise);
-    //   chunk
-    // });
-  
-    // Spawn new entity and add our new task as a component
-    //commands.spawn(LoadChunk(task));
-    send_key(key);
-  } 
-}
-
-fn send_keys(
-  local_res: Res<LocalResource>,
-  keyboard_input: Res<Input<KeyCode>>,
-
-  mut commands: Commands,
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-
-  mut players: Query<(&Transform, &mut Player)>,
-) {
-  if keyboard_input.just_pressed(KeyCode::T) {
-    info!("Testing keypress T");
-    send_key([0, 0, 0]);
-  }
-
-  for (trans, mut player) in &mut players {
-    
-    let t = trans.translation;
-    let key = world_pos_to_key(
-      &[t.x as i64, t.y as i64, t.z as i64], 
-      local_res.manager.seamless_size()
-    );
-
-    if key != player.key {
-      for (entity, _graphics) in &chunk_graphics {
-        commands.entity(entity).despawn_recursive();
+    impl Default for LocalResource {
+      fn default() -> Self {
+        Self {
+          duration: 0.0,
+          keys_count: 0,
+          keys_total: 0,
+          done: true,
+          manager: ChunkManager::default(),
+        }
       }
+    }
 
 
-      player.prev_key = player.key;
-      player.key = key;
-      let keys = adjacent_keys(&key, 1, true);
-      info!("Initialize {} keys", keys.len());
+    #[derive(Component)]
+    pub struct ChunkGraphics;
 
-      for key in keys.iter() {
-        send_key(*key);
-        // let chunk = ChunkManager::new_chunk(key, 4, 4, local_res.manager.noise);
-        // send_chunk(chunk);
+    fn recv_keys(
+      mut commands: Commands,
+      mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+    ) {
+      //let thread_pool = AsyncComputeTaskPool::get();
+
+      let depth = bevy_voxel_res.chunk_manager.depth as u8;
+      let noise = bevy_voxel_res.chunk_manager.noise;
+
+      for (key, lod) in bevy_voxel_res.recv_key.drain() {
+        let key = key.clone();
+        send_key(Key {
+          key: key,
+          lod: lod
+        });
+      } 
+    }
+
+    fn recv_chunk(
+      plugin_res: Res<PluginResource>,
+      mut commands: Commands,
+      mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+    ) {
+      for chunk in plugin_res.recv_chunk.drain() {
+        // info!("update() {:?}", bytes);
+        // info!("wasm_recv_data");
+        //local_res.keys_count += 1;
+        
+        // let octree: Octree = bincode::deserialize(&bytes[..]).unwrap();
+        // let chunk = Chunk {
+        //   key: octree.key,
+        //   octree: VoxelOctree::new_from_bytes(octree.data),
+        //   ..Default::default()
+        // };
+
+        send_chunk(chunk);
       }
-    }   
+      
+    }
+
+    fn load_mesh(
+      plugin_res: Res<PluginResource>,
+      mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+    ) {
+      for data in plugin_res.recv_mesh.drain() {
+        // info!("wasm_recv_mesh {:?}", data.key);
+
+        bevy_voxel_res.send_mesh.send(data);
+      }
+    }
+
   }
-}
-fn recv_chunk(
-  plugin_res: Res<PluginResource>,
-  mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-) {
-  for bytes in plugin_res.recv.drain() {
-    // info!("update() {:?}", bytes);
-    info!("wasm_recv_data");
-    //local_res.keys_count += 1;
-    
-    let octree: Octree = bincode::deserialize(&bytes[..]).unwrap();
-    let chunk = Chunk {
-      key: octree.key,
-      octree: VoxelOctree::new_from_bytes(octree.data),
-      ..Default::default()
-    };
-
-    send_chunk(chunk);
-  }
-  
-}
-fn load_chunks(
-  plugin_res: Res<PluginResource>,
-  mut local_res: ResMut<LocalResource>,
-  time: Res<Time>,
-
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
-  
-) {
-  if local_res.keys_count != local_res.keys_total {
-    local_res.duration += time.delta_seconds();
-  }
-
-  if !local_res.done && local_res.keys_count == local_res.keys_total {
-    local_res.done = true;
-    info!("Total duration {}", local_res.duration);
-  }
-
-  for bytes in plugin_res.recv.drain() {
-    // info!("update() {:?}", bytes);
-    info!("wasm_recv_data");
-    local_res.keys_count += 1;
-    
-    let octree: Octree = bincode::deserialize(&bytes[..]).unwrap();
-    let chunk = Chunk {
-      key: octree.key,
-      octree: VoxelOctree::new_from_bytes(octree.data),
-      ..Default::default()
-    };
-
-    send_chunk(chunk);
-  }
-
-  
-}
-fn load_mesh(
-  plugin_res: Res<PluginResource>,
-  mut local_res: ResMut<LocalResource>,
-  time: Res<Time>,
-
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  chunk_graphics: Query<(Entity, &ChunkGraphics)>,) {
-  for data in plugin_res.recv_mesh.drain() {
-    info!("wasm_recv_mesh {:?}", data.key);
-
-    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, data.positions.clone());
-    render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, data.normals.clone());
-    render_mesh.set_indices(Some(Indices::U32(data.indices.clone())));
-
-    let mesh_handle = meshes.add(render_mesh);
-    let mut pos = key_to_world_coord_f32(&data.key, local_res.manager.seamless_size());
-
-    let mat = materials.add(Color::rgb(0.7, 0.7, 0.7).into());
-    commands
-      .spawn(MaterialMeshBundle {
-        mesh: mesh_handle,
-        material: mat,
-        transform: Transform::from_translation(pos.into()),
-        ..default()
-      })
-      .insert(ChunkGraphics);
-  }
-}
-
-}
 }
 
 fn startup() {
