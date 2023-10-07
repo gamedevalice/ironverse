@@ -1,4 +1,4 @@
-use bevy::{prelude::*, input::{mouse::MouseButtonInput, ButtonState}, window::CursorGrabMode};
+use bevy::prelude::*;
 use bevy_flycam::MovementSettings;
 use web_sys::HtmlElement;
 use flume::*;
@@ -20,7 +20,7 @@ impl Plugin for CustomPlugin {
       ;
 
     app
-      .add_startup_system(startup)
+      .add_systems(Startup, startup)
       .add_systems(Update, send_mouse_events);
   }
 }
@@ -38,7 +38,7 @@ fn startup(local_res: Res<LocalResource>,) {
   let send_error = local_res.send_error.clone();
   let cb1 = Closure::wrap(Box::new(move |event: web_sys::ErrorEvent| {
     // event.message()
-    send_error.send(event.message());
+    let _ = send_error.send(event.message());
   }) as Box<dyn FnMut(web_sys::ErrorEvent)>);
   window.set_onerror(Some(cb1.as_ref().unchecked_ref()));
   cb1.forget();
@@ -55,9 +55,9 @@ fn startup(local_res: Res<LocalResource>,) {
 fn send_mouse_events(
   local_res: Res<LocalResource>,
   // mut wasm_events: EventWriter<WasmInputEvent>,
-  mut mouse_inputs: EventWriter<MouseInput>,
+  mut _mouse_inputs: EventWriter<MouseInput>,
 ) {
-  for e in local_res.recv_mouse_click.drain() {
+  for _e in local_res.recv_mouse_click.drain() {
     // info!("clicked {}", is_pointer_locked());
     if !is_pointer_locked() {
       continue;
@@ -81,7 +81,7 @@ fn send_mouse_events(
 
 
 fn update_fullscreen(
-  input: Res<Input<KeyCode>>,
+  _input: Res<Input<KeyCode>>,
 ) {
   // if input.just_pressed(KeyCode::F) {
   //   let _ = html_body().request_fullscreen();
@@ -90,9 +90,9 @@ fn update_fullscreen(
 }
 
 fn grab_mouse(
-  mouse: Res<Input<MouseButton>>,
-  mut cursor_state_next: ResMut<NextState<CursorState>>,
-  ui_state: Res<State<UIState>>,
+  _mouse: Res<Input<MouseButton>>,
+  mut _cursor_state_next: ResMut<NextState<CursorState>>,
+  _ui_state: Res<State<UIState>>,
 ) {
   // if mouse.just_pressed(MouseButton::Left) {
   //   match ui_state.0 {
@@ -106,8 +106,8 @@ fn grab_mouse(
 }
 
 fn cursor_free(
-  mut windows: Query<&mut Window>,
-  mut move_setting_res: ResMut<MovementSettings>,
+  mut _windows: Query<&mut Window>,
+  mut _move_setting_res: ResMut<MovementSettings>,
 ) {
   // let mut window = windows.single_mut();
   // window.cursor.visible = true;
@@ -118,8 +118,8 @@ fn cursor_free(
 }
 
 fn cursor_locked(
-  mut windows: Query<&mut Window>,
-  mut move_setting_res: ResMut<MovementSettings>,
+  mut _windows: Query<&mut Window>,
+  mut _move_setting_res: ResMut<MovementSettings>,
 ) {
   // let mut window = windows.single_mut();
   // window.cursor.visible = false;
@@ -129,7 +129,7 @@ fn cursor_locked(
   // move_setting_res.speed = 6.0;
 }
 
-
+#[allow(dead_code)]
 pub fn html_body() -> HtmlElement {
   let window = web_sys::window().expect("no global `window` exists");
   let document = window.document().expect("should have a document on window");

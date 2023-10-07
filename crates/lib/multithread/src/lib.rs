@@ -1,15 +1,14 @@
 #![feature(async_closure)]
 
-use std::{cell::RefCell, rc::Rc, future::Future, task::{Context, Poll}};
+use std::{future::Future, task::{Context, Poll}};
 use plugin::Key;
 use wasm_mt_pool::prelude::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
-use wasm_mt::utils::{console_ln, fetch_as_arraybuffer, sleep};
-use voxels::{chunk::chunk_manager::*, data::{voxel_octree::{MeshData, VoxelMode, VoxelOctree}, surface_nets::VoxelReuse}};
+use wasm_mt::utils::{console_ln, fetch_as_arraybuffer};
+use voxels::{chunk::chunk_manager::*, data::{voxel_octree::{MeshData, VoxelMode}, surface_nets::VoxelReuse}};
 use flume::{Sender, Receiver};
 use web_sys::{CustomEvent, HtmlInputElement, CustomEventInit};
-use crate::plugin::Octree;
 
 
 use std::sync::RwLock;
@@ -252,14 +251,6 @@ impl ToString for EventType {
     }
   }
 }
-
-struct Channels {
-  // recv: Receiver<[i64; 3]>,
-  // recv_chunk: Receiver<Chunk>,
-}
-
-type ChannerRef = Rc<RefCell<Channels>>;
-
 
 struct ChannelFuture {
   // unit: ChannerRef,

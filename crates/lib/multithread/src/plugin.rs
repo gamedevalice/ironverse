@@ -3,7 +3,7 @@ use flume;
 use flume::{Sender, Receiver};
 use voxels::chunk::chunk_manager::Chunk;
 use voxels::data::voxel_octree::MeshData;
-use web_sys::{MessageEvent, CustomEvent, CustomEventInit};
+use web_sys::{CustomEvent, CustomEventInit};
 use wasm_bindgen::prelude::*;
 
 pub struct CustomPlugin;
@@ -11,7 +11,7 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(PluginResource::default())
-      .add_startup_system(init);
+      .add_systems(Startup, init);
   }
 }
 
@@ -107,7 +107,7 @@ pub fn send_colors(colors: &Vec<[f32; 3]>) {
 
 #[derive(Resource)]
 pub struct PluginResource {
-  timer: Timer,
+  // timer: Timer,
   send_chunk: Sender<Chunk>,
   pub recv_chunk: Receiver<Chunk>,
 
@@ -120,7 +120,7 @@ impl Default for PluginResource {
     let (send_chunk, recv_chunk) = flume::unbounded();
     let (send_mesh, recv_mesh) = flume::unbounded();
     Self {
-      timer: Timer::from_seconds(100.0, TimerMode::Repeating),
+      // timer: Timer::from_seconds(100.0, TimerMode::Repeating),
 
       send_chunk: send_chunk,
       recv_chunk: recv_chunk,
