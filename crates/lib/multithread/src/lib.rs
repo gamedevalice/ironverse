@@ -1,7 +1,6 @@
 #![feature(async_closure)]
 
 use std::{cell::RefCell, rc::Rc, future::Future, task::{Context, Poll}};
-
 use plugin::Key;
 use wasm_mt_pool::prelude::*;
 use wasm_bindgen::prelude::*;
@@ -12,6 +11,10 @@ use flume::{Sender, Receiver};
 use web_sys::{CustomEvent, HtmlInputElement, CustomEventInit};
 use crate::plugin::Octree;
 
+
+use std::sync::RwLock;
+static COLORS: RwLock<Vec<[f32; 3]>> = RwLock::new(Vec::new());
+
 pub mod plugin;
 
 #[wasm_bindgen]
@@ -20,7 +23,11 @@ pub fn app() {
   // let (send_chunk, recv_chunk) = flume::unbounded();
   // recv_key_from_wasm(send_queue);
   // recv_chunk_from_wasm(send_chunk);
-  
+
+  for _ in 0..500 {
+    COLORS.write().unwrap().push([0.0, 0.0, 0.0]);
+  }
+
   let (send, recv) = flume::unbounded();
   recv_data_key_from_wasm(send.clone());
   recv_data_chunk_from_wasm(send.clone());
@@ -98,6 +105,9 @@ async fn load_data_from_wasm(
   recv: Receiver<WasmMessage>
 ) {
 
+  
+  console_ln!("COLORS.len() 1 {}", COLORS.read().unwrap().len());
+
   while let Ok(msg) = recv.recv_async().await {
     // console_ln!("load_data_from_wasm {:?}", );
 
@@ -129,6 +139,8 @@ async fn load_data_from_wasm(
     if msg.chunk.is_some() {
       let chunk = msg.chunk.unwrap();
       let c = chunk.clone();
+
+      let colors = COLORS.read().unwrap().clone();
       // console_ln!("load_chunk {:?}", chunk.clone().key);
 
       let cb = move |result: Result<JsValue, JsValue>| {
@@ -151,7 +163,7 @@ async fn load_data_from_wasm(
       };
   
       pool_exec!(pool, move || {
-        let mesh = compute_mesh(chunk);
+        let mesh = compute_mesh(chunk, &colors);
 
         let r = bincode::serialize(&mesh);
         if r.is_err() {
@@ -172,15 +184,28 @@ fn compute_chunk(key: Key) -> Chunk {
   ChunkManager::new_chunk(&key.key, 4, key.lod, manager.noise)
 }
 
-fn compute_mesh(chunk: Chunk) -> MeshData {
-  let mut v = Vec::new();
-  for _ in 0..500 {
-    v.push([0.0, 0.0, 0.0]);
-  }
+fn compute_mesh(chunk: Chunk, colors: &Vec<[f32; 3]>) -> MeshData {
+  // let mut v = Vec::new();
+  // for _ in 0..500 {
+  //   v.push([0.0, 0.0, 0.0]);
+  // }
+
+  // console_ln!("COLORS.len() {}", COLORS.read().unwrap().len());
+  // if COLORS.read().unwrap().len() == 0 {
+  //   console_ln!("Testing");
+  //   // for _ in 0..500 {
+  //   //   COLORS.write().unwrap().push([0.0, 0.0, 0.0]);
+  //   // }  
+  // }
+
+  // console_ln!("colors.len() {}", colors.len());
+
   chunk.octree.compute_mesh(
     VoxelMode::SurfaceNets, 
     &mut VoxelReuse::default(), 
-    &v, 
+    colors,
+    // &v, 
+    // &COLORS.read().unwrap(),
     1.0, 
     chunk.key,
     chunk.lod
