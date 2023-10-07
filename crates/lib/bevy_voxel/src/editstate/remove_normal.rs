@@ -1,9 +1,5 @@
 use bevy::prelude::*;
-use voxels::data::voxel_octree::VoxelMode;
-
-use crate::{EditState, Preview, BevyVoxelResource, Center, Chunks, PreviewGraphics, ChunkData, ShapeState, Selected};
-
-use super::{EditEvents, EditEvent};
+use crate::{EditState, Preview, PreviewGraphics, ShapeState, Selected};
 
 
 pub struct CustomPlugin;
@@ -43,11 +39,8 @@ fn preview_position(
 
 fn remove_voxel_cube(
   mouse: Res<Input<MouseButton>>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-
   mut chunks: Query<&Selected>,
   shape_state: Res<State<ShapeState>>,
-  mut edit_event_writer: EventWriter<EditEvents>
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
   *State::get(&shape_state) != ShapeState::Cube {
@@ -58,9 +51,6 @@ fn remove_voxel_cube(
     if selected.pos.is_none() {
       continue;
     }
-    // edit_event_writer.send(EditEvents {
-    //   event: EditEvent::RemoveCube
-    // });
   }
 }
 
@@ -68,7 +58,6 @@ fn remove_voxel_sphere(
   mouse: Res<Input<MouseButton>>,
   mut chunks: Query<&Preview>,
   shape_state: Res<State<ShapeState>>,
-  mut edit_event_writer: EventWriter<EditEvents>,
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
   *State::get(&shape_state) != ShapeState::Sphere {
@@ -79,9 +68,6 @@ fn remove_voxel_sphere(
     if preview.pos.is_none() {
       continue;
     }
-    // edit_event_writer.send(EditEvents {
-    //   event: EditEvent::RemoveSphere
-    // });
   }
 }
 

@@ -1,4 +1,4 @@
-use bevy::{prelude::*, input::mouse::MouseButtonInput, window::CursorGrabMode};
+use bevy::{prelude::*, input::mouse::MouseButtonInput};
 use bevy_flycam::MovementSettings;
 use crate::{input::{MouseInput, InputResource}, data::{CursorState, UIState}};
 
@@ -30,13 +30,11 @@ fn update(
 
 
 fn toggle_mouse_grab(
-  mouse: Res<Input<MouseButton>>,
-  key: Res<Input<KeyCode>>,
-  mut cursor_state_next: ResMut<NextState<CursorState>>,
-  cursor_state: Res<State<CursorState>>,
-
+  _mouse: Res<Input<MouseButton>>,
+  _key: Res<Input<KeyCode>>,
+  mut _cursor_state_next: ResMut<NextState<CursorState>>,
+  _cursor_state: Res<State<CursorState>>,
   input_res: Res<InputResource>,
-
   ui_state: Res<State<UIState>>,
 ) {
   if !input_res.enabled {
@@ -70,8 +68,8 @@ fn toggle_mouse_grab(
 
 
 fn cursor_free(
-  mut windows: Query<&mut Window>,
-  mut move_setting_res: ResMut<MovementSettings>,
+  mut _windows: Query<&mut Window>,
+  mut _move_setting_res: ResMut<MovementSettings>,
 ) {
   // let mut window = windows.single_mut();
   // window.cursor.visible = true;
@@ -82,8 +80,8 @@ fn cursor_free(
 }
 
 fn cursor_locked(
-  mut windows: Query<&mut Window>,
-  mut move_setting_res: ResMut<MovementSettings>,
+  mut _windows: Query<&mut Window>,
+  mut _move_setting_res: ResMut<MovementSettings>,
 ) {
   // let mut window = windows.single_mut();
   // window.cursor.visible = false;

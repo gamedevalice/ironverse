@@ -31,7 +31,6 @@ fn edit_remove(edit_state: Res<State<EditState>>,) -> bool {
 fn update(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<StandardMaterial>>,
   bevy_voxel_res: Res<BevyVoxelResource>,
 
   previews: Query<&Preview, Changed<Preview>>,

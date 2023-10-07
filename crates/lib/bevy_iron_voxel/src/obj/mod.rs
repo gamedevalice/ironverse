@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use voxels::chunk::chunk_manager::ChunkManager;
-use obj_exporter::*;
+// use voxels::chunk::chunk_manager::ChunkManager;
+// use obj_exporter::*;
 use crate::{data::GameResource, components::player::Player};
 
 pub struct CustomPlugin;
@@ -12,9 +12,9 @@ impl Plugin for CustomPlugin {
 }
 
 fn export(
-  keys: Res<Input<KeyCode>>,
-  mut game_res: ResMut<GameResource>,
-  players: Query<&Player>,
+  _keys: Res<Input<KeyCode>>,
+  mut _game_res: ResMut<GameResource>,
+  _players: Query<&Player>,
 ) {
   // if keys.just_pressed(KeyCode::Period) {
   //   let mut player_key = [0, 0, 0];

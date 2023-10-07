@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{BevyVoxelResource, Preview, Center, Chunks, MeshComponent};
+use crate::{BevyVoxelResource, Preview, Chunks, MeshComponent};
 
 mod add_normal;
 mod add_dist;
@@ -35,13 +35,13 @@ impl Plugin for CustomPlugin {
 
 fn modify_voxels(
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-  mut chunks: Query<(&Preview, &Center, &mut Chunks, &mut MeshComponent)>,
+  mut chunks: Query<(&Preview, &mut Chunks, &mut MeshComponent)>,
 
   mut edit_event_reader: EventReader<EditEvents>,
 ) {
   for e in edit_event_reader.iter() {
     if e.event == EditEvent::RemoveCube {
-      for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
+      for (preview, mut chunks, mut mesh_comp) in &mut chunks {
         if preview.pos.is_none() {
           continue;
         }
@@ -65,7 +65,7 @@ fn modify_voxels(
     }
 
     if e.event == EditEvent::RemoveSphere {
-      for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
+      for (preview, mut chunks, mut mesh_comp) in &mut chunks {
         if preview.pos.is_none() {
           continue;
         }

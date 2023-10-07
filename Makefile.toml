@@ -31,3 +31,10 @@ script = '''
   clear
   clear
 '''
+
+[tasks.editor]
+script = '''
+  clear
+  clear
+  cargo run -p editor
+'''

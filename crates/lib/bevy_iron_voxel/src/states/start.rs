@@ -8,7 +8,7 @@ impl Plugin for CustomPlugin {
       .add_systems(OnEnter(GameState::Start), 
         enter
       )
-      // .add_system(update)
+      .add_systems(Update, update)
       ;
   }
 }
@@ -20,12 +20,12 @@ fn enter(
 }
 
 fn update(
-  mut light_query: Query<&mut Transform, With<PointLight>>,
-  time: Res<Time>,
+  mut _light_query: Query<&mut Transform, With<PointLight>>,
+  _time: Res<Time>,
 ) {
-  let t = time.elapsed_seconds();
-  for mut tfm in light_query.iter_mut() {
-    tfm.translation = 5.0 * Vec3::new(t.cos(), 1.0, t.sin());
-  }
+  // let t = time.elapsed_seconds();
+  // for mut tfm in light_query.iter_mut() {
+  //   tfm.translation = 5.0 * Vec3::new(t.cos(), 1.0, t.sin());
+  // }
 }
 

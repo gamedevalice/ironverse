@@ -1,7 +1,6 @@
 use bevy::{prelude::*, tasks::{AsyncComputeTaskPool, Task}};
 use voxels::{chunk::chunk_manager::{ChunkManager, Chunk}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
 use futures_lite::future;
-
 use crate::BevyVoxelResource;
 
 
@@ -19,7 +18,7 @@ impl Plugin for CustomPlugin {
 
 fn recv_keys(
   mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
   let thread_pool = AsyncComputeTaskPool::get();
 
@@ -41,12 +40,12 @@ fn recv_keys(
 
 fn recv_chunk(
   mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
   mut tasks: Query<(Entity, &mut LoadChunk)>,
 ) {
   for (entity, mut task) in &mut tasks {
     if let Some(chunk) = future::block_on(future::poll_once(&mut task.0)) {
-      bevy_voxel_res.send_chunk.send(chunk);
+      let _ = bevy_voxel_res.send_chunk.send(chunk);
 
       // Task is complete, so remove task component from entity
       commands.entity(entity).remove::<LoadChunk>();
@@ -57,12 +56,11 @@ fn recv_chunk(
 
 fn recv_process_mesh(
   mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
   let thread_pool = AsyncComputeTaskPool::get();
 
   let depth = bevy_voxel_res.chunk_manager.depth;
-  let noise = bevy_voxel_res.chunk_manager.noise;
   let scale = bevy_voxel_res.chunk_manager.voxel_scale;
 
   for chunk in bevy_voxel_res.recv_process_mesh.drain() {
@@ -86,12 +84,12 @@ fn recv_process_mesh(
 
 fn recv_mesh(
   mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
   mut tasks: Query<(Entity, &mut LoadMeshData)>,
 ) {
   for (entity, mut task) in &mut tasks {
     if let Some(data) = future::block_on(future::poll_once(&mut task.0)) {
-      bevy_voxel_res.send_mesh.send(data);
+      let _ = bevy_voxel_res.send_mesh.send(data);
 
       // Task is complete, so remove task component from entity
       commands.entity(entity).remove::<LoadMeshData>();

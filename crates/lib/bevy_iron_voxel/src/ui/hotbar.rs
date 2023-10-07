@@ -25,7 +25,7 @@ fn render(
   windows: Query<&Window, With<PrimaryWindow>>,
   hotbar_res: Res<HotbarResource>,
   mut hotbar_ui_res: ResMut<HotbarUIResource>,
-  ui_res: Res<UIResource>,
+  _ui_res: Res<UIResource>,
 ) {
   let res = windows.get_single();
   if res.is_err() {
@@ -86,13 +86,13 @@ fn render(
  */
 fn render_items(
   mut ctx: EguiContexts,
-  mut is_initialized: Local<bool>,
-  mut texture_id: Local<TextureId>,
-  images: Local<Images>,
+  mut _is_initialized: Local<bool>,
+  mut _texture_id: Local<TextureId>,
+  _images: Local<Images>,
 
   windows: Query<&Window, With<PrimaryWindow>>,
   hotbar_res: Res<HotbarResource>,
-  mut hotbar_ui_res: ResMut<HotbarUIResource>,
+  hotbar_ui_res: Res<HotbarUIResource>,
   ui_res: Res<UIResource>,
   inventory_texture: Res<InventoryTexture>,
 ) {

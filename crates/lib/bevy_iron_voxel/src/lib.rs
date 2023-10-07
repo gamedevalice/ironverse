@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PresentMode};
+use bevy::prelude::*;
 pub use bevy_voxel::{BevyVoxelPlugin, BevyVoxelResource, editstate::{EditEvents,EditEvent}, EditState, Preview};
 use cfg_if::cfg_if;
 use voxels::chunk::chunk_manager::DEFAULT_COLOR_PALETTE;
