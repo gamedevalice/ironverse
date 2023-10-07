@@ -20,7 +20,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
             title: "Ironverse".into(),
-            // mode: bevy::window::WindowMode::BorderlessFullscreen,
+            mode: bevy::window::WindowMode::BorderlessFullscreen,
             resolution: (800., 600.).into(),
             present_mode: PresentMode::AutoVsync,
             fit_canvas_to_parent: true,

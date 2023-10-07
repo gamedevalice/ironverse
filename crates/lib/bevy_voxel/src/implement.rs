@@ -1,6 +1,4 @@
 use bevy::{prelude::*, utils::HashMap};
-
-use multithread::plugin::send_colors;
 use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::{RayUtils, Utils};
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
@@ -13,6 +11,7 @@ use cfg_if::cfg_if;
 cfg_if! {
   if #[cfg(target_arch = "wasm32")] {
     use multithread::plugin::send_key;
+    use multithread::plugin::send_colors;
   }
 }
 
@@ -740,7 +739,11 @@ impl BevyVoxelResource {
 
 
   pub fn update_colors(&self) {
-    send_colors(&self.chunk_manager.colors);
+    cfg_if! {
+      if #[cfg(target_arch = "wasm32")] {
+        send_colors(&self.chunk_manager.colors);
+      }
+    }
   }
 }
 
