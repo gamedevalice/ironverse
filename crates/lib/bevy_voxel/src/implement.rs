@@ -1,5 +1,6 @@
 use bevy::{prelude::*, utils::HashMap};
 
+use multithread::plugin::send_colors;
 use rapier3d::{prelude::{Vector, ColliderHandle, Ray, QueryFilter}, na::Point3};
 use utils::{RayUtils, Utils};
 use voxels::{chunk::{chunk_manager::{ChunkManager, Chunk}, adjacent_keys}, data::{voxel_octree::{VoxelMode, MeshData}, surface_nets::VoxelReuse}};
@@ -25,7 +26,7 @@ impl BevyVoxelResource {
     colors: Vec<[f32; 3]>,
     ranges: Vec<u32>,
   ) -> Self {
-    Self {
+    let mut res = BevyVoxelResource {
       chunk_manager: ChunkManager::new(
         depth,
         voxel_scale,
@@ -38,7 +39,9 @@ impl BevyVoxelResource {
       edit_state: EditState::AddNormal,
       ranges: ranges,
       ..Default::default()
-    }
+    };
+    res.update_colors();
+    res
   }
 
   pub fn get_key(&self, pos: Vec3) -> [i64; 3] {
@@ -734,6 +737,11 @@ impl BevyVoxelResource {
     Utils::in_range_by_lod(key1, key2, &self.ranges, lod)
   }
 
+
+
+  pub fn update_colors(&self) {
+    send_colors(&self.chunk_manager.colors);
+  }
 }
 
 /*

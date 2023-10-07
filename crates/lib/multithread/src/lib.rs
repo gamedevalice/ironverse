@@ -31,6 +31,7 @@ pub fn app() {
   let (send, recv) = flume::unbounded();
   recv_data_key_from_wasm(send.clone());
   recv_data_chunk_from_wasm(send.clone());
+  recv_colors_from_wasm();
 
   spawn_local(async move {
     let ab_js = fetch_as_arraybuffer("./wasm/multithread/multithread.js").await.unwrap();
@@ -94,6 +95,25 @@ fn recv_data_chunk_from_wasm(send: Sender<WasmMessage>) {
   let window = web_sys::window().unwrap();
   let _ = window.add_event_listener_with_callback(
     &EventType::ChunkSend.to_string(),
+    callback.as_ref().unchecked_ref()
+  );
+
+  callback.forget();
+}
+
+fn recv_colors_from_wasm() {
+  let callback = Closure::wrap(Box::new(move |event: CustomEvent | {
+    let data = event.detail().as_string().unwrap();
+    let bytes = array_bytes::hex2bytes(data).unwrap();
+    let colors: Vec<[f32; 3]> = bincode::deserialize(&bytes).unwrap();
+
+    COLORS.write().unwrap().clear();
+    COLORS.write().unwrap().append(&mut colors.clone());
+  }) as Box<dyn FnMut(CustomEvent)>);
+
+  let window = web_sys::window().unwrap();
+  let _ = window.add_event_listener_with_callback(
+    &EventType::SendColors.to_string(),
     callback.as_ref().unchecked_ref()
   );
 
@@ -218,6 +238,7 @@ pub enum EventType {
   KeyRecv,
   ChunkSend,
   ChunkRecv,
+  SendColors,
 }
 
 impl ToString for EventType {
@@ -227,6 +248,7 @@ impl ToString for EventType {
       EventType::KeyRecv => String::from("KeyRecv"),
       EventType::ChunkSend => String::from("ChunkSend"),
       EventType::ChunkRecv => String::from("ChunkRecv"),
+      EventType::SendColors => String::from("SendColors"),
     }
   }
 }
