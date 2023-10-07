@@ -1,7 +1,6 @@
 #![feature(async_closure)]
 
 use std::{cell::RefCell, rc::Rc, future::Future, task::{Context, Poll}};
-
 use plugin::Key;
 use wasm_mt_pool::prelude::*;
 use wasm_bindgen::prelude::*;
@@ -12,6 +11,10 @@ use flume::{Sender, Receiver};
 use web_sys::{CustomEvent, HtmlInputElement, CustomEventInit};
 use crate::plugin::Octree;
 
+
+use std::sync::RwLock;
+static COLORS: RwLock<Vec<[f32; 3]>> = RwLock::new(Vec::new());
+
 pub mod plugin;
 
 #[wasm_bindgen]
@@ -20,10 +23,15 @@ pub fn app() {
   // let (send_chunk, recv_chunk) = flume::unbounded();
   // recv_key_from_wasm(send_queue);
   // recv_chunk_from_wasm(send_chunk);
-  
+
+  for _ in 0..500 {
+    COLORS.write().unwrap().push([0.0, 0.0, 0.0]);
+  }
+
   let (send, recv) = flume::unbounded();
   recv_data_key_from_wasm(send.clone());
   recv_data_chunk_from_wasm(send.clone());
+  recv_colors_from_wasm();
 
   spawn_local(async move {
     let ab_js = fetch_as_arraybuffer("./wasm/multithread/multithread.js").await.unwrap();
@@ -49,16 +57,6 @@ fn recv_data_key_from_wasm(send: Sender<WasmMessage>) {
     let data = event.detail().as_string().unwrap();
     let bytes = array_bytes::hex2bytes(data).unwrap();
     let key: Key = bincode::deserialize(&bytes).unwrap();
-
-    // let bytes = array_bytes::hex2bytes(data).unwrap();
-    // let a: Vec<i64> = bytes
-    //   .chunks(8)
-    //   .map(|a| {
-    //     let a1: [u8; 8] = a[0..8].try_into().unwrap();
-    //     i64::from_be_bytes(a1)
-    //   })
-    //   .collect();
-    // let key: [i64; 3] = a[0..3].try_into().unwrap();
 
     let msg = WasmMessage {
       key: Some(key),
@@ -92,8 +90,6 @@ fn recv_data_chunk_from_wasm(send: Sender<WasmMessage>) {
     };
 
     let _ = send.send(msg);
-
-
   }) as Box<dyn FnMut(CustomEvent)>);
 
   let window = web_sys::window().unwrap();
@@ -105,10 +101,32 @@ fn recv_data_chunk_from_wasm(send: Sender<WasmMessage>) {
   callback.forget();
 }
 
+fn recv_colors_from_wasm() {
+  let callback = Closure::wrap(Box::new(move |event: CustomEvent | {
+    let data = event.detail().as_string().unwrap();
+    let bytes = array_bytes::hex2bytes(data).unwrap();
+    let colors: Vec<[f32; 3]> = bincode::deserialize(&bytes).unwrap();
+
+    COLORS.write().unwrap().clear();
+    COLORS.write().unwrap().append(&mut colors.clone());
+  }) as Box<dyn FnMut(CustomEvent)>);
+
+  let window = web_sys::window().unwrap();
+  let _ = window.add_event_listener_with_callback(
+    &EventType::SendColors.to_string(),
+    callback.as_ref().unchecked_ref()
+  );
+
+  callback.forget();
+}
+
 async fn load_data_from_wasm(
   pool: &ThreadPool,
   recv: Receiver<WasmMessage>
 ) {
+
+  
+  console_ln!("COLORS.len() 1 {}", COLORS.read().unwrap().len());
 
   while let Ok(msg) = recv.recv_async().await {
     // console_ln!("load_data_from_wasm {:?}", );
@@ -140,15 +158,22 @@ async fn load_data_from_wasm(
 
     if msg.chunk.is_some() {
       let chunk = msg.chunk.unwrap();
+      let c = chunk.clone();
+
+      let colors = COLORS.read().unwrap().clone();
       // console_ln!("load_chunk {:?}", chunk.clone().key);
 
       let cb = move |result: Result<JsValue, JsValue>| {
+        if result.is_err() {
+          let err = result.clone().err().unwrap();
+          console_ln!("Error {:?} {:?}", c.key, err);
+        }
         let r = result.unwrap();
         let ab = r.dyn_ref::<js_sys::ArrayBuffer>().unwrap();
         let vec = js_sys::Uint8Array::new(ab).to_vec();
         let str = array_bytes::bytes2hex("", vec);
   
-        // console_ln!("recv_chunk test");
+        
         let e = CustomEvent::new_with_event_init_dict(
           &EventType::ChunkRecv.to_string(), CustomEventInit::new().detail(&JsValue::from_str(&str))
         ).unwrap();
@@ -158,10 +183,15 @@ async fn load_data_from_wasm(
       };
   
       pool_exec!(pool, move || {
-        let mesh = compute_mesh(chunk);
-        let encoded: Vec<u8> = bincode::serialize(&mesh).unwrap();
+        let mesh = compute_mesh(chunk, &colors);
+
+        let r = bincode::serialize(&mesh);
+        if r.is_err() {
+          console_ln!("Error encoding");
+        }
+        // let encoded: Vec<u8> = bincode::serialize(&mesh).unwrap();
   
-        Ok(wasm_mt::utils::u8arr_from_vec(&encoded).buffer().into())
+        Ok(wasm_mt::utils::u8arr_from_vec(&r.unwrap()).buffer().into())
       }, cb);
     }
 
@@ -174,11 +204,28 @@ fn compute_chunk(key: Key) -> Chunk {
   ChunkManager::new_chunk(&key.key, 4, key.lod, manager.noise)
 }
 
-fn compute_mesh(chunk: Chunk) -> MeshData {
+fn compute_mesh(chunk: Chunk, colors: &Vec<[f32; 3]>) -> MeshData {
+  // let mut v = Vec::new();
+  // for _ in 0..500 {
+  //   v.push([0.0, 0.0, 0.0]);
+  // }
+
+  // console_ln!("COLORS.len() {}", COLORS.read().unwrap().len());
+  // if COLORS.read().unwrap().len() == 0 {
+  //   console_ln!("Testing");
+  //   // for _ in 0..500 {
+  //   //   COLORS.write().unwrap().push([0.0, 0.0, 0.0]);
+  //   // }  
+  // }
+
+  // console_ln!("colors.len() {}", colors.len());
+
   chunk.octree.compute_mesh(
     VoxelMode::SurfaceNets, 
     &mut VoxelReuse::default(), 
-    &vec!([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 1.0, 1.0]), 
+    colors,
+    // &v, 
+    // &COLORS.read().unwrap(),
     1.0, 
     chunk.key,
     chunk.lod
@@ -191,6 +238,7 @@ pub enum EventType {
   KeyRecv,
   ChunkSend,
   ChunkRecv,
+  SendColors,
 }
 
 impl ToString for EventType {
@@ -200,6 +248,7 @@ impl ToString for EventType {
       EventType::KeyRecv => String::from("KeyRecv"),
       EventType::ChunkSend => String::from("ChunkSend"),
       EventType::ChunkRecv => String::from("ChunkRecv"),
+      EventType::SendColors => String::from("SendColors"),
     }
   }
 }

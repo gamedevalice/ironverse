@@ -163,6 +163,7 @@ pub fn update_color_picker(mouse: Res<Input<MouseButton>>, time: Res<Time>, mut 
         local.pressed_time = 0.0;
         local.edit_count = 0;
         local.is_pressing = false;
+        voxel_res.update_colors();
     }
 
     //change voxel assigned to hotbar
