@@ -9,6 +9,13 @@ impl Plugin for CustomPlugin {
     app
       .add_plugins(MaterialPlugin::<CustomMaterial>::default())
       .add_systems(Update, add);
+
+
+/*     // Test code
+    app
+      .add_systems(Update, 
+        delete_main_octrees_outside_range
+      ); */
   }
 }
 
@@ -25,10 +32,11 @@ fn add(
 ) {
   for (_, mut mesh_comp) in &mut chunk_query {
     for (data, collider_handle) in mesh_comp.added.iter() {
+
+      // This is for removing the duplicates
       'graphics: for (entity, graphics) in &chunk_graphics {
         if graphics.key == data.key {
           commands.entity(entity).despawn();
-
           if graphics.lod == 0 {
             bevy_voxel_res.physics.remove_collider(graphics.collider);
           }
@@ -66,6 +74,31 @@ fn add(
     mesh_comp.added.clear();
   }
 }
+
+/* fn delete_main_octrees_outside_range(
+  mut commands: Commands,
+  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  centers: Query<&Center, Changed<Center>>,
+
+  chunk_graphics: Query<(Entity, &ChunkGraphics)>,
+
+) {
+  for center in &centers {
+    for (entity, graphics) in &chunk_graphics {
+      if !bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, 0) {
+        if graphics.lod == 0 {
+          commands.entity(entity).despawn();
+          bevy_voxel_res.physics.remove_collider(graphics.collider);
+        }
+        
+      }
+    }
+    
+  }
+} */
+
+
+
 
 pub const VOXEL_COLOR: MeshVertexAttribute =
   MeshVertexAttribute::new("VOXEL_COLOR", 988540918, VertexFormat::Float32x3);
