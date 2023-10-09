@@ -12,9 +12,9 @@ impl Plugin for CustomPlugin {
 
 fn add(
   mut commands: Commands,
-  query: Query<(Entity, &Player), Added<Player>>,
+  query: Query<Entity, Added<Player>>,
 ) {
-  for (entity, player) in &query {
+  for entity in &query {
     info!("Add cam");
 
     // let rigid_body = &mut physics.rigid_body_set[player.body];

@@ -35,6 +35,13 @@ script = '''
   clear
 '''
 
+[tasks.editor]
+script = '''
+  clear
+  clear
+  cargo run -p editor
+'''
+
 [tasks.compile_wasm_opt]
 script = '''
 wasm-pack build --out-dir ../../bin/editor/wasm/multithread --target no-modules ./crates/lib/multithread/

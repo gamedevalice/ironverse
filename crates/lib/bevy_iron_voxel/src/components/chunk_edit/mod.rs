@@ -1,9 +1,6 @@
-use bevy::{prelude::*, input::mouse::MouseWheel};
-use bevy_voxel::{Selected, Preview, SelectedGraphics, BevyVoxelResource, PreviewGraphics, Center, Chunks, EditState, ShapeState, MeshComponent};
-use rapier3d::prelude::ColliderHandle;
-use voxels::{chunk::chunk_manager::Chunk, data::voxel_octree::VoxelMode};
-use crate::{input::hotbar::HotbarResource, graphics::ChunkGraphics};
-
+use bevy::prelude::*;
+use bevy_voxel::{Selected, Preview, SelectedGraphics, PreviewGraphics, Chunks, EditState, ShapeState, MeshComponent};
+use voxels::chunk::chunk_manager::Chunk;
 use super::player::Player;
 
 pub struct CustomPlugin;
@@ -40,15 +37,15 @@ fn add_to_player(
 }
 
 fn switch_state(
-  key_input: Res<Input<KeyCode>>,
-  mut next_edit: ResMut<NextState<EditState>>,
-  state: Res<State<EditState>>,
+  _key_input: Res<Input<KeyCode>>,
+  mut _next_edit: ResMut<NextState<EditState>>,
+  _state: Res<State<EditState>>,
 
-  mut next_shape: ResMut<NextState<ShapeState>>,
-  shape_state: Res<State<ShapeState>>,
+  mut _next_shape: ResMut<NextState<ShapeState>>,
+  _shape_state: Res<State<ShapeState>>,
 
-  mut local: Local<usize>,
-  mut local1: Local<usize>,
+  mut _local: Local<usize>,
+  mut _local1: Local<usize>,
 ) {
 
   // if key_input.just_pressed(KeyCode::Down) {

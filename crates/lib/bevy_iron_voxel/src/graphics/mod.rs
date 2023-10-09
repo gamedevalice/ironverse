@@ -58,9 +58,9 @@ fn startup(
 }
 
 fn toggle_showhide(
-  key_input: Res<Input<KeyCode>>,
+  _key_input: Res<Input<KeyCode>>,
   mut previews: Query<(&mut Visibility, &ChunkPreviewGraphics)>,
-  mut graphics_res: ResMut<GraphicsResource>,
+  graphics_res: Res<GraphicsResource>,
 ) {
   // if key_input.just_pressed(KeyCode::P) {
   //   graphics_res.show_preview = !graphics_res.show_preview;
@@ -88,7 +88,7 @@ fn remove(
   bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
   let max_lod = bevy_voxel_res.chunk_manager.depth as usize;
-  for (center, mesh_comp) in &mesh_comps {
+  for (center, _mesh_comp) in &mesh_comps {
     for (entity, graphics) in &chunk_graphics {
       for lod in 0..max_lod {
         if bevy_voxel_res.in_range_by_lod(&center.key, &graphics.key, lod) {

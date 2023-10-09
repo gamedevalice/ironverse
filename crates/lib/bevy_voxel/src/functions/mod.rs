@@ -1,10 +1,8 @@
 mod sphere;
 mod cube;
 
-use bevy::{prelude::*, utils::HashMap};
-
+use bevy::prelude::*;
 use rapier3d::prelude::ColliderHandle;
-use voxels::data::voxel_octree::MeshData;
 use crate::{BevyVoxelResource, Selected, Preview, Chunks, Center, ShapeState, EditState, MeshComponent};
 
 use cfg_if::cfg_if;
@@ -120,9 +118,9 @@ fn load_main_octrees(
 
 fn load_lod_chunks(
   mut res: ResMut<BevyVoxelResource>,
-  mut chunks: Query<(&Center, &mut Chunks, &mut MeshComponent), Added<Chunks>>
+  chunks: Query<&Center, Added<Chunks>>
 ) {
-  for (center, mut chunks, mut mesh_comp) in &mut chunks {
+  for center in &chunks {
     for lod in 1..res.ranges.len() - 1 {
       let keys = res.get_keys_by_lod(center.key, lod);
       request_load_chunk(&keys, &mut res, lod);
@@ -157,11 +155,11 @@ fn load_main_delta_octrees(
 }
 
 fn load_lod_delta_octrees(
-  mut res: ResMut<BevyVoxelResource>,
-  mut centers: Query<(&Center, &mut Chunks, &mut MeshComponent), Changed<Center>>
+  res: Res<BevyVoxelResource>,
+  centers: Query<(&Center, &Chunks), Changed<Center>>
 ) {
   
-  for (center, mut chunks, mut mesh_comp) in &mut centers {
+  for (center, chunks) in &centers {
     for lod in 1..res.ranges.len() - 1 {
       let keys = res.get_delta_keys_by_lod(
         &center.prev_key, &center.key, lod
@@ -179,25 +177,6 @@ fn load_lod_delta_octrees(
         }
       }
     }
-
-    // for lod in 1..2 {
-    //   let keys = res.get_delta_keys_by_lod(
-    //     &center.prev_key, &center.key, 1
-    //   );
-
-    //   for key in keys.iter() {
-    //     let d = chunks.data.get(key);
-    //     if d.is_none() {
-    //       let _ = res.send_key.send((*key, 1));
-    //     }
-    //     if d.is_some() {
-    //       let mut data = d.unwrap().clone();
-    //       data.lod = 1;
-    //       let _ = res.send_process_mesh.send(data);
-    //     }
-    //   }
-    // }
-
   }
 }
 
@@ -236,31 +215,19 @@ fn request_load_chunk(
 }
 
 fn receive_chunks(
-  mut res: ResMut<BevyVoxelResource>,
-  mut queries: Query<(&Center, &mut Chunks, &mut MeshComponent)>
+  res: Res<BevyVoxelResource>,
 ) {
   for c in res.recv_chunk.drain() {
-    for (center, mut chunks, mut mesh_comp) in &mut queries {
-      res.send_process_mesh.send(c.clone());
-
-      // let mut chunk = c.clone();
-      // chunk.lod = 0;
-      // chunks.data.insert(c.key, chunk);
-    }
+    let _ = res.send_process_mesh.send(c.clone());
   }
 }
 
 fn receive_mesh(
-  mut res: ResMut<BevyVoxelResource>,
-  mut queries: Query<(&Center, &mut Chunks, &mut MeshComponent)>
+  res: Res<BevyVoxelResource>,
+  mut queries: Query<(&Center, &mut MeshComponent)>
 ) {
-  let max_lod = res.chunk_manager.depth as u8;
-  let ranges = res.ranges.clone();
   for data in res.recv_mesh.drain() {
-    for (center, mut chunks, mut mesh_comp) in &mut queries {
-      let d = data.clone();
-      // mesh_comp.data.insert(d.key, d);
-
+    for (center, mut mesh_comp) in &mut queries {
       if res.in_range_by_lod(&center.key, &data.key, data.lod) {
         if data.lod == 0 {
           // println!("Error: Lod 0 should not be loaded async");

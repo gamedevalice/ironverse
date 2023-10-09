@@ -16,12 +16,8 @@ impl Plugin for CustomPlugin {
 }
 
 fn recv_keys(
-  mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
-  let depth = bevy_voxel_res.chunk_manager.depth as u8;
-  let noise = bevy_voxel_res.chunk_manager.noise;
-
   for (key, lod) in bevy_voxel_res.recv_key.drain() {
     let key = key.clone();
     send_key(Key {
@@ -33,8 +29,6 @@ fn recv_keys(
 
 fn recv_chunk(
   plugin_res: Res<PluginResource>,
-  mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
   for chunk in plugin_res.recv_chunk.drain() {
     send_chunk(chunk);
@@ -43,8 +37,7 @@ fn recv_chunk(
 }
 
 fn recv_process_mesh(
-  mut commands: Commands,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: Res<BevyVoxelResource>,
 ) {
 
   for chunk in bevy_voxel_res.recv_process_mesh.drain() {
@@ -55,11 +48,9 @@ fn recv_process_mesh(
 
 fn load_mesh(
   plugin_res: Res<PluginResource>,
-  mut bevy_voxel_res: ResMut<BevyVoxelResource>,
+  bevy_voxel_res: ResMut<BevyVoxelResource>,
 ) {
   for data in plugin_res.recv_mesh.drain() {
-    // info!("wasm_recv_mesh {:?}", data.key);
-
-    bevy_voxel_res.send_mesh.send(data);
+    let _ = bevy_voxel_res.send_mesh.send(data);
   }
 }

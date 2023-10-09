@@ -10,11 +10,11 @@ impl Plugin for CustomPlugin {
 }
 
 fn modify_preview(
-  key_input: Res<Input<KeyCode>>,
-  time: Res<Time>,
-  mut previews: Query<&mut Preview>,
+  _key_input: Res<Input<KeyCode>>,
+  _time: Res<Time>,
+  mut _previews: Query<&mut Preview>,
 ) {
-  let speed = 1.0;
+  let _speed = 1.0;
   // if key_input.pressed(KeyCode::Equals) {
   //   for mut preview in previews.iter_mut() {
   //     if preview.sphere_size < 8.0 {

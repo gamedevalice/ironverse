@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use bevy_iron_ui::core::{LayoutNode, UiManager, UiTags};
 use bevy_iron_ui::layout::{node, button, text};
 use bevy_iron_voxel::{Preview, BevyVoxelResource};
-use bevy_iron_voxel::data::GameResource;
 use super::voxel_edit_mode::HotbarVoxels;
 
 use super::AppState;
@@ -78,7 +77,7 @@ pub fn controls(keyboard_input: Res<Input<KeyCode>>, mut next_state: ResMut<Next
     }
 }
 
-pub fn update_color_picker(mouse: Res<Input<MouseButton>>, time: Res<Time>, mut local: Local<ControlsLocal>, mut previews: Query<&mut Preview>, mut button_query: Query<(&UiTags, &Interaction)>, mut color_picker_query: Query<(&UiTags, &mut BackgroundColor, &mut BorderColor)>, mut rgb_text_query: Query<(&UiTags, &mut Text)>, mut hotbar_voxels: ResMut<HotbarVoxels>, mut voxel_res: ResMut<BevyVoxelResource>) {
+pub fn update_color_picker(mouse: Res<Input<MouseButton>>, time: Res<Time>, mut local: Local<ControlsLocal>, mut _previews: Query<&mut Preview>, mut button_query: Query<(&UiTags, &Interaction)>, mut color_picker_query: Query<(&UiTags, &mut BackgroundColor, &mut BorderColor)>, mut rgb_text_query: Query<(&UiTags, &mut Text)>, mut hotbar_voxels: ResMut<HotbarVoxels>, mut voxel_res: ResMut<BevyVoxelResource>) {
 
     while voxel_res.chunk_manager.colors.len() < 255 {
         voxel_res.chunk_manager.colors.push([0.8, 0.8, 0.8]);

@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 use bevy_voxel::{BevyVoxelResource, Center};
 use rapier3d::{na::Vector3, prelude::{RigidBodyHandle, ColliderHandle}};
-use voxels::utils::posf32_to_world_key;
-use crate::{physics::Physics, data::{GameResource, GameState}};
+use crate::data::{GameResource, GameState};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {

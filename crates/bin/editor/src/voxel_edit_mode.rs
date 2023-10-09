@@ -1,9 +1,9 @@
-use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
+use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
 use bevy::window::CursorGrabMode;
 use bevy_iron_ui::core::{LayoutNode, UiTags, UiManager};
 use bevy_iron_ui::layout::{node, button, text, image};
-use bevy_iron_voxel::{BevyVoxelResource, EditEvent, EditEvents, EditState, Preview, data::GameResource};
+use bevy_iron_voxel::{BevyVoxelResource, EditEvent, EditEvents, EditState, Preview};
 
 use super::AppState;
 

@@ -15,24 +15,24 @@ impl Plugin for CustomPlugin {
   }
 }
 
-pub struct GameEvent {
-  pub event_type: GameEventType,
-  pub pos: Vec3,
-}
+// pub struct GameEvent {
+//   pub event_type: GameEventType,
+//   pub pos: Vec3,
+// }
 
-impl GameEvent {
-  pub fn new(e: GameEventType, p: Vec3) -> Self {
-    Self {
-      event_type: e,
-      pos: p
-    }
-  }
-}
+// impl GameEvent {
+//   pub fn new(e: GameEventType, p: Vec3) -> Self {
+//     Self {
+//       event_type: e,
+//       pos: p
+//     }
+//   }
+// }
 
-#[derive(PartialEq, Eq, Debug, Clone, Hash)]
-pub enum GameEventType {
-  SpawnPlayer
-}
+// #[derive(PartialEq, Eq, Debug, Clone, Hash)]
+// pub enum GameEventType {
+//   SpawnPlayer
+// }
 
 
 

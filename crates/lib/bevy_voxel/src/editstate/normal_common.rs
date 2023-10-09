@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-
-use crate::{EditState, Preview, BevyVoxelResource, Center, Chunks, MeshComponent};
-
+use crate::{EditState, Preview, BevyVoxelResource, Chunks, MeshComponent};
 use super::{EditEvents, EditEvent};
 
 pub struct CustomPlugin;
@@ -56,13 +54,13 @@ fn preview_position(
 
 fn modify_voxels(
   mut bevy_voxel_res: ResMut<BevyVoxelResource>,
-  mut chunks: Query<(&Preview, &Center, &mut Chunks, &mut MeshComponent)>,
+  mut chunks: Query<(&Preview, &mut Chunks, &mut MeshComponent)>,
 
   mut edit_event_reader: EventReader<EditEvents>,
 ) {
   for e in edit_event_reader.iter() {
     if e.event == EditEvent::AddCube {
-      for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
+      for (preview, mut chunks, mut mesh_comp) in &mut chunks {
         if preview.pos.is_none() {
           continue;
         }
@@ -86,7 +84,7 @@ fn modify_voxels(
     }
 
     if e.event == EditEvent::AddSphere {
-      for (preview, center, mut chunks, mut mesh_comp) in &mut chunks {
+      for (preview, mut chunks, mut mesh_comp) in &mut chunks {
         if preview.pos.is_none() {
           continue;
         }

@@ -10,8 +10,8 @@ impl Plugin for CustomPlugin {
 }
 
 fn modify_preview(
-  key_input: Res<Input<KeyCode>>,
-  mut previews: Query<&mut Preview>,
+  _key_input: Res<Input<KeyCode>>,
+  mut _previews: Query<&mut Preview>,
 ) {
   // if key_input.just_pressed(KeyCode::Equals) {
   //   for mut preview in previews.iter_mut() {

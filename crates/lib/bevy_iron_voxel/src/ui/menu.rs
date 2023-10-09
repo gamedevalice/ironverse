@@ -17,10 +17,10 @@ impl Plugin for CustomPlugin {
 
 
 fn toggle_show(
-  key: Res<Input<KeyCode>>,
-  mut cursor_state_next: ResMut<NextState<CursorState>>,
-  mut ui_state_next: ResMut<NextState<UIState>>,
-  ui_state: Res<State<UIState>>,
+  _key: Res<Input<KeyCode>>,
+  mut _cursor_state_next: ResMut<NextState<CursorState>>,
+  mut _ui_state_next: ResMut<NextState<UIState>>,
+  _ui_state: Res<State<UIState>>,
 ) {
   // if key.just_pressed(KeyCode::ControlLeft) {
   //   match *State::get(&ui_state) {
@@ -44,11 +44,11 @@ fn render(
   mut commands: Commands,
   mut contexts: EguiContexts,
   windows: Query<(Entity, &Window), With<PrimaryWindow>>,
-  mut ui_res: ResMut<UIResource>,
-  state: Res<State<UIState>>,
+  mut _ui_res: ResMut<UIResource>,
+  _state: Res<State<UIState>>,
   mut next_state: ResMut<NextState<UIState>>,
   mut next_game_state: ResMut<NextState<GameState>>,
-  local_res: Res<UIMenuResource>,
+  _local_res: Res<UIMenuResource>,
 
   mut game_res: ResMut<GameResource>,
 ) {

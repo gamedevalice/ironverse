@@ -10,7 +10,6 @@ use cfg_if::cfg_if;
 
 cfg_if! {
   if #[cfg(target_arch = "wasm32")] {
-    use multithread::plugin::send_key;
     use multithread::plugin::send_colors;
   }
 }
@@ -25,7 +24,7 @@ impl BevyVoxelResource {
     colors: Vec<[f32; 3]>,
     ranges: Vec<u32>,
   ) -> Self {
-    let mut res = BevyVoxelResource {
+    let res = BevyVoxelResource {
       chunk_manager: ChunkManager::new(
         depth,
         voxel_scale,
@@ -268,7 +267,7 @@ impl BevyVoxelResource {
   }
 
   fn get_preview_remove_sphere(
-    &self, pos: Vec3, preview: &Preview
+    &self, _pos: Vec3, preview: &Preview
   ) -> Chunk {
     let mut chunk = Chunk::default();
     let mid_pos = (chunk.octree.get_size() / 2) as i64;
@@ -646,8 +645,6 @@ impl BevyVoxelResource {
 
   pub fn load_lod_meshes(&mut self, key: [i64; 3], lod: usize) -> Vec<ChunkMesh> {
     let mut chunk_meshes = Vec::new();
-    let max_lod = self.chunk_manager.depth as u8;
-
     let keys = self.get_keys_by_lod(key, lod);
     for k in keys.iter() {
       let chunk = load_chunk_with_lod(self, *k, lod);

@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-
 use crate::components::player::Player;
 
 pub struct CustomPlugin;
@@ -31,7 +30,7 @@ fn add(
 
 fn follow_light(
   mut light_query: Query<&mut Transform, With<PointLight>>,
-  player: Query<(&GlobalTransform), With<Player>>,
+  player: Query<&GlobalTransform, With<Player>>,
 ) {
   for mut tfm in light_query.iter_mut() {
     for global in &player {

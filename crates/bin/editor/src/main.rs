@@ -1,11 +1,7 @@
-use bevy::{prelude::*, core_pipeline::Skybox};
+use bevy::prelude::*;
 use bevy::window::PresentMode;
-use bevy::render::mesh::shape;
-
-use bevy_flycam::{NoCameraAndGrabPlugin, FlyCam, KeyBindings};
-
-use bevy_iron_ui::{UiPlugin, core::UiManager};
-use bevy_iron_voxel::{VoxelWorldPlugin, components::player::create_new_player, data::GameResource, BevyVoxelResource};
+use bevy_flycam::NoCameraAndGrabPlugin;
+use bevy_iron_voxel::VoxelWorldPlugin;
 
 pub mod theme;
 pub mod main_menu;
@@ -68,7 +64,7 @@ pub enum AppState {
     VoxelEditOptions,
 }
 
-fn setup_camera(mut commands: Commands, mut bevy_voxel_res: ResMut<BevyVoxelResource>, game_res: Res<GameResource>) {
+/* fn setup_camera(mut commands: Commands, mut bevy_voxel_res: ResMut<BevyVoxelResource>, game_res: Res<GameResource>) {
     //Add Player Camera
     commands.spawn((
         Camera3dBundle {
@@ -78,4 +74,4 @@ fn setup_camera(mut commands: Commands, mut bevy_voxel_res: ResMut<BevyVoxelReso
         FlyCam,
         create_new_player(bevy_voxel_res, &game_res)
     ));
-}
+} */

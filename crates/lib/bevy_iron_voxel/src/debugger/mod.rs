@@ -19,7 +19,7 @@ impl Plugin for CustomPlugin {
   }
 }
 
-fn startup(
+/* fn startup(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut materials: ResMut<Assets<StandardMaterial>>,
@@ -30,4 +30,4 @@ fn startup(
     material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
     ..default()
   });
-}
+} */

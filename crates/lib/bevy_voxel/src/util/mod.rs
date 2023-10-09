@@ -1,22 +1,6 @@
 use bevy::prelude::*;
-use utils::Utils;
 use voxels::chunk::chunk_manager::{ChunkManager, Chunk};
 use crate::BevyVoxelResource;
-
-pub fn set_voxel(
-  chunk_manager: &mut ChunkManager,
-  pos: Vec3,
-  voxel: u8,
-) {
-  let mul = 1.0 / chunk_manager.voxel_scale;
-  let p = [
-    (pos.x * mul) as i64,
-    (pos.y * mul) as i64,
-    (pos.z * mul) as i64,
-  ];
-
-  chunk_manager.set_voxel2(&p, voxel);
-}
 
 pub fn set_voxel_default(
   chunk_manager: &mut ChunkManager,
@@ -79,15 +63,6 @@ pub fn get_near_positions(pos: Vec3, unit: f32) -> Vec<Vec3> {
 
 
 pub fn get_key(pos: Vec3, voxel_scale: f32, seamless_size: u32) -> [i64; 3] {
-  let p = [
-    pos.x as i64,
-    pos.y as i64,
-    pos.z as i64,
-  ];
-
-  let div = (1.0 / voxel_scale) as u32;
-  let s = seamless_size / div;
-
   let s1 = (seamless_size as f32) / (1.0 / voxel_scale);
   pos_to_key(pos, s1)
 }

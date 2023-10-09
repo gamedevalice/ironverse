@@ -1,6 +1,5 @@
-use bevy::{prelude::*, render::{mesh::{MeshVertexAttribute, MeshVertexBufferLayout, Indices}, render_resource::{VertexFormat, AsBindGroup, ShaderRef, SpecializedMeshPipelineError, RenderPipelineDescriptor, PrimitiveTopology, ShaderType, AsBindGroupShaderType, TextureFormat}, render_asset::RenderAssets}, reflect::TypeUuid, pbr::{MaterialPipeline, MaterialPipelineKey, StandardMaterialFlags}, asset::LoadState};
-use bevy_voxel::{BevyVoxelResource, Chunks, MeshComponent, Center};
-
+use bevy::{prelude::*, render::{mesh::{MeshVertexAttribute, MeshVertexBufferLayout, Indices}, render_resource::{VertexFormat, AsBindGroup, ShaderRef, SpecializedMeshPipelineError, RenderPipelineDescriptor, PrimitiveTopology}}, reflect::TypeUuid, pbr::{MaterialPipeline, MaterialPipelineKey}};
+use bevy_voxel::{BevyVoxelResource, MeshComponent};
 use crate::graphics::ChunkGraphics;
 
 pub struct CustomPlugin;
@@ -23,7 +22,7 @@ fn add(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
   mut custom_materials: ResMut<Assets<CustomMaterial>>,
-  mut images: ResMut<Assets<Image>>,
+  mut _images: ResMut<Assets<Image>>,
 
   chunk_graphics: Query<(Entity, &ChunkGraphics)>,
 
@@ -55,7 +54,7 @@ fn add(
         base_color: Color::rgb(1.0, 1.0, 1.0),
       });
 
-      let mut pos = bevy_voxel_res.get_pos(data.key);
+      let pos = bevy_voxel_res.get_pos(data.key);
       commands
         .spawn(MaterialMeshBundle {
           mesh: mesh_handle,

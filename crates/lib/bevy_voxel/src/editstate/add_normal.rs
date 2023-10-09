@@ -1,9 +1,5 @@
 use bevy::prelude::*;
-use voxels::data::voxel_octree::VoxelMode;
-use crate::{EditState, Preview, BevyVoxelResource, Center, Chunks, PreviewGraphics, ChunkData, ShapeState, MeshComponent};
-
-use super::{EditEvents, EditEvent};
-
+use crate::{EditState, Preview, PreviewGraphics, ShapeState};
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
@@ -20,7 +16,6 @@ fn add_voxel_cube(
   mut chunks: Query<&Preview>,
   shape_state: Res<State<ShapeState>>,
   
-  mut edit_event_writer: EventWriter<EditEvents>
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
   *State::get(&shape_state) != ShapeState::Cube {
@@ -31,9 +26,6 @@ fn add_voxel_cube(
     if preview.pos.is_none() {
       continue;
     }
-    // edit_event_writer.send(EditEvents {
-    //   event: EditEvent::AddCube
-    // });
   }
 }
 
@@ -41,7 +33,6 @@ fn add_voxel_sphere(
   mouse: Res<Input<MouseButton>>,
   mut chunks: Query<&Preview>,
   shape_state: Res<State<ShapeState>>,
-  mut edit_event_writer: EventWriter<EditEvents>
 ) {
   if !mouse.just_pressed(MouseButton::Left) ||
   *State::get(&shape_state) != ShapeState::Sphere {
@@ -52,9 +43,6 @@ fn add_voxel_sphere(
     if preview.pos.is_none() {
       continue;
     }
-    // edit_event_writer.send(EditEvents {
-    //   event: EditEvent::AddSphere
-    // });
   }
 }
 

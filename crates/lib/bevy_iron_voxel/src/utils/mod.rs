@@ -4,8 +4,8 @@
 use bevy::math::{Vec3, Quat};
 use bevy::prelude::Transform;
 use voxels::chunk::chunk_manager::ChunkManager;
-use voxels::chunk::{adjacent_keys_i64};
-use voxels::{chunk::{voxel_pos_to_key}};
+use voxels::chunk::adjacent_keys_i64;
+use voxels::chunk::voxel_pos_to_key;
 
 pub struct Math;
 
@@ -197,7 +197,7 @@ impl RayUtils {
   pub fn get_normal_point_with_scale(
     trans: &Transform, dist: f32, size: u32, scale: f32
   ) -> Vec3 {
-    let mut point = trans.translation + trans.forward() * dist;
+    let mut _point = trans.translation + trans.forward() * dist;
     // point -= size as f32 * 0.5 - 0.5;
 
     /*

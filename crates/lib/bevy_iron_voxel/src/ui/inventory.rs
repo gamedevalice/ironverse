@@ -1,12 +1,15 @@
+use bevy::prelude::*;
+use bevy_egui::egui::TextureId;
+/* 
 use bevy::{prelude::*, window::PrimaryWindow, asset::LoadState};
 use bevy_egui::{EguiContexts, egui::{self, TextureId, Frame, Color32, Rect, Vec2, Pos2, Sense}};
 use crate::{input::{hotbar::HotbarResource, InputResource}, data::{CursorState, UIState}};
 use super::hotbar::HotbarUIResource;
-
+ */
 
 pub struct CustomPlugin;
 impl Plugin for CustomPlugin {
-  fn build(&self, app: &mut App) {
+  fn build(&self, _app: &mut App) {
     // app
     //   .insert_resource(LocalResource::default())
     //   .add_systems(Startup, startup)
@@ -18,7 +21,7 @@ impl Plugin for CustomPlugin {
     //   );
   }
 }
-
+/* 
 fn startup(
   mut commands: Commands, asset_server: Res<AssetServer>
 ) {
@@ -35,7 +38,7 @@ fn startup(
 fn prepare_texture(
   mut ctx: EguiContexts,
   mut loading_texture: ResMut<InventoryTexture>,
-  mut images: ResMut<Assets<Image>>,
+  mut _images: ResMut<Assets<Image>>,
   asset_server: Res<AssetServer>,
 ) {
   if loading_texture.is_loaded
@@ -48,12 +51,12 @@ fn prepare_texture(
 }
 
 fn toggle_show(
-  key: Res<Input<KeyCode>>,
-  mut next_state: ResMut<NextState<UIState>>,
-  ui_state: Res<State<UIState>>,
-  mut cursor_state_next: ResMut<NextState<CursorState>>,
+  _key: Res<Input<KeyCode>>,
+  mut _next_state: ResMut<NextState<UIState>>,
+  _ui_state: Res<State<UIState>>,
+  mut _cursor_state_next: ResMut<NextState<CursorState>>,
 
-  mut input_res: ResMut<InputResource>,
+  mut _input_res: ResMut<InputResource>,
 ) {
   // if key.just_pressed(KeyCode::I) {
   //   match *State::get(&ui_state) {
@@ -245,19 +248,19 @@ fn render_dragging(
 
 }
 
-
+ */
 
 
 #[derive(Resource)]
 pub struct InventoryTexture {
   pub is_loaded: bool,
-  slot: Handle<Image>,
+  // slot: Handle<Image>,
   pub albedo: Handle<Image>,
-  slot_id: TextureId,
+  // slot_id: TextureId,
   pub albedo_id: TextureId,
 }
 
-#[derive(Resource)]
+/* #[derive(Resource)]
 struct LocalResource {
   slots: Vec<Slot>
 }
@@ -289,3 +292,4 @@ struct Slot {
   is_dragged: bool,
   item_id: u32,
 }
+ */
