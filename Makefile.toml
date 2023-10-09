@@ -4,6 +4,9 @@ default_to_workspace = false
 [tasks.web]
 dependencies = ["clear", "compile_wasm", "serve"]
 
+[tasks.web_opt]
+dependencies = ["clear", "compile_wasm_opt", "serve"]
+
 [tasks.compile_wasm]
 script = '''
 wasm-pack build --out-dir ../../bin/editor/wasm/multithread --target no-modules ./crates/lib/multithread/
@@ -37,4 +40,12 @@ script = '''
   clear
   clear
   cargo run -p editor
+'''
+
+[tasks.compile_wasm_opt]
+script = '''
+wasm-pack build --out-dir ../../bin/editor/wasm/multithread --target no-modules ./crates/lib/multithread/
+cargo build --profile wasm-release --target wasm32-unknown-unknown
+wasm-bindgen --out-name app --out-dir crates/bin/editor/wasm --target web target/wasm32-unknown-unknown/release/editor.wasm
+wasm-opt -Oz --output crates/bin/editor/wasm/app_bg.wasm crates/bin/editor/wasm/app_bg.wasm
 '''
