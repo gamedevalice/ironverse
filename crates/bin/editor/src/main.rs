@@ -20,7 +20,7 @@ fn main() {
             resolution: (800., 600.).into(),
             present_mode: PresentMode::AutoVsync,
             fit_canvas_to_parent: true,
-            prevent_default_event_handling: false,
+            prevent_default_event_handling: true,
             ..default()
         }),
         ..default()
@@ -35,6 +35,7 @@ fn main() {
             next_state.set(AppState::MainMenu);
         })
         .init_resource::<voxel_edit_mode::HotbarVoxels>()
+        .init_resource::<voxel_edit_mode::WebPointer>()
         .add_systems(Update, voxel_edit_mode::update_hotbar)
         //.add_systems(Startup, setup_camera)
 
@@ -45,6 +46,7 @@ fn main() {
 
         //AppState: VoxelEditMode
         .add_systems(OnEnter(AppState::VoxelEditMode), voxel_edit_mode::on_enter)
+        .add_systems(Update, voxel_edit_mode::handle_web_pointer_unlock.run_if(in_state(AppState::VoxelEditMode)))
         .add_systems(Update, voxel_edit_mode::controls.run_if(in_state(AppState::VoxelEditMode)))
         .add_systems(OnExit(AppState::VoxelEditMode), voxel_edit_mode::on_exit)
 

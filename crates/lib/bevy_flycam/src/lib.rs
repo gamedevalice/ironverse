@@ -317,18 +317,24 @@ cfg_if! {
             }
 
             if let Ok(window) = primary_window.get_single() {
-                for mut transform in query.iter_mut() {
-                    let (mut yaw, mut pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
-
-                    let window_scale = window.height().min(window.width());
-                    pitch -= (settings.sensitivity * delta_y * window_scale).to_radians();
-                    yaw -= (settings.sensitivity * delta_x * window_scale).to_radians();
-
-                    pitch = pitch.clamp(-1.54, 1.54);
-
-                    // Order is important to prevent unintended roll
-                    transform.rotation =
-                        Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
+                
+                match window.cursor.grab_mode {
+                    CursorGrabMode::None => (),
+                    _ => {
+                        for mut transform in query.iter_mut() {
+                            let (mut yaw, mut pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
+        
+                            let window_scale = window.height().min(window.width());
+                            pitch -= (settings.sensitivity * delta_y * window_scale).to_radians();
+                            yaw -= (settings.sensitivity * delta_x * window_scale).to_radians();
+        
+                            pitch = pitch.clamp(-1.54, 1.54);
+        
+                            // Order is important to prevent unintended roll
+                            transform.rotation =
+                                Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
+                        }
+                    }
                 }
             } else {
                 warn!("Primary window not found for `player_look`!");
