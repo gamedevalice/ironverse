@@ -8,3 +8,11 @@ bevy = "0.11.2"
 bevy_flycam = { path = "../../lib/bevy_flycam"}
 bevy_iron_ui = { path = "../../lib/bevy_iron_ui"}
 bevy_iron_voxel = { path = "../../lib/bevy_iron_voxel"}
+
+[dependencies.web-sys]
+version = "0.3.61"
+features = [
+  "Window",
+  "Document",
+  "HtmlElement",
+]

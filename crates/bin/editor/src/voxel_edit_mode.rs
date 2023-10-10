@@ -4,7 +4,6 @@ use bevy::window::CursorGrabMode;
 use bevy_iron_ui::core::{LayoutNode, UiTags, UiManager};
 use bevy_iron_ui::layout::{node, button, text, image};
 use bevy_iron_voxel::{BevyVoxelResource, EditEvent, EditEvents, EditState, Preview};
-
 use super::AppState;
 
 const HOTBAR_KEYS: [bevy::prelude::KeyCode; 10] = [
@@ -19,16 +18,38 @@ const HOTBAR_KEYS: [bevy::prelude::KeyCode; 10] = [
     KeyCode::Key9,
     KeyCode::Key0,
 ];
+  
 pub fn on_enter(mut ui_manager: ResMut<UiManager>, mut commands: Commands, asset_server: Res<AssetServer>, query: Query<(Entity, &UiTags)>, mut window: Query<&mut Window>) {
     ui_manager.set_layout(&mut commands, &asset_server, &query, layout(&asset_server));
-    
     //lock the cursor
     let mut window = window.single_mut();
     window.cursor.visible = false;
     window.cursor.grab_mode = CursorGrabMode::Locked;
+
+    //request full screen if on web
+    #[cfg(target_arch = "wasm32")]
+    let _ = web_sys::window().unwrap().document().unwrap().body().unwrap().request_fullscreen();
 }
-pub fn on_exit(mut window: Query<&mut Window>) {
-    
+
+#[derive(Default, Resource)]
+pub struct WebPointer{
+    pub was_locked: bool,
+}
+
+pub fn handle_web_pointer_unlock(mut next_state: ResMut<NextState<AppState>>, mut web_pointer: ResMut<WebPointer>) {
+    #[cfg(target_arch = "wasm32")]
+    if let Some(_) = web_sys::window().unwrap().document().unwrap().pointer_lock_element() {
+        web_pointer.was_locked = true;
+    } else if web_pointer.was_locked {
+        next_state.set(AppState::MainMenu);
+    }
+}
+pub fn on_exit(mut window: Query<&mut Window>, mut web_pointer: ResMut<WebPointer>) {
+    //reset WebPointer state
+    #[cfg(target_arch = "wasm32")] {
+        web_pointer.was_locked = false;
+    }
+
     //unlock the cursor
     let mut window = window.single_mut();
     window.cursor.visible = true;
@@ -48,15 +69,6 @@ pub fn layout(asset_server: &Res<AssetServer>) -> LayoutNode {
     }
     node(vec!["voxel_edit_mode"], vec![
         image(vec!["crosshair"], asset_server.load("images/crosshair.png"), vec![]),
-        node(vec!["voxel_edit_mode_controls_list"], vec![
-            text(vec!["voxel_edit_mode_controls_text"], "WASD: Move", vec![]),
-            text(vec!["voxel_edit_mode_controls_text"], "Mouse: Look", vec![]),
-            text(vec!["voxel_edit_mode_controls_text"], "Mouse Wheel: Change Size", vec![]),
-            text(vec!["voxel_edit_mode_controls_text"], "Left Click: Perform Edit", vec![]),
-            text(vec!["voxel_edit_mode_controls_text"], "Right Click: Toggle Add/Remove", vec![]),
-            text(vec!["voxel_edit_mode_controls_text"], "R: Options", vec![]),
-            text(vec!["voxel_edit_mode_controls_text"], "ESC: Menu", vec![])
-        ]),
         node(vec!["hotbar"], hotbar_buttons)
     ])
 }

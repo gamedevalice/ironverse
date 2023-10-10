@@ -7,6 +7,13 @@ pub fn theme(asset_server: &Res<AssetServer>, base_widget: Widget, tag: &str) ->
     match base_widget {
         Widget::Node(mut node) => {
             match tag {
+                "menu_container" => {
+                    node.style = Style {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        ..node.style
+                    };
+                },
                 "menu" => {
                     node.style = Style {
                         width: Val::Percent(33.0),
@@ -29,15 +36,24 @@ pub fn theme(asset_server: &Res<AssetServer>, base_widget: Widget, tag: &str) ->
                         ..node.style
                     };
                 },
-                "voxel_edit_mode_controls_list" => {
+                "voxel_edit_mode_controls_container" => {
                     node.style = Style {
                         width: Val::Percent(100.0),
                         height: Val::Percent(100.0),
                         display: Display::Flex,
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Start,
+                        justify_content: JustifyContent::End,
+                        position_type: PositionType::Absolute,
+                        ..node.style
+                    };
+                },
+                "voxel_edit_mode_controls_list" => {
+                    node.style = Style {
+                        display: Display::Flex,
                         flex_direction: FlexDirection::Column,
                         align_items: AlignItems::Start,
                         justify_content: JustifyContent::Start,
-                        position_type: PositionType::Absolute,
                         ..node.style
                     };
                 },

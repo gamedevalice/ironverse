@@ -9,10 +9,10 @@ pub fn on_enter(mut ui_manager: ResMut<UiManager>, mut commands: Commands, asset
 }
 
 pub fn layout(asset_server: &Res<AssetServer>) -> LayoutNode {
-    node(vec!["menu"], vec![
+    let mut menu_items = vec![
         image(vec!["menu_logo"], asset_server.load("images/logo/anvil-constellation-logo-512.png"), vec![]),
         button(vec!["menu_button", "menu_back_button"], vec![
-            text(vec!["button_text", "menu_button_text"], "Back to Game (ESC)", vec![])
+            text(vec!["button_text", "menu_button_text"], "Back to Game", vec![])
         ]),
         button(vec!["menu_button", "menu_new_button"], vec![
             text(vec!["button_text", "menu_button_text"], "New World", vec![])
@@ -23,9 +23,29 @@ pub fn layout(asset_server: &Res<AssetServer>) -> LayoutNode {
         button(vec!["menu_button", "menu_load_button"], vec![
             text(vec!["button_text", "menu_button_text"], "Load World", vec![])
         ]),
+    ];
+    
+    //Only show Quit Button if not on web
+    #[cfg(not(target_arch = "wasm32"))]
+    menu_items.push(
         button(vec!["menu_button", "menu_quit_button"], vec![
             text(vec!["button_text", "menu_button_text"], "Quit Game", vec![])
+        ])
+    );
+
+    node(vec!["menu_container"], vec![
+        node(vec!["voxel_edit_mode_controls_container"], vec![
+            node(vec!["voxel_edit_mode_controls_list"], vec![
+                text(vec!["voxel_edit_mode_controls_text"], "WASD: Move", vec![]),
+                text(vec!["voxel_edit_mode_controls_text"], "Mouse: Look", vec![]),
+                text(vec!["voxel_edit_mode_controls_text"], "Mouse Wheel: Change Size", vec![]),
+                text(vec!["voxel_edit_mode_controls_text"], "Left Click: Perform Edit", vec![]),
+                text(vec!["voxel_edit_mode_controls_text"], "Right Click: Toggle Add/Remove", vec![]),
+                text(vec!["voxel_edit_mode_controls_text"], "R: Options", vec![]),
+                text(vec!["voxel_edit_mode_controls_text"], "ESC: Menu", vec![])
+            ]),
         ]),
+        node(vec!["menu"], menu_items)
     ])
 }
 
@@ -57,6 +77,8 @@ pub fn button_actions(
     }
 }
 pub fn controls(keyboard_input: Res<Input<KeyCode>>, mut next_state: ResMut<NextState<AppState>>) {
+    //Don't allow this hotkey on web since it fails to trigger fullscreen
+    #[cfg(not(target_arch = "wasm32"))]
     if keyboard_input.just_pressed(KeyCode::Escape) {
         next_state.set(AppState::VoxelEditMode);
     }

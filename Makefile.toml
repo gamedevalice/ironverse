@@ -44,8 +44,9 @@ script = '''
 
 [tasks.compile_wasm_opt]
 script = '''
-wasm-pack build --out-dir ../../bin/editor/wasm/multithread --target no-modules ./crates/lib/multithread/
+wasm-pack build --release --out-dir ../../bin/editor/wasm/multithread --target no-modules ./crates/lib/multithread/
+wasm-opt -Oz --output crates/bin/editor/wasm/multithread/multithread_bg.wasm crates/bin/editor/wasm/multithread/multithread_bg.wasm
 cargo build --profile wasm-release --target wasm32-unknown-unknown
-wasm-bindgen --out-name app --out-dir crates/bin/editor/wasm --target web target/wasm32-unknown-unknown/release/editor.wasm
+wasm-bindgen --out-name app --out-dir crates/bin/editor/wasm --target web target/wasm32-unknown-unknown/wasm-release/editor.wasm
 wasm-opt -Oz --output crates/bin/editor/wasm/app_bg.wasm crates/bin/editor/wasm/app_bg.wasm
 '''
