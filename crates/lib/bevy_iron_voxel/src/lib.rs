@@ -7,38 +7,24 @@ mod utils;
 
 cfg_if! {
   if #[cfg(feature = "core")] {
-    mod input;
     pub mod components;
     mod states;
     mod graphics;
     mod physics;
     pub mod data;
     mod obj;
-  }
-}
-
-
-cfg_if! {
-  if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
-    mod wasm;
+    mod save;
   }
 }
 
 cfg_if! {
-  if #[cfg(all(feature = "ui_prompt", target_arch = "wasm32") )] {
+  if #[cfg(target_arch = "wasm32")] {
     mod wasm_ui;
   }
 }
 
-// mod native;
 cfg_if! {
-  if #[cfg(all(not(feature = "tests"), not(target_arch = "wasm32") ))] {
-    mod native;
-  }
-}
-
-cfg_if! {
-  if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
+  if #[cfg(not(target_arch = "wasm32") )] {
     mod native_ui;
   }
 }
@@ -53,13 +39,6 @@ cfg_if! {
 cfg_if! {
   if #[cfg(feature = "graphics_normal")] {
     mod graphics_normal;
-  }
-}
-
-cfg_if! {
-  if #[cfg(feature = "ui")] {
-    mod ui;
-    mod debugger;
   }
 }
 
@@ -89,7 +68,6 @@ impl Plugin for VoxelWorldPlugin {
           ))
           .add_plugins(data::CustomPlugin)
           // .add_plugins(physics::CustomPlugin)
-          .add_plugins(input::CustomPlugin)
           .add_plugins(components::CustomPlugin)
           .add_plugins(graphics::CustomPlugin)
           .add_plugins(states::CustomPlugin)
@@ -125,37 +103,14 @@ impl Plugin for VoxelWorldPlugin {
     }
   
     cfg_if! {
-      if #[cfg(feature = "ui")] {
-        app
-          .add_plugins(ui::CustomPlugin)
-          .add_plugins(debugger::CustomPlugin)
-          ;
-      }
-    }
-  
-    cfg_if! {
-      if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
-        app
-          .add_plugins(wasm::CustomPlugin);
-      }
-    }
-  
-    cfg_if! {
-      if #[cfg(all(feature = "ui_prompt", target_arch = "wasm32") )] {
+      if #[cfg(target_arch = "wasm32")] {
         app
           .add_plugins(wasm_ui::CustomPlugin);
       }
     }
   
     cfg_if! {
-      if #[cfg(all(not(feature = "tests"), not(target_arch = "wasm32") ))] {
-        app
-          .add_plugins(native::CustomPlugin);
-      }
-    }
-  
-    cfg_if! {
-      if #[cfg(all(feature = "ui_prompt", not(target_arch = "wasm32") ))] {
+      if #[cfg(not(target_arch = "wasm32") )] {
         app
           .add_plugins(native_ui::CustomPlugin);
       }

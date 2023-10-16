@@ -5,6 +5,7 @@ Install cargo plugins:
 cargo install wasm-pack
 cargo install wasm-bindgen-cli
 cargo install cargo-make
+cargo install duckscript_cli
 ```
 
 ## Build and Run

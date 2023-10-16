@@ -19,9 +19,9 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       // .add_system(track_modified_chunks)
-      .add_system(enter.in_schedule(OnEnter(GameState::SaveGame)))
-      .add_system(export_obj)
-      .add_system(handle_obj_export);
+      .add_systems(OnEnter(GameState::SaveGame), enter)
+      .add_systems(Update, export_obj)
+      .add_systems(Update, handle_obj_export);
   }
 }
 

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_iron_ui::core::{LayoutNode, UiTags, UiManager};
 use bevy_iron_ui::layout::{node, button, text, image};
+use bevy_iron_voxel::data::GameState;
 
 use super::AppState;
 
@@ -14,15 +15,15 @@ pub fn layout(asset_server: &Res<AssetServer>) -> LayoutNode {
         button(vec!["menu_button", "menu_back_button"], vec![
             text(vec!["button_text", "menu_button_text"], "Back to Game", vec![])
         ]),
-        button(vec!["menu_button", "menu_new_button"], vec![
-            text(vec!["button_text", "menu_button_text"], "New World", vec![])
-        ]),
-        button(vec!["menu_button", "menu_save_button"], vec![
-            text(vec!["button_text", "menu_button_text"], "Save World", vec![])
-        ]),
-        button(vec!["menu_button", "menu_load_button"], vec![
-            text(vec!["button_text", "menu_button_text"], "Load World", vec![])
-        ]),
+        // button(vec!["menu_button", "menu_new_button"], vec![
+        //     text(vec!["button_text", "menu_button_text"], "New World", vec![])
+        // ]),
+        // button(vec!["menu_button", "menu_save_button"], vec![
+        //     text(vec!["button_text", "menu_button_text"], "Save World", vec![])
+        // ]),
+        // button(vec!["menu_button", "menu_load_button"], vec![
+        //     text(vec!["button_text", "menu_button_text"], "Load World", vec![])
+        // ]),
     ];
     
     //Only show Quit Button if not on web
@@ -37,6 +38,7 @@ pub fn layout(asset_server: &Res<AssetServer>) -> LayoutNode {
         node(vec!["voxel_edit_mode_controls_container"], vec![
             node(vec!["voxel_edit_mode_controls_list"], vec![
                 text(vec!["voxel_edit_mode_controls_text"], "WASD: Move", vec![]),
+                text(vec!["voxel_edit_mode_controls_text"], "Space/C: Up/Down", vec![]),
                 text(vec!["voxel_edit_mode_controls_text"], "Mouse: Look", vec![]),
                 text(vec!["voxel_edit_mode_controls_text"], "Mouse Wheel: Change Size", vec![]),
                 text(vec!["voxel_edit_mode_controls_text"], "Left Click: Perform Edit", vec![]),
@@ -58,16 +60,20 @@ pub fn button_actions(
         (Changed<Interaction>, With<Button>),
     >, 
     mut exit: EventWriter<bevy::app::AppExit>, 
-    mut next_state: ResMut<NextState<AppState>>
+    mut app_state: ResMut<NextState<AppState>>, 
+    mut game_state: ResMut<NextState<GameState>>
 ) {
     for (interaction, ui_tags) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 if ui_tags.tags.contains(&"menu_back_button".to_string()) {
-                    next_state.set(AppState::VoxelEditMode);
+                    app_state.set(AppState::VoxelEditMode);
                 } else if ui_tags.tags.contains(&"menu_new_button".to_string()) {
+                    game_state.set(GameState::New);
                 } else if ui_tags.tags.contains(&"menu_save_button".to_string()) {
+                    game_state.set(GameState::SaveGame);
                 } else if ui_tags.tags.contains(&"menu_load_button".to_string()) {
+                    game_state.set(GameState::LoadGame);
                 } else if ui_tags.tags.contains(&"menu_quit_button".to_string()) {
                     exit.send(bevy::app::AppExit);
                 }

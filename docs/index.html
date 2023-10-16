@@ -1,0 +1,56 @@
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <style>
+      body {
+        background: linear-gradient(
+          135deg,
+          white 0%,
+          white 49%,
+          black 49%,
+          black 51%,
+          white 51%,
+          white 100%
+        );
+        background-repeat: repeat;
+        background-size: 20px 20px;
+      }
+      canvas {
+        background-color: white;
+      }
+
+
+      #scene {
+        height: 100%;
+        width: 500px;
+        float: left;
+      }
+
+      #render, .concurrency, .timing {
+        padding: 20px;
+        margin: 20px;
+        float: left;
+      }
+
+      .concurrency {
+        display: none;
+      }
+    </style>
+  </head>
+  <script type="module">
+    import init from './wasm/app.js'
+    init()
+  </script>
+  <body>
+    <a id="download"></a>
+    
+    <script type="module">
+      import startApp from './multithread.js';
+      startApp('multithread');
+    </script>
+
+    <div class='concurrency'>
+      <input type="range" id="concurrency" value="6" />
+    </div>
+  </body>
+</html>

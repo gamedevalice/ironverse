@@ -79,6 +79,8 @@ pub struct ControlsLocal {
     pub pressed_time: f32,
     pub edit_count: i32,
 }
+const HOLD_EDIT_TIME: f32 = 0.2;
+
 pub fn controls(time: Res<Time>, mut local: Local<ControlsLocal>, mut previews: Query<&mut Preview>, mut mouse_wheel: EventReader<MouseWheel>, edit_state_reader: Res<State<EditState>>, mut edit_state_writer: ResMut<NextState<EditState>>, mut edit_event_writer: EventWriter<EditEvents>, mouse: Res<Input<MouseButton>>, keyboard_input: Res<Input<KeyCode>>, mut next_state: ResMut<NextState<AppState>>) {
     //open menu
     if keyboard_input.just_pressed(KeyCode::Escape) {
@@ -96,7 +98,7 @@ pub fn controls(time: Res<Time>, mut local: Local<ControlsLocal>, mut previews: 
     //perform edit
     if local.is_pressing {
         local.pressed_time += time.delta_seconds();
-        if local.pressed_time > (local.edit_count as f32) * 0.1 {
+        if local.pressed_time > (local.edit_count as f32) * HOLD_EDIT_TIME {
             if edit_state_reader.get() == &EditState::AddNormal {
                 edit_event_writer.send(EditEvents {
                   event: EditEvent::AddCube

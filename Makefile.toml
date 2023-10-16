@@ -7,6 +7,12 @@ dependencies = ["clear", "compile_wasm", "serve"]
 [tasks.web_opt]
 dependencies = ["clear", "compile_wasm_opt", "serve"]
 
+[tasks.deploy]
+dependencies = ["compile_wasm_opt", "deploy_wasm"]
+
+[tasks.deploy_serve]
+dependencies = ["compile_wasm_opt", "deploy_wasm", "serve_deployed"]
+
 [tasks.compile_wasm]
 script = '''
 wasm-pack build --out-dir ../../bin/editor/wasm/multithread --target no-modules ./crates/lib/multithread/
@@ -16,7 +22,7 @@ wasm-bindgen --out-name app --out-dir crates/bin/editor/wasm --target web target
 
 [tasks.serve]
 script = '''
-basic-http-server ./crates/bin/editor/
+echo "LOCAL: [http://localhost:4000]" && basic-http-server -a 0.0.0.0:4000 ./crates/bin/editor/
 '''
 
 [tasks.web_editor]
@@ -49,4 +55,17 @@ wasm-opt -Oz --output crates/bin/editor/wasm/multithread/multithread_bg.wasm cra
 cargo build --profile wasm-release --target wasm32-unknown-unknown
 wasm-bindgen --out-name app --out-dir crates/bin/editor/wasm --target web target/wasm32-unknown-unknown/wasm-release/editor.wasm
 wasm-opt -Oz --output crates/bin/editor/wasm/app_bg.wasm crates/bin/editor/wasm/app_bg.wasm
+'''
+
+[tasks.deploy_wasm]
+script = '''
+duck -e "cp ./crates/bin/editor/index.html ./docs/index.html"
+duck -e "cp ./crates/bin/editor/multithread.js ./docs/multithread.js"
+duck -e "cp ./crates/bin/editor/wasm ./docs"
+duck -e "cp ./crates/bin/editor/assets ./docs"
+'''
+
+[tasks.serve_deployed]
+script = '''
+echo "LOCAL: [http://localhost:4000]" && basic-http-server -a 0.0.0.0:4000 ./docs/
 '''
