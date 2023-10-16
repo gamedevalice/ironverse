@@ -38,6 +38,7 @@ pub fn layout(asset_server: &Res<AssetServer>) -> LayoutNode {
         node(vec!["voxel_edit_mode_controls_container"], vec![
             node(vec!["voxel_edit_mode_controls_list"], vec![
                 text(vec!["voxel_edit_mode_controls_text"], "WASD: Move", vec![]),
+                text(vec!["voxel_edit_mode_controls_text"], "Space/C: Up/Down", vec![]),
                 text(vec!["voxel_edit_mode_controls_text"], "Mouse: Look", vec![]),
                 text(vec!["voxel_edit_mode_controls_text"], "Mouse Wheel: Change Size", vec![]),
                 text(vec!["voxel_edit_mode_controls_text"], "Left Click: Perform Edit", vec![]),
