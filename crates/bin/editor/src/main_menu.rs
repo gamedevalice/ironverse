@@ -15,15 +15,15 @@ pub fn layout(asset_server: &Res<AssetServer>) -> LayoutNode {
         button(vec!["menu_button", "menu_back_button"], vec![
             text(vec!["button_text", "menu_button_text"], "Back to Game", vec![])
         ]),
-        button(vec!["menu_button", "menu_new_button"], vec![
-            text(vec!["button_text", "menu_button_text"], "New World", vec![])
-        ]),
-        button(vec!["menu_button", "menu_save_button"], vec![
-            text(vec!["button_text", "menu_button_text"], "Save World", vec![])
-        ]),
-        button(vec!["menu_button", "menu_load_button"], vec![
-            text(vec!["button_text", "menu_button_text"], "Load World", vec![])
-        ]),
+        // button(vec!["menu_button", "menu_new_button"], vec![
+        //     text(vec!["button_text", "menu_button_text"], "New World", vec![])
+        // ]),
+        // button(vec!["menu_button", "menu_save_button"], vec![
+        //     text(vec!["button_text", "menu_button_text"], "Save World", vec![])
+        // ]),
+        // button(vec!["menu_button", "menu_load_button"], vec![
+        //     text(vec!["button_text", "menu_button_text"], "Load World", vec![])
+        // ]),
     ];
     
     //Only show Quit Button if not on web
