@@ -9,9 +9,9 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(LocalResource::default())
-      .add_system(enter.in_schedule(OnEnter(GameState::LoadGame)))
-      .add_system(update.in_set(OnUpdate(GameState::LoadGame)))
-      .add_system(exit.in_schedule(OnExit(GameState::LoadGame)))
+      .add_systems(OnEnter(GameState::LoadGame), enter)
+      .add_systems(Update, update.run_if(OnUpdate(GameState::LoadGame)))
+      .add_systems(OnExit(GameState::LoadGame), exit)
       ;
   }
 }
