@@ -16,7 +16,7 @@ wasm-bindgen --out-name app --out-dir crates/bin/editor/wasm --target web target
 
 [tasks.serve]
 script = '''
-basic-http-server ./crates/bin/editor/
+echo "LOCAL: [http://localhost:4000]" && basic-http-server -a 0.0.0.0:4000 ./crates/bin/editor/
 '''
 
 [tasks.web_editor]
