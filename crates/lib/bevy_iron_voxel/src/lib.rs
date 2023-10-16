@@ -17,13 +17,6 @@ cfg_if! {
   }
 }
 
-
-cfg_if! {
-  if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
-    mod wasm;
-  }
-}
-
 cfg_if! {
   if #[cfg(target_arch = "wasm32")] {
     mod wasm_ui;
@@ -106,13 +99,6 @@ impl Plugin for VoxelWorldPlugin {
         app
           .add_plugins(graphics_normal::chunks::CustomPlugin)
           .add_plugins(graphics_normal::chunk_preview::CustomPlugin);
-      }
-    }
-  
-    cfg_if! {
-      if #[cfg(all(not(feature = "tests"), target_arch = "wasm32"))] {
-        app
-          .add_plugins(wasm::CustomPlugin);
       }
     }
   
