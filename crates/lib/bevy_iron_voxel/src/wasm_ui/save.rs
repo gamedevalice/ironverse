@@ -1,6 +1,5 @@
 use bevy::{prelude::*, utils::HashMap};
 use voxels::chunk::chunk_manager::Chunk;
-use crate::components::chunk::Chunks;
 use crate::data::{Terrains, Data, Status, GameState, GameResource};
 use super::html_body;
 use wasm_bindgen::JsCast;
@@ -11,9 +10,9 @@ impl Plugin for CustomPlugin {
   fn build(&self, app: &mut App) {
     app
       .insert_resource(LocalResource::default())
-      .add_system(enter.in_schedule(OnEnter(GameState::SaveGame)))
-      .add_system(track_modified_chunks)
-      .add_system(export_obj)
+      .add_systems(OnEnter(GameState::SaveGame), enter)
+      .add_systems(Update, track_modified_chunks)
+      .add_systems(Update, export_obj)
     ;
   }
 }
@@ -70,21 +69,21 @@ fn enter(local_res: Res<LocalResource>,) {
 
 
 fn track_modified_chunks(
-  mut chunks_query: Query<&Chunks, Changed<Chunks>>,
+  //mut chunks_query: Query<&Chunks, Changed<Chunks>>,
   mut local_res: ResMut<LocalResource>,
 ) {
-  for c in &chunks_query {
-    for mesh in c.data.iter() {
-      if !mesh.chunk.is_default {
-        if !mesh.chunk.is_default {
-          local_res.chunks.insert(mesh.key.clone(), mesh.chunk.clone());
-        }
+  // for c in &chunks_query {
+  //   for mesh in c.data.iter() {
+  //     if !mesh.chunk.is_default {
+  //       if !mesh.chunk.is_default {
+  //         local_res.chunks.insert(mesh.key.clone(), mesh.chunk.clone());
+  //       }
         
-        // info!("chunks.len() {:?}", local_res.chunks.len());
-      }
-    }
+  //       // info!("chunks.len() {:?}", local_res.chunks.len());
+  //     }
+  //   }
     
-  }
+  // }
 }
 
 

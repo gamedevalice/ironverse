@@ -10,7 +10,7 @@ impl Plugin for CustomPlugin {
     app
       .insert_resource(LocalResource::default())
       .add_systems(OnEnter(GameState::LoadGame), enter)
-      .add_systems(Update, update.run_if(OnUpdate(GameState::LoadGame)))
+      .add_systems(Update, update.run_if(in_state(GameState::LoadGame)))
       .add_systems(OnExit(GameState::LoadGame), exit)
       ;
   }
