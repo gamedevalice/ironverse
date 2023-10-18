@@ -62,6 +62,7 @@ script = '''
 duck -e "cp ./crates/bin/editor/index.html ./docs/index.html"
 duck -e "cp ./crates/bin/editor/multithread.js ./docs/multithread.js"
 duck -e "cp ./crates/bin/editor/wasm ./docs"
+duck -e "cp ./crates/bin/editor/wasm/multithread ./docs/wasm"
 duck -e "cp ./crates/bin/editor/assets ./docs"
 '''
 
