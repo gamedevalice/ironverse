@@ -1,0 +1,11 @@
+{
+  "name": "multithread",
+  "version": "0.1.0",
+  "files": [
+    "multithread_bg.wasm",
+    "multithread.js",
+    "multithread.d.ts"
+  ],
+  "browser": "multithread.js",
+  "types": "multithread.d.ts"
+}
